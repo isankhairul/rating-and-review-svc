@@ -1,4 +1,3 @@
-
 # go-klikdokter-boilerplate
 
 This is boilerplate for klikdokter microservice, it's use go-kit as our base library
@@ -12,6 +11,13 @@ The example to use this boilerplate please see this code
 - In a root folder type `go run main.go`
 - Swagger in /docs
 - Run unit test in root folder : `go test -v ./...`
+
+## Config
+
+- config files are in yaml format 
+- config-dev.yml is used for local development, config-prd.yml used for staging and production
+- env-vars with "KD" prefix will override config files 
+- for example : KD_SITE_PORT will override site.port 
   
 ## Directory Structure
 
