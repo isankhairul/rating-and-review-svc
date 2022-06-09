@@ -2,8 +2,8 @@
 //   version: 1.0
 //   title: Boilerplate Go Kit Api
 //  Schemes: http
-//  Host: localhost:5600
-//  BasePath: /
+//  Host:
+//  BasePath: /rating-svc
 //  Produces:
 //    - application/json
 //
@@ -13,8 +13,10 @@ package main
 import (
 	"fmt"
 	"go-klikdokter/app/api/initialization"
+	"go-klikdokter/helper/_struct"
 	"go-klikdokter/helper/config"
 	"go-klikdokter/helper/consul"
+	"go-klikdokter/helper/database"
 	"net/http"
 	"os"
 	"os/signal"
@@ -72,8 +74,14 @@ func main() {
 		logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
 	}
 
+	// Init MongoDB Connection
+	db, err := database.NewMongo()
+	if err != nil {
+		_ = logger.Log("Err Db connection :", err.Error())
+		panic(err.Error())
+	}
 	// Init DB Connection
-	db, err := initialization.DbInit()
+	//db, err := initialization.DbInit()
 	if err != nil {
 		_ = logger.Log("Err Db connection :", err.Error())
 		panic(err.Error())
@@ -88,6 +96,7 @@ func main() {
 	// Routing initialization
 	mux := initialization.InitRouting(db, logger)
 	http.Handle("/", accessControl(mux))
+	http.Handle(_struct.PrefixBase, accessControl(mux))
 
 	errs := make(chan error, 2)
 

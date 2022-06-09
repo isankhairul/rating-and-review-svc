@@ -2,10 +2,11 @@ package initialization
 
 import (
 	"go-klikdokter/app/api/transport"
-	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/registry"
+	"go-klikdokter/helper/_struct"
 	"go-klikdokter/helper/config"
 	"go-klikdokter/helper/database"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 
 	"github.com/go-kit/log"
@@ -23,8 +24,6 @@ func DbInit() (*gorm.DB, error) {
 	}
 
 	//Define auto migration here
-	_ = db.AutoMigrate(&entity.Product{})
-	_ = db.AutoMigrate(&entity.Doctor{})
 
 	// example Seeder
 	// for i := 0; i < 1000; i++ {
@@ -37,26 +36,21 @@ func DbInit() (*gorm.DB, error) {
 	// 	}
 	// }
 
-
-
 	return db, nil
 }
 
-func InitRouting(db *gorm.DB, logger log.Logger) *http.ServeMux {
+func InitRouting(db *mongo.Database, logger log.Logger) *http.ServeMux {
 	// Service registry
-	prodSvc := registry.RegisterProductService(db, logger)
-	doctorSvc := registry.RegisterDoctorService(db, logger)
+	ratingSvc := registry.RegisterRatingService(db, logger)
 
 	// Transport initialization
 	swagHttp := transport.SwaggerHttpHandler(log.With(logger, "SwaggerTransportLayer", "HTTP")) //don't delete or change this !!
-	prodHttp := transport.ProductHttpHandler(prodSvc, log.With(logger, "ProductTransportLayer", "HTTP"))
-	doctorHttp := transport.DoctorHttpHandler(doctorSvc, log.With(logger, "ProductTransportLayer", "HTTP"))
+	ratingHttp := transport.RatingHttpHandler(ratingSvc, log.With(logger, "RatingTransportLayer", "HTTP"))
 
 	// Routing path
 	mux := http.NewServeMux()
 	mux.Handle("/", swagHttp) //don't delete or change this!!
-	mux.Handle("/products/", prodHttp)
-	mux.Handle("/doctors/", doctorHttp)
+	mux.Handle(_struct.PrefixBase, ratingHttp)
 
 	return mux
 }

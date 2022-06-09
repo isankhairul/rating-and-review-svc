@@ -1,18 +1,81 @@
-basePath: /
+basePath: /rating-svc
 definitions:
-  BaseIDModel:
+  CreateRatingSubmissonRequest:
     properties:
-      is_deleted:
-        type: boolean
-        x-go-name: IsDeleted
-      uid:
-        description: |-
-          UID of the product
-          in: int64
+      comment:
         type: string
-        x-go-name: UID
+        x-go-name: Comment
+      ip_address:
+        type: string
+        x-go-name: IPAddress
+      rating_id:
+        type: string
+        x-go-name: RatingID
+      user_agent:
+        type: string
+        x-go-name: UserAgent
+      user_id:
+        type: string
+        x-go-name: UserID
+      user_id_legacy:
+        type: string
+        x-go-name: UserIDLegacy
+      value:
+        format: double
+        type: number
+        x-go-name: Value
     type: object
-    x-go-package: go-klikdokter/app/model/base
+    x-go-package: go-klikdokter/app/model/request
+  CreateRatingTypeNumRequest:
+    properties:
+      description:
+        description: |-
+          Description of rating type num
+          in: string
+        type: string
+        x-go-name: Description
+      intervals:
+        description: |-
+          Intervals of rating type num
+          in: integer
+        format: int64
+        type: integer
+        x-go-name: Intervals
+      max_score:
+        description: |-
+          Max Score of rating type num
+          in: integer
+        format: int64
+        type: integer
+        x-go-name: MaxScore
+      min_score:
+        description: |-
+          Min Score of rating type num
+          in: integer
+        format: int64
+        type: integer
+        x-go-name: MinScore
+      scale:
+        description: |-
+          Scale of rating type num
+          in: integer
+        format: int64
+        type: integer
+        x-go-name: Scale
+      status:
+        description: |-
+          Status of rating type num
+          in: bool
+        type: boolean
+        x-go-name: Status
+      type:
+        description: |-
+          Type of rating type num
+          in: string
+        type: string
+        x-go-name: Type
+    type: object
+    x-go-package: go-klikdokter/app/model/request
   DataResponse:
     properties:
       record:
@@ -42,6 +105,13 @@ definitions:
     type: object
     x-go-name: metaResponse
     x-go-package: go-klikdokter/app/model/base
+  ObjectID:
+    items:
+      format: uint8
+      type: integer
+    title: ObjectID is the BSON ObjectID type.
+    type: array
+    x-go-package: go.mongodb.org/mongo-driver/bson/primitive
   PaginationResponse:
     properties:
       limit:
@@ -98,28 +168,76 @@ definitions:
         type: string
     type: object
     x-go-package: go-klikdokter/app/model/request
-  SaveDoctorRequest:
+  Rating:
     properties:
-      gender:
-        description: |-
-          Gender of the doctor
-          in: string
+      comment_allowed:
+        type: boolean
+        x-go-name: CommentAllowed
+      description:
         type: string
-        x-go-name: Gender
+        x-go-name: Description
+      id:
+        $ref: '#/definitions/ObjectID'
       name:
-        description: |-
-          Name of the doctor
-          in: string
         type: string
         x-go-name: Name
-      uid:
-        description: |-
-          Uid of the product, use this on UPDATE function
-          in: int32
+      rating_type:
         type: string
-        x-go-name: Uid
+        x-go-name: RatingType
+      rating_type_id:
+        type: string
+        x-go-name: RatingTypeId
+      source_type:
+        type: string
+        x-go-name: SourceType
+      source_uid:
+        type: string
+        x-go-name: SourceUid
+      status:
+        type: boolean
+        x-go-name: Status
     type: object
-    x-go-package: go-klikdokter/app/model/request
+    x-go-name: RatingsCol
+    x-go-package: go-klikdokter/app/model/entity
+  RatingTypesNumCol:
+    properties:
+      created_at:
+        format: date-time
+        type: string
+        x-go-name: CreatedAt
+      description:
+        type: string
+        x-go-name: Description
+      id:
+        $ref: '#/definitions/ObjectID'
+      intervals:
+        format: int64
+        type: integer
+        x-go-name: Intervals
+      max_score:
+        format: int64
+        type: integer
+        x-go-name: MaxScore
+      min_score:
+        format: int64
+        type: integer
+        x-go-name: MinScore
+      scale:
+        format: int64
+        type: integer
+        x-go-name: Scale
+      status:
+        type: boolean
+        x-go-name: Status
+      type:
+        type: string
+        x-go-name: Type
+      updated_at:
+        format: date-time
+        type: string
+        x-go-name: UpdatedAt
+    type: object
+    x-go-package: go-klikdokter/app/model/entity
   SaveProductRequest:
     properties:
       name:
@@ -159,6 +277,12 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/DataResponse'
+      errors:
+        description: |-
+          Errors is the response message
+          in: string
+        type: object
+        x-go-name: Errors
       meta:
         $ref: '#/definitions/MetaResponse'
       pagination:
@@ -166,110 +290,66 @@ definitions:
     type: object
     x-go-name: responseHttp
     x-go-package: go-klikdokter/app/model/base
-  doctor:
+  UpdateRatingSubmissonRequest:
     properties:
-      gender:
-        description: |-
-          Gender of the doctor
-          in: string
+      comment:
         type: string
-        x-go-name: Gender
-      is_deleted:
-        type: boolean
-        x-go-name: IsDeleted
-      name:
-        description: |-
-          Name of the doctor
-          in: string
+        x-go-name: Comment
+      id:
         type: string
-        x-go-name: Name
-      uid:
-        description: |-
-          UID of the product
-          in: int64
+        x-go-name: ID
+      rating_id:
         type: string
-        x-go-name: UID
+        x-go-name: RatingID
+      updated_at:
+        format: date-time
+        type: string
+        x-go-name: UpdatedAt
+      user_id:
+        type: string
+        x-go-name: UserID
+      user_id_legacy:
+        type: string
+        x-go-name: UserIDLegacy
+      value:
+        format: double
+        type: number
+        x-go-name: Value
     type: object
-    x-go-name: Doctor
-    x-go-package: go-klikdokter/app/model/entity
-  product:
-    properties:
-      is_deleted:
-        type: boolean
-        x-go-name: IsDeleted
-      name:
-        description: |-
-          Name of the product
-          in: string
-        type: string
-        x-go-name: Name
-      sku:
-        description: |-
-          Sku of the product
-          in: string
-        type: string
-        x-go-name: Sku
-      uid:
-        description: |-
-          UID of the product
-          in: int64
-        type: string
-        x-go-name: UID
-      uom:
-        description: |-
-          Uom of the product
-          in: string
-        type: string
-        x-go-name: Uom
-      weight:
-        description: |-
-          Weight of the product
-          in: int32
-        format: int32
-        type: integer
-        x-go-name: Weight
-    type: object
-    x-go-name: Product
-    x-go-package: go-klikdokter/app/model/entity
-host: localhost:5600
+    x-go-package: go-klikdokter/app/model/request
 info:
   title: 'KD Boilerplate Go kit:'
   version: "1.0"
 paths:
-  /doctors/:
-    post:
-      description: Create Doctor
-      operationId: SaveDoctorRequest
-      parameters:
-      - in: body
-        name: body
-        schema:
-          $ref: '#/definitions/SaveDoctorRequest'
-        x-go-name: Body
-      responses:
-        "201":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
-        "401":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
-      tags:
-      - Doctor
-  /doctors/{id}:
+  /api/v1/rating-submissions:
     get:
-      description: Get Doctor
-      operationId: doctor
+      description: Get List Rating Submissions
+      operationId: ListRatingSubmissionRequest
       parameters:
-      - description: 'name: id'
-        in: path
-        name: id
-        required: true
+      - format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - in: query
+        name: sort
         type: string
-        x-go-name: Id
+        x-go-name: Sort
+      - in: query
+        name: dir
+        type: string
+        x-go-name: Dir
+      - in: query
+        name: filter
+        type: string
+        x-go-name: Filter
       responses:
-        "201":
+        "200":
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
@@ -278,19 +358,18 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - Get-Doctor
-  /products/:
+      - ratingSubmission
     post:
-      description: Create product
-      operationId: SaveProductRequest
+      description: Create Rating Submission
+      operationId: ReqRatingSubmissonBody
       parameters:
       - in: body
         name: body
         schema:
-          $ref: '#/definitions/SaveProductRequest'
+          $ref: '#/definitions/CreateRatingSubmissonRequest'
         x-go-name: Body
       responses:
-        "201":
+        "200":
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
@@ -299,18 +378,18 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - product
-  /products/{id}:
+      - ratingSubmission
+  /api/v1/rating-submissions/{id}:
     delete:
-      description: Delete product
-      operationId: byParamDelete
+      description: Delete Rating Submission
+      operationId: ReqDeleteRatingSubmissionById
       parameters:
-      - description: 'name: id'
+      - description: ID of Rating Submission
         in: path
         name: id
         required: true
         type: string
-        x-go-name: Id
+        x-go-name: ID
       responses:
         "200":
           description: SuccessResponse
@@ -321,17 +400,17 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - product-delete
+      - ratingSubmission
     get:
-      description: Get product
-      operationId: byParamGet
+      description: Get Rating Submission By Id
+      operationId: ReqRatingSubmissionById
       parameters:
-      - description: 'name: id'
+      - description: ID of Rating Submission
         in: path
         name: id
         required: true
         type: string
-        x-go-name: Id
+        x-go-name: ID
       responses:
         "200":
           description: SuccessResponse
@@ -342,22 +421,22 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - get-product
-      - product
+      - ratingSubmission
     put:
-      description: Update product
-      operationId: UpdateProductRequest
+      description: Update Rating Submission
+      operationId: ReqUpdateRatingSubmissonBody
       parameters:
-      - description: 'name: id'
+      - description: ID of Rating Submission
         in: path
         name: id
         required: true
         type: string
-        x-go-name: Id
+        x-go-name: ID
       - in: body
         name: body
+        required: true
         schema:
-          $ref: '#/definitions/SaveProductRequest'
+          $ref: '#/definitions/UpdateRatingSubmissonRequest'
         x-go-name: Body
       responses:
         "200":
@@ -369,11 +448,38 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - product-update
-  /products/list:
+      - ratingSubmission
+  /api/v1/rating-types-numeric:
     get:
-      description: List products
-      operationId: productList
+      description: Get Rating Type Nums
+      operationId: getRatingTypeNums
+      parameters:
+      - description: Maximun records per page
+        format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - description: Page No
+        format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - example: name asc, uom desc
+        in: query
+        name: sort
+        type: string
+        x-go-name: Sort
+      - example: name asc, uom desc
+        in: query
+        name: dir
+        type: string
+        x-go-name: Dir
+      - in: query
+        name: filter
+        type: string
+        x-go-name: Filter
       responses:
         "200":
           description: SuccessResponse
@@ -384,7 +490,95 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - product
+      - ratingTypeNum
+    post:
+      description: Create Rating Type Num
+      operationId: createRatingTypeNum
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateRatingTypeNumRequest'
+        x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - ratingTypeNum
+  /api/v1/rating-types-numeric/{id}:
+    delete:
+      description: Update Rating Type Num
+      operationId: deleteRatingTypeNum
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: Id
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - ratingTypeNum
+    get:
+      description: Get Rating Type Num By Id
+      operationId: getRatingById
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: Id
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - ratingTypeNum
+    put:
+      description: Update Rating Type Num
+      operationId: updateRatingTypeNum
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: Id
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateRatingTypeNumRequest'
+        x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - ratingTypeNum
 produces:
 - application/json
 schemes:
