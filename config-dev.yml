@@ -6,11 +6,12 @@ log:
 #database settings
 database:
   driver: sqlite
-  hostname: 10.1.35.39
-  port: 5432
-  username: app_user
-  password: app_userPWD2019
-  dbname: local.db
+  hostname: localhost
+  port: 27017
+  username: admin
+  password: admin
+  dbname: ratingsNReviewsDB
+  uri: mongodb://
 
 server:
   port: 5600

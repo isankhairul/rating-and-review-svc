@@ -3,23 +3,14 @@ package registry
 import (
 	rp "go-klikdokter/app/repository"
 	"go-klikdokter/app/service"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/go-kit/log"
-	"gorm.io/gorm"
 )
 
-func RegisterProductService(db *gorm.DB, logger log.Logger) service.ProductService {
-	return service.NewProductService(
+func RegisterRatingService(db *mongo.Database, logger log.Logger) service.RatingService {
+	return service.NewRatingService(
 		logger,
-		rp.NewBaseRepository(db),
-		rp.NewProductRepository(rp.NewBaseRepository(db)),
-	)
-}
-
-func RegisterDoctorService(db *gorm.DB, logger log.Logger) service.DoctorService {
-	return service.NewDoctorService(
-		logger,
-		rp.NewBaseRepository(db),
-		rp.NewDoctorRepository(rp.NewBaseRepository(db)),
+		rp.NewRatingRepository(db),
 	)
 }

@@ -12,6 +12,8 @@ type errorer interface {
 	error() error
 }
 
+type Empty struct{}
+
 type errorResponse struct {
 	// Meta is the API response information
 	// in: struct{}
@@ -41,13 +43,15 @@ func EncodeResponseHTTP(ctx context.Context, w http.ResponseWriter, resp interfa
 	result := base.GetHttpResponse(resp)
 	code := result.Meta.Code
 	switch code {
-	case message.ErrPageNotFound.Code, message.ErrBadRouting.Code:
+	case message.DataNotFoundCode:
 		w.WriteHeader(http.StatusNotFound)
 	case message.ErrNoAuth.Code:
 		w.WriteHeader(http.StatusUnauthorized)
-	case message.ErrDB.Code, message.ErrBadRouting.Code, message.ErrReq.Code:
+	case message.BadRequestCode, message.DataNotFoundCode, message.ErrSaveData.Code, message.ErrTypeReq.Code,
+		message.ErrTypeFormatReq.Code, message.ErrIdFormatReq.Code, message.ErrScaleValueReq.Code,
+		message.ErrIntervalsValueReq.Code, message.UserAgentTooLong.Code:
 		w.WriteHeader(http.StatusBadRequest)
-	case message.SuccessMsg.Code:
+	case message.SuccessCode, message.ErrNoData.Code:
 		w.WriteHeader(http.StatusOK)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
@@ -59,8 +63,10 @@ func EncodeResponseHTTP(ctx context.Context, w http.ResponseWriter, resp interfa
 //Encode error, for HTTP
 func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusBadRequest)
 	result := &errorResponse{}
 	result.Meta.Code = message.ErrReq.Code
-	result.Meta.Message = message.ErrReq.Message
+	result.Meta.Message = err.Error()
+	result.Data = Empty{}
 	_ = json.NewEncoder(w).Encode(result)
 }
