@@ -10,6 +10,7 @@ import (
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/repository"
 	"go-klikdokter/helper/message"
+	"go-klikdokter/pkg/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"regexp"
@@ -29,6 +30,20 @@ type RatingService interface {
 	GetRatingSubmission(id string) (*entity.RatingSubmisson, message.Message)
 	GetListRatingSubmissions(input request.ListRatingSubmissionRequest) ([]entity.RatingSubmisson, *base.Pagination, message.Message)
 	DeleteRatingSubmission(id string) message.Message
+
+	// Rating type likert
+	CreateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) message.Message
+	GetRatingTypeLikertById(input request.GetRatingTypeLikertRequest) (*entity.RatingTypesLikertCol, message.Message)
+	UpdateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) message.Message
+	DeleteRatingTypeLikertById(input request.GetRatingTypeLikertRequest) message.Message
+	GetRatingTypeLikerts(input request.GetRatingTypeLikertsRequest) ([]entity.RatingTypesLikertCol, *base.Pagination, message.Message)
+
+	// Rating
+	CreateRating(input request.SaveRatingRequest) (*entity.RatingsCol, message.Message)
+	GetRatingById(id string) (*entity.RatingsCol, message.Message)
+	UpdateRating(input request.UpdateRatingRequest) message.Message
+	DeleteRating(id string) message.Message
+	GetListRatings(input request.GetListRatingsRequest) ([]entity.RatingsCol, *base.Pagination, message.Message)
 }
 
 type ratingServiceImpl struct {
@@ -389,7 +404,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissions(input request.ListRatingSub
 	if input.Filter != "" {
 		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
 		if errMarshal != nil {
-			return nil, nil, message.FailedMsg
+			return nil, nil, message.ErrUnmarshalRequest
 		}
 	}
 	result, pagination, err := s.ratingRepo.GetListRatingSubmissions(filter, input.Page, input.Limit, input.Sort, dir)
@@ -399,5 +414,284 @@ func (s *ratingServiceImpl) GetListRatingSubmissions(input request.ListRatingSub
 		}
 		return nil, nil, message.FailedMsg
 	}
+	return result, pagination, message.SuccessMsg
+}
+
+// swagger:route POST /api/v1/rating-types-likert/ RatingTypesLikert createRatingTypeLikertRequest
+// Create Rating Type Likert
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) CreateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) message.Message {
+	err := s.ratingRepo.CreateRatingTypeLikert(input)
+	if err != nil {
+		return message.ErrSaveData
+	}
+	return message.SuccessMsg
+}
+
+// swagger:route GET /api/v1/rating-types-likert/{id} RatingTypesLikert getRatingTypeLikertById
+// Get Rating Type Likert By Id
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) GetRatingTypeLikertById(input request.GetRatingTypeLikertRequest) (*entity.RatingTypesLikertCol, message.Message) {
+	objectId, err := primitive.ObjectIDFromHex(input.Id)
+	if err != nil {
+		return nil, message.ErrIdFormatReq
+	}
+	result, err := s.ratingRepo.GetRatingTypeLikertById(objectId)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, message.ErrNoData
+		}
+		return nil, message.FailedMsg
+	}
+	return result, message.SuccessMsg
+}
+
+// swagger:route PUT /api/v1/rating-types-likert/{id} RatingTypesLikert updateRatingTypeLikert
+// Update Rating Type Likert
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) UpdateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) message.Message {
+	objectId, err := primitive.ObjectIDFromHex(input.Id)
+	if err != nil {
+		return message.ErrIdFormatReq
+	}
+	err = s.ratingRepo.UpdateRatingTypeLikert(objectId, input)
+	if err != nil {
+		fmt.Println("err.Error()", err.Error())
+		return message.ErrSaveData
+	}
+	return message.SuccessMsg
+}
+
+// swagger:route DELETE /api/v1/rating-types-likert/{id} RatingTypesLikert deleteRatingTypeLikert
+// Delete Rating Type Likert
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) DeleteRatingTypeLikertById(input request.GetRatingTypeLikertRequest) message.Message {
+	objectId, err := primitive.ObjectIDFromHex(input.Id)
+	if err != nil {
+		return message.ErrIdFormatReq
+	}
+	err = s.ratingRepo.DeleteRatingTypeLikert(objectId)
+	if err != nil {
+		if err.Error() == "user not found" {
+			return message.ErrNoData
+		}
+		return message.FailedMsg
+	}
+	return message.SuccessMsg
+}
+
+// swagger:route GET /api/v1/rating-types-likert RatingTypesLikert getRatingTypeLikerts
+// Get Rating Type Likerts
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) GetRatingTypeLikerts(input request.GetRatingTypeLikertsRequest) ([]entity.RatingTypesLikertCol, *base.Pagination, message.Message) {
+	var dir interface{}
+	if input.Dir == "asc" {
+		dir = 1
+	} else {
+		dir = -1
+	}
+	//Set default value
+	if input.Page <= 0 {
+		input.Page = 1
+	}
+	if input.Limit <= 0 {
+		input.Limit = 50
+	}
+	if input.Sort == "" {
+		input.Sort = "updated_at"
+	}
+
+	filter := request.FilterRatingTypeLikert{}
+	if input.Filter != "" {
+		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
+		if errMarshal != nil {
+			return nil, nil, message.FailedMsg
+		}
+	}
+
+	result, pagination, err := s.ratingRepo.GetRatingTypeLikerts(filter, input.Page, input.Limit, input.Sort, dir)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil, message.ErrNoData
+		}
+		return nil, nil, message.FailedMsg
+	}
+	return result, pagination, message.SuccessMsg
+}
+
+// swagger:route POST /api/v1/ratings/ Ratings CreateRatingRequest
+// Create New Rating
+//
+// responses:
+//  200: SuccessResponse
+func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*entity.RatingsCol, message.Message) {
+	source, err := util.CallGetDetailMedicalFacility(input.SourceUid)
+	if err != nil {
+		return nil, message.ErrFailedToCallGetMedicalFacility
+	}
+
+	if source.Meta.Code != message.GetMedicalFacilitySuccess.Code {
+		return nil, message.ErrSourceNotExist
+	}
+
+	ratingTypeId, err := primitive.ObjectIDFromHex(input.RatingTypeId)
+	if err != nil {
+		return nil, message.ErrRatingTypeIdFormatReq
+	}
+
+	rating, err := s.ratingRepo.GetRatingByName(input.Name)
+	if err != nil {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, message.FailedMsg
+		}
+	}
+
+	if rating != nil {
+		return nil, message.ErrDuplicateRatingName
+	}
+
+	ratingType, err := s.ratingRepo.GetRatingTypeNumById(ratingTypeId)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, message.ErrRatingTypeNotExist
+		}
+		return nil, message.FailedMsg
+	}
+
+	if ratingType == nil || ratingType.Type != input.RatingType {
+		return nil, message.ErrRatingTypeNotExist
+	}
+
+	if !input.Status {
+		input.Status = true
+	}
+
+	result, err := s.ratingRepo.CreateRating(input)
+	if err != nil {
+		return nil, message.FailedMsg
+	}
+	return result, message.SuccessMsg
+}
+
+// swagger:route GET /api/v1/ratings/{id} Ratings GetRatingRequest
+// Get Rating By Id
+//
+// responses:
+//  200: RatingsCol
+func (s *ratingServiceImpl) GetRatingById(id string) (*entity.RatingsCol, message.Message) {
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, message.ErrIdFormatReq
+	}
+
+	result, err := s.ratingRepo.GetRatingById(objectId)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, message.ErrNoData
+		}
+		return nil, message.FailedMsg
+	}
+
+	return result, message.SuccessMsg
+}
+
+// swagger:route PUT /api/v1/ratings/{id} Ratings UpdateRatingRequest
+// Update Rating
+//
+// responses:
+//  200: SuccessResponse
+func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) message.Message {
+	objectId, err := primitive.ObjectIDFromHex(input.Id)
+	if err != nil {
+		return message.ErrIdFormatReq
+	}
+
+	_, err = s.ratingRepo.GetRatingById(objectId)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return message.ErrNoData
+		}
+		return message.FailedMsg
+	}
+
+	_, err = s.ratingRepo.UpdateRating(objectId, input.Body)
+	if err != nil {
+		return message.ErrSaveData
+	}
+	return message.SuccessMsg
+}
+
+// swagger:route DELETE /api/v1/ratings/{id} Ratings DeleteRatingRequest
+// Delete Rating
+//
+// responses:
+//  200: SuccessResponse
+func (s *ratingServiceImpl) DeleteRating(id string) message.Message {
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return message.ErrIdFormatReq
+	}
+
+	_, err = s.ratingRepo.GetRatingById(objectId)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return message.ErrNoData
+		}
+		return message.FailedMsg
+	}
+	err = s.ratingRepo.DeleteRating(objectId)
+	if err != nil {
+		return message.FailedMsg
+	}
+	return message.SuccessMsg
+}
+
+// swagger:route GET /api/v1/ratings/ Ratings GetListRatingsRequest
+// Get list Rating
+//
+// responses:
+//  200: RatingsCol
+func (s *ratingServiceImpl) GetListRatings(input request.GetListRatingsRequest) ([]entity.RatingsCol, *base.Pagination, message.Message) {
+	input.MakeDefaultValueIfEmpty()
+	var dir int
+	if input.Dir == "asc" {
+		dir = 1
+	} else {
+		dir = -1
+	}
+
+	filter := request.RatingFilter{}
+	if input.Filter != "" {
+		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
+		if errMarshal != nil {
+			return nil, nil, message.ErrUnmarshalRequest
+		}
+	}
+
+	result, pagination, err := s.ratingRepo.GetRatingsByParams(input.Limit, input.Page, dir, input.Sort, filter)
+	if err != nil {
+		return nil, nil, message.FailedMsg
+	}
+
 	return result, pagination, message.SuccessMsg
 }

@@ -19,3 +19,7 @@ type RatingsCol struct {
 	CreatedAt      time.Time          `json:"-" bson:"created_at,omitempty"`
 	UpdatedAt      time.Time          `json:"-" bson:"updated_at,omitempty"`
 }
+
+func (RatingsCol) CollectionName() string {
+	return "ratingsCol"
+}
