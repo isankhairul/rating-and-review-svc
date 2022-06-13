@@ -95,6 +95,76 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 		options...,
 	))
 
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "rating-types-likert/").Handler(httptransport.NewServer(
+		ep.CreateRatingTypeLikert,
+		decodeCreateRatingTypeLikert,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-types-likert/{id}").Handler(httptransport.NewServer(
+		ep.GetRatingTypeLikertById,
+		decodeGetRatingTypeLikertById,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "rating-types-likert/{id}").Handler(httptransport.NewServer(
+		ep.UpdateRatingTypeLikertById,
+		decodeUpdateRatingTypeLikertById,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "rating-types-likert/{id}").Handler(httptransport.NewServer(
+		ep.DeleteRatingTypeLikertById,
+		decodeGetRatingTypeLikertById,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-types-likert").Handler(httptransport.NewServer(
+		ep.GetRatingTypeLikerts,
+		decodeRatingTypeLikerts,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + _struct.PrefixRating).Handler(httptransport.NewServer(
+		ep.CreateRating,
+		decodeCreateRating,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + _struct.PrefixRating + "{id}").Handler(httptransport.NewServer(
+		ep.ShowRating,
+		decodeGetById,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + _struct.PrefixRating + "{id}").Handler(httptransport.NewServer(
+		ep.UpdateRating,
+		decodeEditRatingById,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + _struct.PrefixRating + "{id}").Handler(httptransport.NewServer(
+		ep.DeleteRating,
+		decodeGetById,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + _struct.PrefixRating).Handler(httptransport.NewServer(
+		ep.GetRatings,
+		decodeGetRatings,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
 	return pr
 }
 
@@ -192,4 +262,87 @@ func decodeGetListRatingSubmission(ctx context.Context, r *http.Request) (rqst i
 	}
 
 	return params, nil
+}
+
+func decodeRatingTypeLikerts(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var params request.GetRatingTypeLikertsRequest
+
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+
+	if err = schema.NewDecoder().Decode(&params, r.Form); err != nil {
+		return nil, err
+	}
+
+	return params, nil
+}
+
+func decodeCreateRatingTypeLikert(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.SaveRatingTypeLikertRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	err = req.Validate()
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func decodeGetRatingTypeLikertById(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.GetRatingTypeLikertRequest
+	req.Id = mux.Vars(r)["id"]
+	return req, nil
+}
+
+func decodeUpdateRatingTypeLikertById(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.SaveRatingTypeLikertRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	err = req.Validate()
+	if err != nil {
+		return nil, err
+	}
+	req.Id = mux.Vars(r)["id"]
+	return req, nil
+}
+
+func decodeCreateRating(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.SaveRatingRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	err = req.Validate()
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func decodeEditRatingById(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.UpdateRatingRequest
+	if err := json.NewDecoder(r.Body).Decode(&req.Body); err != nil {
+		return nil, err
+	}
+	err = req.Body.Validate()
+	if err != nil {
+		return nil, err
+	}
+	req.Id = mux.Vars(r)["id"]
+	return req, nil
+}
+
+func decodeGetRatings(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.GetListRatingsRequest
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+
+	if err = schema.NewDecoder().Decode(&req, r.Form); err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }

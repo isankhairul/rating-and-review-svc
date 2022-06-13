@@ -249,13 +249,6 @@ func TestDeleteRatingTypeNumByIdErrIdFormatReq(t *testing.T) {
 	assert.Equal(t, message.ErrIdFormatReq, msg)
 }
 
-func TestDeleteRatingTypeNumByIdErrNoData(t *testing.T) {
-	req := request.GetRatingTypeNumRequest{Id: "629ec0836f3c2761ba2dc869"}
-
-	msg := svc.DeleteRatingTypeNumById(req)
-	assert.Equal(t, message.ErrNoData, msg)
-}
-
 func TestDeleteRatingTypeNumByIdFailed(t *testing.T) {
 	req := request.GetRatingTypeNumRequest{Id: "629ec0836f3c2761ba2dc899"}
 
@@ -441,4 +434,213 @@ func TestGetListRatingSubmission(t *testing.T) {
 	_, _, msg := svc.GetListRatingSubmissions(input)
 
 	assert.Equal(t, message.SuccessMsg, msg)
+}
+
+func TestCreateRatingTypeLikert(t *testing.T) {
+	req := request.SaveRatingTypeLikertRequest{
+		Type:        "type",
+		Description: "Description",
+	}
+
+	msg := svc.CreateRatingTypeLikert(req)
+	assert.Equal(t, message.SuccessMsg, msg)
+}
+
+func TestCreateRatingTypeLikertFailed(t *testing.T) {
+	req := request.SaveRatingTypeLikertRequest{
+		Type:        "typeErr",
+		Description: "Description",
+	}
+
+	msg := svc.CreateRatingTypeLikert(req)
+	assert.Equal(t, message.ErrSaveData, msg)
+}
+
+func TestGetRatingTypeLikertById(t *testing.T) {
+	req := request.GetRatingTypeLikertRequest{
+		Id: "629ec07e6f3c2761ba2dc868",
+	}
+	objectId, _ := primitive.ObjectIDFromHex(req.Id)
+
+	likert := entity.RatingTypesLikertCol{
+		Type:        "test",
+		Description: "dkfjlsdf",
+	}
+	ratingRepository.Mock.On("GetRatingTypeLikertById", objectId).Return(likert)
+
+	_, msg := svc.GetRatingTypeLikertById(req)
+	assert.Equal(t, message.SuccessMsg, msg)
+}
+
+func TestGetRatingTypeLikertByIdErrIdFormatReq(t *testing.T) {
+	req := request.GetRatingTypeLikertRequest{
+		Id: "3411ds",
+	}
+	_, msg := svc.GetRatingTypeLikertById(req)
+	assert.Equal(t, message.ErrIdFormatReq, msg)
+}
+
+func TestGetRatingTypeLikertByIdFailed(t *testing.T) {
+	req := request.GetRatingTypeLikertRequest{
+		Id: "629dce7bf1f26275e0d84826",
+	}
+	objectId, _ := primitive.ObjectIDFromHex(req.Id)
+
+	likert := entity.RatingTypesLikertCol{
+		Type:        "test",
+		Description: "dkfjlsdf",
+	}
+	ratingRepository.Mock.On("GetRatingTypeLikertById", objectId).Return(likert)
+
+	_, msg := svc.GetRatingTypeLikertById(req)
+	assert.Equal(t, message.FailedMsg, msg)
+}
+
+func TestGetRatingTypeLikertByIdFailedErrNoData(t *testing.T) {
+	req := request.GetRatingTypeLikertRequest{
+		Id: "629dce7bf1f26275e0d84326",
+	}
+	objectId, _ := primitive.ObjectIDFromHex(req.Id)
+	ratingRepository.Mock.On("GetRatingTypeLikertById", objectId).Return(nil)
+
+	_, msg := svc.GetRatingTypeLikertById(req)
+	assert.Equal(t, message.ErrNoData, msg)
+}
+
+func TestUpdateRatingTypeLikert(t *testing.T) {
+	req := request.SaveRatingTypeLikertRequest{
+		Id:          "629ec07e6f3c2761ba2dc868",
+		Description: "fjkdsfd",
+	}
+	objectId, _ := primitive.ObjectIDFromHex(req.Id)
+
+	likert := entity.RatingTypesLikertCol{
+		Type:        "test",
+		Description: "dkfjlsdf",
+	}
+	ratingRepository.Mock.On("GetRatingTypeLikertById", objectId).Return(likert)
+
+	msg := svc.UpdateRatingTypeLikert(req)
+	assert.Equal(t, message.SuccessMsg, msg)
+}
+
+func TestUpdateRatingTypeLikertErrIdFormatReq(t *testing.T) {
+	req := request.SaveRatingTypeLikertRequest{
+		Id:          "213",
+		Description: "fjkdsfd",
+	}
+
+	msg := svc.UpdateRatingTypeLikert(req)
+	assert.Equal(t, message.ErrIdFormatReq, msg)
+}
+
+func TestUpdateRatingTypeLikertErrSaveData(t *testing.T) {
+	req := request.SaveRatingTypeLikertRequest{
+		Id:          "629ec07e6f3c2761ba2dc828",
+		Description: "failed",
+	}
+	objectId, _ := primitive.ObjectIDFromHex(req.Id)
+
+	likert := entity.RatingTypesLikertCol{
+		Type:        "test",
+		Description: "dkfjlsdf",
+	}
+	ratingRepository.Mock.On("GetRatingTypeLikertById", objectId).Return(likert)
+
+	msg := svc.UpdateRatingTypeLikert(req)
+	assert.Equal(t, message.ErrSaveData, msg)
+}
+
+func TestDeleteRatingTypeLikertById(t *testing.T) {
+	req := request.GetRatingTypeLikertRequest{
+		Id: "629ec07e6f3c2761ba2dc868",
+	}
+	msg := svc.DeleteRatingTypeLikertById(req)
+	assert.Equal(t, message.SuccessMsg, msg)
+}
+
+func TestDeleteRatingTypeLikertByIdErrIdFormatReq(t *testing.T) {
+	req := request.GetRatingTypeLikertRequest{
+		Id: "21323",
+	}
+	msg := svc.DeleteRatingTypeLikertById(req)
+	assert.Equal(t, message.ErrIdFormatReq, msg)
+}
+
+func TestDeleteRatingTypeLikertByIdFailedMsg(t *testing.T) {
+	req := request.GetRatingTypeLikertRequest{
+		Id: "629ec0836f3c2761ba2dc899",
+	}
+	msg := svc.DeleteRatingTypeLikertById(req)
+	assert.Equal(t, message.FailedMsg, msg)
+}
+
+func TestDeleteRatingTypeLikertByIdErrNoData(t *testing.T) {
+	req := request.GetRatingTypeLikertRequest{
+		Id: "629ec0836f3c2761ba2dc869",
+	}
+	msg := svc.DeleteRatingTypeLikertById(req)
+	assert.Equal(t, message.ErrNoData, msg)
+}
+
+func TestGetRatingTypeLikerts(t *testing.T) {
+	req := request.GetRatingTypeLikertsRequest{
+		Sort:  "",
+		Dir:   "desc",
+		Page:  0,
+		Limit: 0,
+	}
+	objectId1, _ := primitive.ObjectIDFromHex("629ec07e6f3c2761ba2dc468")
+	objectId2, _ := primitive.ObjectIDFromHex("629ec07e6f3c2761ba2dc848")
+	result := []entity.RatingTypesLikertCol{
+		{
+			ID:          objectId1,
+			Description: "jdhkaf",
+		},
+		{
+			ID:          objectId2,
+			Description: "jdhkaf",
+		},
+	}
+	paginationResult := base.Pagination{
+		Records:   120,
+		Limit:     50,
+		Page:      1,
+		TotalPage: 12,
+	}
+	ratingRepository.Mock.On("GetRatingTypeLikerts", request.FilterRatingTypeLikert{TypeId: []string(nil)}, 1, int64(50), "updated_at", -1).Return(result, &paginationResult)
+
+	_, _, msg := svc.GetRatingTypeLikerts(req)
+	assert.Equal(t, message.SuccessMsg, msg)
+}
+
+func TestGetRatingTypeLikertsFailedMsg(t *testing.T) {
+	req := request.GetRatingTypeLikertsRequest{
+		Sort:  "failed",
+		Dir:   "asc",
+		Page:  0,
+		Limit: 0,
+	}
+	objectId1, _ := primitive.ObjectIDFromHex("629ec07e6f3c2761ba2dc468")
+	objectId2, _ := primitive.ObjectIDFromHex("629ec07e6f3c2761ba2dc848")
+	result := []entity.RatingTypesLikertCol{
+		{
+			ID:          objectId1,
+			Description: "jdhkaf",
+		},
+		{
+			ID:          objectId2,
+			Description: "jdhkaf",
+		},
+	}
+	paginationResult := base.Pagination{
+		Records:   120,
+		Limit:     50,
+		Page:      1,
+		TotalPage: 12,
+	}
+	ratingRepository.Mock.On("GetRatingTypeLikerts", request.FilterRatingTypeLikert{TypeId: []string(nil)}, 1, int64(50), "failed", 1).Return(result, &paginationResult)
+
+	_, _, msg := svc.GetRatingTypeLikerts(req)
+	assert.Equal(t, message.FailedMsg, msg)
 }

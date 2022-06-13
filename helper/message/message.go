@@ -36,6 +36,11 @@ var UserRated = Message{Code: BadRequestCode, Message: "Duplicate submissions by
 var ErrRatingNotFound = Message{Code: DataNotFoundCode, Message: "Rating not found"}
 var ErrRatingNumericTypeNotFound = Message{Code: DataNotFoundCode, Message: "Rating Numeric Type Not Found"}
 var ErrValueFormat = Message{Code: BadRequestCode, Message: "Wrong format Rating submission value"}
+var ErrRatingTypeNotExist = Message{Code: 401021, Message: "Rating Type Not Exist"}
+var ErrRatingTypeIdFormatReq = Message{Code: 401022, Message: "Rating Type Id is wrong format"}
+var ErrDuplicateRatingName = Message{Code: 401023, Message: "Rating name has already existed"}
+var ErrSourceNotExist = Message{Code: 401024, Message: "Source not exist"}
+var ErrFailedToCallGetMedicalFacility = Message{Code: 401025, Message: "Failed to call get medical facility"}
 
 // Code 39000 - 39999 Server error
 var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}
@@ -43,3 +48,7 @@ var ErrPageNotFound = Message{Code: 39404, Message: "Halaman Tidak ditemukan"}
 var SuccessMsg = Message{Code: SuccessCode, Message: "Success"}
 var FailedMsg = Message{Code: BadRequestCode, Message: "Failed"}
 var ErrReqParam = Message{Code: BadRequestCode, Message: "Invalid Request Parameter(s)"}
+
+// msg in api get booking Medical facility
+var GetMedicalFacilitySuccess = Message{Code: 200, Message: "OK"}
+var GetMedicalFacilityNotFound = Message{Code: 400, Message: "Data tidak ditemukan"}
