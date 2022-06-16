@@ -43,15 +43,13 @@ func EncodeResponseHTTP(ctx context.Context, w http.ResponseWriter, resp interfa
 	result := base.GetHttpResponse(resp)
 	code := result.Meta.Code
 	switch code {
-	case message.DataNotFoundCode:
+	case message.UnauthorizedCode:
 		w.WriteHeader(http.StatusNotFound)
 	case message.ErrNoAuth.Code:
 		w.WriteHeader(http.StatusUnauthorized)
-	case message.BadRequestCode, message.DataNotFoundCode, message.ErrSaveData.Code, message.ErrTypeReq.Code,
-		message.ErrTypeFormatReq.Code, message.ErrIdFormatReq.Code, message.ErrScaleValueReq.Code,
-		message.ErrIntervalsValueReq.Code, message.UserAgentTooLong.Code:
+	case message.JSONParseFailCode, message.ErrTypeReq.Code, message.ValidationFailCode:
 		w.WriteHeader(http.StatusBadRequest)
-	case message.SuccessCode, message.ErrNoData.Code:
+	case message.SuccessCode, message.DataNotFoundCode:
 		w.WriteHeader(http.StatusOK)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)

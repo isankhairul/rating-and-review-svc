@@ -34,7 +34,7 @@ type SaveRatingRequest struct {
 	// example: Rumah Sakit - RS Pondok Indah Bintaro Jaya
 	Name string `json:"name"`
 	// example: Rating Group for Rumah Sakit RS Pondok Indah Bintaro Jaya
-	Description string `json:"description"`
+	Description *string `json:"description"`
 	// example: 2729
 	SourceUid string `json:"source_uid"`
 	// example: hospital
@@ -46,7 +46,7 @@ type SaveRatingRequest struct {
 	// example: true
 	CommentAllowed *bool `json:"comment_allowed"`
 	// example: true
-	Status bool `json:"status"`
+	Status *bool `json:"status"`
 }
 
 // swagger:parameters GetRatingRequest
@@ -66,7 +66,12 @@ type DeleteRatingRequest struct {
 func (req SaveRatingRequest) Validate() error {
 	sourceType := viper.GetStringSlice("source-type")
 	return validation.ValidateStruct(&req,
-		validation.Field(&req.SourceType, validation.In(sourceType[0], sourceType[1], sourceType[2])))
+		validation.Field(&req.Name, validation.Required),
+		validation.Field(&req.SourceType, validation.Required, validation.In(sourceType[0], sourceType[1], sourceType[2])),
+		validation.Field(&req.SourceUid, validation.Required),
+		validation.Field(&req.RatingTypeId, validation.Required),
+		validation.Field(&req.RatingType, validation.Required),
+	)
 }
 
 type RatingFilter struct {

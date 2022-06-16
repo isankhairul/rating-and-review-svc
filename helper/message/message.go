@@ -1,10 +1,13 @@
 package message
 
 var (
-	BadRequestCode     = 412002
+	JSONParseFailCode  = 412001
+	ValidationFailCode = 412002
+	UnauthorizedCode   = 412001
+	FailConnectCode    = 512003
+	TimeOutCode        = 512005
 	SuccessCode        = 212000
-	DataNotFoundCode   = 201001
-	InternalServerCode = 501000
+	DataNotFoundCode   = 212004
 )
 
 // Message wrapper.
@@ -13,41 +16,58 @@ type Message struct {
 	Message string `json:"message"`
 }
 
-var TelErrUserNotFound = Message{Code: 34000, Message: "Not found"}
-var ErrDataExists = Message{Code: 34001, Message: "Data already exists"}
-var ErrBadRouting = Message{Code: 34002, Message: "Inconsistent mapping between route and handler"}
-var ErrInternalError = Message{Code: InternalServerCode, Message: "Error has been occured while processing request"}
-var ErrUnmarshalRequest = Message{Code: 412001, Message: "Error can not unmarshal"}
-var ErrNoAuth = Message{Code: 34004, Message: "No Authorization"}
+var TelErrUserNotFound = Message{Code: DataNotFoundCode, Message: "Not found"}
+var ErrDataExists = Message{Code: ValidationFailCode, Message: "Data already exists"}
+var ErrBadRouting = Message{Code: FailConnectCode, Message: "Inconsistent mapping between route and handler"}
+var ErrInternalError = Message{Code: ValidationFailCode, Message: "Error has been occured while processing request"}
+var ErrUnmarshalRequest = Message{Code: ValidationFailCode, Message: "Error can not unmarshal"}
+var ErrNoAuth = Message{Code: UnauthorizedCode, Message: "No Authorization"}
 var ErrInvalidHeader = Message{Code: 34005, Message: "Invalid header"}
-var ErrDB = Message{Code: 34005, Message: "Error has been occured while processing database request"}
-var ErrNoData = Message{Code: 212004, Message: "Data is not found"}
-var ErrSaveData = Message{Code: 412002, Message: "Data cannot be saved, please check your request"}
-var ErrReq = Message{Code: 34005, Message: "Required field"}
-var ErrTypeReq = Message{Code: 401001, Message: "Type required field"}
-var ErrTypeFormatReq = Message{Code: 401002, Message: "Type is wrong format"}
-var ErrIdFormatReq = Message{Code: 401003, Message: "Id is wrong format"}
-var ErrScaleValueReq = Message{Code: 401004, Message: "Scale is wrong value"}
-var ErrIntervalsValueReq = Message{Code: 401005, Message: "Intervals is wrong value"}
-var UserAgentTooLong = Message{Code: BadRequestCode, Message: "The maximum length of user_agent allowed is 200 characters"}
-var ErrIPFormatReq = Message{Code: InternalServerCode, Message: "Wrong IP format"}
-var UserUIDRequired = Message{Code: BadRequestCode, Message: "One of the following user_id and user_id_legacy must be filled"}
-var UserRated = Message{Code: BadRequestCode, Message: "Duplicate submissions by the same user for rating is not allowed"}
+var ErrDB = Message{Code: FailConnectCode, Message: "Error has been occured while processing database request"}
+var ErrLTNumState = Message{Code: ValidationFailCode, Message: "Error Num of Statements less Than required Num Statements"}
+var ErrGTNumState = Message{Code: ValidationFailCode, Message: "Error Num of Statements greater than  required Num Statements"}
+var ErrNoData = Message{Code: DataNotFoundCode, Message: "Data is not found"}
+var ErrSaveData = Message{Code: ValidationFailCode, Message: "Data cannot be saved, please check your request"}
+var ErrMatchNumState = Message{Code: ValidationFailCode, Message: "Error Num of Statements does not match required Num Statements"}
+var ErrReq = Message{Code: ValidationFailCode, Message: "Required field"}
+var ErrTypeReq = Message{Code: ValidationFailCode, Message: "Type required field"}
+var ErrTypeFormatReq = Message{Code: ValidationFailCode, Message: "Type is wrong format"}
+var ErrIdFormatReq = Message{Code: ValidationFailCode, Message: "Id is wrong format"}
+var ErrScaleValueReq = Message{Code: ValidationFailCode, Message: "Scale is wrong value"}
+var ErrDuplicateType = Message{Code: ValidationFailCode, Message: "Duplicate type, please check your request"}
+var ErrIntervalsValueReq = Message{Code: ValidationFailCode, Message: "Intervals is wrong value"}
+var UserAgentTooLong = Message{Code: ValidationFailCode, Message: "The maximum length of user_agent allowed is 200 characters"}
+var ErrIPFormatReq = Message{Code: ValidationFailCode, Message: "Wrong IP format"}
+var UserUIDRequired = Message{Code: ValidationFailCode, Message: "One of the following user_id and user_id_legacy must be filled"}
+var UserRated = Message{Code: ValidationFailCode, Message: "Duplicate submissions by the same user for rating is not allowed"}
 var ErrRatingNotFound = Message{Code: DataNotFoundCode, Message: "Rating not found"}
 var ErrRatingNumericTypeNotFound = Message{Code: DataNotFoundCode, Message: "Rating Numeric Type Not Found"}
-var ErrValueFormat = Message{Code: BadRequestCode, Message: "Wrong format Rating submission value"}
-var ErrRatingTypeNotExist = Message{Code: 401021, Message: "Rating Type Not Exist"}
-var ErrRatingTypeIdFormatReq = Message{Code: 401022, Message: "Rating Type Id is wrong format"}
-var ErrDuplicateRatingName = Message{Code: 401023, Message: "Rating name has already existed"}
-var ErrSourceNotExist = Message{Code: 401024, Message: "Source not exist"}
-var ErrFailedToCallGetMedicalFacility = Message{Code: 401025, Message: "Failed to call get medical facility"}
+var ErrValueFormat = Message{Code: ValidationFailCode, Message: "Wrong format Rating submission value"}
+var ErrRatingTypeNotExist = Message{Code: DataNotFoundCode, Message: "Rating type not exist"}
+var ErrRatingTypeIdFormatReq = Message{Code: ValidationFailCode, Message: "Rating type id is wrong format"}
+var ErrDuplicateRatingName = Message{Code: ValidationFailCode, Message: "Rating name has already existed"}
+var ErrSourceNotExist = Message{Code: DataNotFoundCode, Message: "Source not exist"}
+var ErrFailedToCallGetMedicalFacility = Message{Code: ValidationFailCode, Message: "Failed to call get medical facility"}
+var ErrThisRatingTypeIsInUse = Message{Code: ValidationFailCode, Message: "This rating type is in use and has submission"}
+var ErrUnmarshalFilterListRatingRequest = Message{Code: ValidationFailCode, Message: "Error can not unmarshal filter param"}
+var ErrDataNotFound = Message{Code: DataNotFoundCode, Message: "Data not found"}
+var ErrRatingHasRatingSubmission = Message{Code: ValidationFailCode, Message: "Rating has rating submission"}
+var ErrMinScoreReq = Message{Code: ValidationFailCode, Message: "Min Score required field"}
+var ErrMaxScoreReq = Message{Code: ValidationFailCode, Message: "Max Score required field"}
+var ErrScaleReq = Message{Code: ValidationFailCode, Message: "Scale required field"}
+var ErrCannotModifiedStatus = Message{Code: ValidationFailCode, Message: "Status can not modified because this rating type in use and has submission"}
+var ErrCannotModifiedMinScore = Message{Code: ValidationFailCode, Message: "Min Score can not modified because this rating type in use and has submission"}
+var ErrCannotModifiedMaxScore = Message{Code: ValidationFailCode, Message: "Max Score can not modified because this rating type in use and has submission"}
+var ErrCannotModifiedScale = Message{Code: ValidationFailCode, Message: "Scale can not modified because this rating type in use and has submission"}
+var ErrCannotModifiedInterval = Message{Code: ValidationFailCode, Message: "Interval can not modified because this rating type in use and has submission"}
+var ErrMaxMin = Message{Code: ValidationFailCode, Message: "min_score can not be less than max_score"}
 
 // Code 39000 - 39999 Server error
 var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}
 var ErrPageNotFound = Message{Code: 39404, Message: "Halaman Tidak ditemukan"}
 var SuccessMsg = Message{Code: SuccessCode, Message: "Success"}
-var FailedMsg = Message{Code: BadRequestCode, Message: "Failed"}
-var ErrReqParam = Message{Code: BadRequestCode, Message: "Invalid Request Parameter(s)"}
+var FailedMsg = Message{Code: ValidationFailCode, Message: "Failed"}
+var ErrReqParam = Message{Code: ValidationFailCode, Message: "Invalid Request Parameter(s)"}
 
 // msg in api get booking Medical facility
 var GetMedicalFacilitySuccess = Message{Code: 200, Message: "OK"}

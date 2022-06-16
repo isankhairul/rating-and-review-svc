@@ -2,13 +2,12 @@ package util
 
 import (
 	"encoding/json"
-	"go-klikdokter/app/model/response"
 	"go-klikdokter/helper/_struct"
 	"io/ioutil"
 	"net/http"
 )
 
-func CallGetDetailMedicalFacility(uid string) (*response.ResponseHttp, error) {
+func CallGetDetailMedicalFacility(uid string) (*ResponseHttp, error) {
 	url := _struct.MedicalFacilityDomain + _struct.MedicalFacilityPath + uid
 
 	client := &http.Client{}
@@ -27,7 +26,7 @@ func CallGetDetailMedicalFacility(uid string) (*response.ResponseHttp, error) {
 	if err != nil {
 		return nil, err
 	}
-	result := response.ResponseHttp{}
+	result := ResponseHttp{}
 	if err := json.Unmarshal([]byte(body), &result); err != nil {
 		return nil, err
 	}

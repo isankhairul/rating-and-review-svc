@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	regexIP = "\\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\\.|$)){4}\\b"
+	regexIP = "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$"
 )
 
 // swagger:parameters ListRatingSubmissionRequest
@@ -21,8 +21,11 @@ type ListRatingSubmissionRequest struct {
 }
 
 type RatingSubmissionFilter struct {
-	UserUID []string `json:"user_uid"`
-	Score   []string `json:"score"`
+	UserID    []string  `json:"user_uid"`
+	Score     []float64 `json:"score"`
+	RatingID  []string  `json:"rating_id"`
+	StartDate string    `json:"start_date"`
+	EndDate   string    `json:"end_date"`
 }
 
 // swagger:parameters ReqRatingSubmissonBody
@@ -52,17 +55,17 @@ type ReqUpdateRatingSubmissonBody struct {
 }
 
 type CreateRatingSubmissonRequest struct {
-	RatingID     string  `json:"rating_id" bson:"rating_id"`
-	UserID       *string `json:"user_id" bson:"user_id"`
-	UserIDLegacy *string `json:"user_id_legacy" bson:"user_id_legacy"`
-	Comment      string  `json:"comment" bson:"comment"`
-	Value        float64 `json:"value" bson:"value"`
-	IPAddress    string  `json:"ip_address" bson:"ip_address"`
-	UserAgent    string  `json:"user_agent" bson:"user_agent"`
+	RatingID     string   `json:"rating_id" bson:"rating_id"`
+	UserID       *string  `json:"user_id" bson:"user_id"`
+	UserIDLegacy *string  `json:"user_id_legacy" bson:"user_id_legacy"`
+	Comment      string   `json:"comment" bson:"comment"`
+	Value        *float64 `json:"value" bson:"value"`
+	IPAddress    string   `json:"ip_address" bson:"ip_address"`
+	UserAgent    string   `json:"user_agent" bson:"user_agent"`
 }
 
 type UpdateRatingSubmissonRequest struct {
-	ID           string    `json:"id"`
+	ID           string    `json:"-"`
 	RatingID     string    `json:"rating_id,omitempty" bson:"rating_id"`
 	UserID       *string   `json:"user_id,omitempty" bson:"user_id"`
 	UserIDLegacy *string   `json:"user_id_legacy,omitempty" bson:"user_id_legacy"`

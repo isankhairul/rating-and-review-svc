@@ -41,3 +41,10 @@ access-control:
   allow-credentials: "true"
   allow-headers: "Origin, Content-Type, Authorization"
   request-headers: "Origin, Content-Type, Authorization"
+
+#source type available
+source-type: [
+  hospital,
+  article,
+  doctor
+]

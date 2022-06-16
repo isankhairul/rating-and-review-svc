@@ -27,17 +27,29 @@ func NewMongo() (*mongo.Database, error) {
 		return nil, err
 	}
 
-	// Create index
-	_, err = client.Database(viper.GetString("database.dbname")).Collection("ratingTypesNumCol").Indexes().CreateOne(
-		context.Background(),
-		mongo.IndexModel{
-			Keys:    bson.D{{Key: "type", Value: 1}},
-			Options: options.Index().SetUnique(true),
-		},
-	)
+	err = CreateIndex(client, "ratingTypesNumCol", "type")
+	if err != nil {
+		return nil, err
+	}
+	err = CreateIndex(client, "ratingTypesLikertCol", "type")
+	if err != nil {
+		return nil, err
+	}
+	err = CreateIndex(client, "ratingsCol", "name")
 	if err != nil {
 		return nil, err
 	}
 
 	return client.Database(viper.GetString("database.dbname")), nil
+}
+
+func CreateIndex(client *mongo.Client, collection, col string) error {
+	_, err := client.Database(viper.GetString("database.dbname")).Collection(collection).Indexes().CreateOne(
+		context.Background(),
+		mongo.IndexModel{
+			Keys:    bson.D{{Key: col, Value: 1}},
+			Options: options.Index().SetUnique(true),
+		},
+	)
+	return err
 }
