@@ -27,7 +27,7 @@ var bsonStatus = bson.D{{"status", true}}
 type RatingRepository interface {
 	// Rating type num
 	CreateRatingTypeNum(input request.CreateRatingTypeNumRequest) (*entity.RatingTypesNumCol, error)
-	UpdateRatingTypeNum(id primitive.ObjectID, input request.CreateRatingTypeNumRequest) error
+	UpdateRatingTypeNum(id primitive.ObjectID, input request.EditRatingTypeNumRequest) error
 	GetRatingTypeNumById(id primitive.ObjectID) (*entity.RatingTypesNumCol, error)
 	DeleteRatingTypeNum(id primitive.ObjectID) error
 	GetRatingTypeNums(filter request.Filter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingTypesNumCol, *base.Pagination, error)
@@ -37,7 +37,13 @@ type RatingRepository interface {
 	UpdateRatingSubmission(input request.UpdateRatingSubmissonRequest, id primitive.ObjectID) error
 	DeleteSubmission(id primitive.ObjectID) error
 	GetRatingSubmissionById(id primitive.ObjectID) (*entity.RatingSubmisson, error)
+
 	GetListRatingSubmissions(filter request.RatingSubmissionFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingSubmisson, *base.Pagination, error)
+	GetRatingSubmissionByRatingId(id string) (*entity.RatingSubmisson, error)
+	FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string) (*entity.RatingSubmisson, error)
+	FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string) (*entity.RatingSubmisson, error)
+	FindRatingByRatingID(ratingId primitive.ObjectID) (*entity.RatingsCol, error)
+	FindRatingNumericTypeByRatingTypeID(ratingTypeId primitive.ObjectID) (*entity.RatingTypesNumCol, error)
 
 	CreateRating(input request.SaveRatingRequest) (*entity.RatingsCol, error)
 	GetRatingById(id primitive.ObjectID) (*entity.RatingsCol, error)
@@ -45,21 +51,35 @@ type RatingRepository interface {
 	DeleteRating(id primitive.ObjectID) error
 	GetRatingsByParams(limit, page, dir int, sort string, filter request.RatingFilter) ([]entity.RatingsCol, *base.Pagination, error)
 	GetRatingByName(name string) (*entity.RatingsCol, error)
+	GetRatingTypeNumByIdAndStatus(id primitive.ObjectID) (*entity.RatingTypesNumCol, error)
+	GetRatingTypeLikertByIdAndStatus(id primitive.ObjectID) (*entity.RatingTypesLikertCol, error)
+	GetRatingByType(id string) (*entity.RatingsCol, error)
 
 	CreateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) error
 	GetRatingTypeLikertById(id primitive.ObjectID) (*entity.RatingTypesLikertCol, error)
 	UpdateRatingTypeLikert(id primitive.ObjectID, input request.SaveRatingTypeLikertRequest) error
 	DeleteRatingTypeLikert(id primitive.ObjectID) error
 	GetRatingTypeLikerts(filter request.FilterRatingTypeLikert, page int, limit int64, sort string, dir interface{}) ([]entity.RatingTypesLikertCol, *base.Pagination, error)
-
-	FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string) (*entity.RatingSubmisson, error)
-	FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string) (*entity.RatingSubmisson, error)
-	FindRatingByRatingID(ratingId primitive.ObjectID) (*entity.RatingsCol, error)
-	FindRatingNumericTypeByRatingTypeID(ratingTypeId primitive.ObjectID) (*entity.RatingTypesNumCol, error)
+	Paginate(value interface{}, pagination *base.Pagination, db *gorm.DB, currRecord int64) func(db *gorm.DB) *gorm.DB
 }
 
 func NewRatingRepository(db *mongo.Database) RatingRepository {
 	return &ratingRepo{db}
+}
+
+func getPagination(r *ratingRepo, page int, limit int64, result interface{}, collectionName string, filter bson.D) *base.Pagination {
+	var pagination base.Pagination
+	s := reflect.ValueOf(result)
+	totalRecord, err := r.db.Collection(collectionName).CountDocuments(context.Background(), filter, &options.CountOptions{})
+	if err != nil {
+		return nil
+	}
+	pagination.Page = page
+	pagination.Limit = int(limit)
+	pagination.TotalRecords = totalRecord
+	pagination.TotalPage = int(math.Ceil(float64(pagination.TotalRecords) / float64(pagination.GetLimit())))
+	pagination.Records = int64(s.Len())
+	return &pagination
 }
 
 func (r *ratingRepo) CreateRatingTypeNum(input request.CreateRatingTypeNumRequest) (*entity.RatingTypesNumCol, error) {
@@ -100,7 +120,7 @@ func (r *ratingRepo) CreateRatingTypeNum(input request.CreateRatingTypeNumReques
 	return &ratingTypeNum, nil
 }
 
-func (r *ratingRepo) UpdateRatingTypeNum(id primitive.ObjectID, input request.CreateRatingTypeNumRequest) error {
+func (r *ratingRepo) UpdateRatingTypeNum(id primitive.ObjectID, input request.EditRatingTypeNumRequest) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
 	var timeUpdate time.Time
 	timeUpdate = time.Now().In(util.Loc)
@@ -161,7 +181,6 @@ func (r *ratingRepo) DeleteRatingTypeNum(id primitive.ObjectID) error {
 
 func (r *ratingRepo) GetRatingTypeNums(filter request.Filter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingTypesNumCol, *base.Pagination, error) {
 	var results []entity.RatingTypesNumCol
-	var pagination base.Pagination
 	var typeIds []primitive.ObjectID
 	for _, ele := range filter.TypeId {
 		objectId, _ := primitive.ObjectIDFromHex(ele)
@@ -170,6 +189,8 @@ func (r *ratingRepo) GetRatingTypeNums(filter request.Filter, page int, limit in
 	bsonMinScore := bson.D{}
 	bsonMaxScore := bson.D{}
 	bsonTypeIdsScore := bson.D{}
+	bsonStatus := bson.D{{"status", true}}
+
 	if len(typeIds) > 0 {
 		bsonTypeIdsScore = bson.D{{"_id", bson.D{{"$in", typeIds}}}}
 	}
@@ -199,11 +220,14 @@ func (r *ratingRepo) GetRatingTypeNums(filter request.Filter, page int, limit in
 	},
 	}
 
-	cursor, err := r.db.Collection("ratingTypesNumCol").
+	collectionName := "ratingTypesNumCol"
+	skip := int64(page)*limit - limit
+	cursor, err := r.db.Collection(collectionName).
 		Find(context.Background(), filter1,
 			&options.FindOptions{
 				Sort:  bson.D{bson.E{Key: sort, Value: dir}},
 				Limit: &limit,
+				Skip:  &skip,
 			})
 	if err != nil {
 		return nil, nil, err
@@ -214,12 +238,8 @@ func (r *ratingRepo) GetRatingTypeNums(filter request.Filter, page int, limit in
 			return nil, nil, err
 		}
 	}
-	pagination.Page = page
-	pagination.Limit = int(limit)
-	pagination.TotalRecords = int64(len(results))
-	pagination.TotalPage = int(math.Ceil(float64(pagination.TotalRecords) / float64(pagination.GetLimit())))
-	pagination.Records = int64(pagination.Limit*(pagination.Page-1)) + int64(len(results))
-	return results, &pagination, nil
+	pagination := getPagination(r, page, limit, results, collectionName, filter1)
+	return results, pagination, nil
 }
 
 func (r *ratingRepo) CreateRatingSubmission(input request.CreateRatingSubmissonRequest) (*entity.RatingSubmisson, error) {
@@ -311,6 +331,17 @@ func (r *ratingRepo) GetRatingSubmissionById(id primitive.ObjectID) (*entity.Rat
 	return &ratingSubmission, nil
 }
 
+func (r *ratingRepo) GetRatingSubmissionByRatingId(id string) (*entity.RatingSubmisson, error) {
+	var ratingSubmission entity.RatingSubmisson
+	ratingSubmissionColl := r.db.Collection("ratingSubCol")
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := ratingSubmissionColl.FindOne(ctx, bson.M{"rating_id": id}).Decode(&ratingSubmission)
+	if err != nil {
+		return nil, err
+	}
+	return &ratingSubmission, nil
+}
+
 func (r *ratingRepo) FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string) (*entity.RatingSubmisson, error) {
 	var ratingSubmission entity.RatingSubmisson
 	ratingSubmissionColl := r.db.Collection("ratingSubCol")
@@ -361,63 +392,14 @@ func (r *ratingRepo) FindRatingNumericTypeByRatingTypeID(ratingTypeId primitive.
 
 func (r *ratingRepo) DeleteSubmission(id primitive.ObjectID) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	update := bson.D{{"$set", bson.D{{"status", false}}}}
-	_, err := r.db.Collection("ratingSubCol").UpdateOne(ctx, bson.M{"_id": id}, update)
+	result, err := r.db.Collection("ratingSubCol").DeleteOne(ctx, bson.M{"_id": id})
 	if err != nil {
 		return err
 	}
+	if result.DeletedCount == 0 {
+		return errors.New("user not found")
+	}
 	return nil
-}
-
-func (r *ratingRepo) GetListRatingSubmissions(filter request.RatingSubmissionFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingSubmisson, *base.Pagination, error) {
-	var results []entity.RatingSubmisson
-	var pagination base.Pagination
-	bsonUserUid := bson.D{}
-	bsonScore := bson.D{}
-	if len(filter.UserUID) > 0 {
-		bsonUserUid = bson.D{{"user_uid", bson.D{{"$in", filter.UserUID}}}}
-	}
-	if len(filter.Score) > 0 {
-		bsonScore = bson.D{{"value", bson.D{{"$in", filter.Score}}}}
-	}
-
-	filter1 := bson.D{{"$and",
-
-		bson.A{
-			bsonStatus,
-			bson.D{{"$or",
-				bson.A{
-					bsonUserUid,
-				}}},
-			bson.D{{"$or",
-				bson.A{
-					bsonScore,
-				}}},
-		},
-	},
-	}
-
-	cursor, err := r.db.Collection("ratingSubCol").
-		Find(context.Background(), filter1,
-			&options.FindOptions{
-				Sort:  bson.D{bson.E{Key: sort, Value: dir}},
-				Limit: &limit,
-			})
-	if err != nil {
-		return nil, nil, err
-	}
-	//
-	if err = cursor.All(context.TODO(), &results); err != nil {
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-	pagination.Page = page
-	pagination.Limit = int(limit)
-	pagination.TotalRecords = int64(len(results))
-	pagination.TotalPage = int(math.Ceil(float64(pagination.TotalRecords) / float64(pagination.GetLimit())))
-	pagination.Records = int64(pagination.Limit*(pagination.Page-1)) + int64(len(results))
-	return results, &pagination, nil
 }
 
 func (r *ratingRepo) CreateRating(input request.SaveRatingRequest) (*entity.RatingsCol, error) {
@@ -462,14 +444,7 @@ func (r *ratingRepo) CreateRating(input request.SaveRatingRequest) (*entity.Rati
 func (r *ratingRepo) GetRatingById(id primitive.ObjectID) (*entity.RatingsCol, error) {
 	var rating entity.RatingsCol
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	bsonFilter := bson.D{{"$and",
-		bson.A{
-			bsonStatus,
-			bson.M{"_id": id},
-		},
-	},
-	}
-	err := r.db.Collection(entity.RatingsCol{}.CollectionName()).FindOne(ctx, bsonFilter).Decode(&rating)
+	err := r.db.Collection(entity.RatingsCol{}.CollectionName()).FindOne(ctx, bson.M{"_id": id}).Decode(&rating)
 	if err != nil {
 		return nil, err
 	}
@@ -572,7 +547,7 @@ func (r *ratingRepo) GetRatingsByParams(limit, page, dir int, sort string, filte
 		}
 	}
 
-	crsr, err := r.db.Collection(entity.RatingsCol{}.CollectionName()).Find(ctx, filter)
+	crsr, err := r.db.Collection(entity.RatingsCol{}.CollectionName()).Find(ctx, bsonFilter)
 	if err = crsr.All(ctx, &allResults); err != nil {
 		if err != nil {
 			return nil, nil, err
@@ -600,6 +575,53 @@ func (r *ratingRepo) GetRatingByName(name string) (*entity.RatingsCol, error) {
 	return &rating, nil
 }
 
+func (r *ratingRepo) GetRatingByType(id string) (*entity.RatingsCol, error) {
+	var rating entity.RatingsCol
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := r.db.Collection(entity.RatingsCol{}.CollectionName()).FindOne(ctx, bson.M{"rating_type_id": id}).Decode(&rating)
+	if err != nil {
+
+		return nil, err
+	}
+	return &rating, nil
+}
+
+func (r *ratingRepo) GetRatingTypeNumByIdAndStatus(id primitive.ObjectID) (*entity.RatingTypesNumCol, error) {
+	var ratingTypeNum entity.RatingTypesNumCol
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	bsonFilter := bson.D{{"$and",
+		bson.A{
+			bsonStatus,
+			bson.M{"_id": id},
+		},
+	},
+	}
+	err := r.db.Collection("ratingTypesNumCol").FindOne(ctx, bsonFilter).Decode(&ratingTypeNum)
+	if err != nil {
+
+		return nil, err
+	}
+	return &ratingTypeNum, nil
+}
+
+func (r *ratingRepo) GetRatingTypeLikertByIdAndStatus(id primitive.ObjectID) (*entity.RatingTypesLikertCol, error) {
+	var ratingTypeLikert entity.RatingTypesLikertCol
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	bsonFilter := bson.D{{"$and",
+		bson.A{
+			bsonStatus,
+			bson.M{"_id": id},
+		},
+	},
+	}
+	err := r.db.Collection("ratingTypesLikertCol").FindOne(ctx, bsonFilter).Decode(&ratingTypeLikert)
+	if err != nil {
+
+		return nil, err
+	}
+	return &ratingTypeLikert, nil
+}
+
 func (r *ratingRepo) Paginate(value interface{}, pagination *base.Pagination, db *gorm.DB, currRecord int64) func(db *gorm.DB) *gorm.DB {
 	var totalRecords int64
 	db.Model(value).Count(&totalRecords)
@@ -611,6 +633,72 @@ func (r *ratingRepo) Paginate(value interface{}, pagination *base.Pagination, db
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Offset(pagination.GetOffset()).Limit(pagination.GetLimit())
 	}
+}
+
+func (r *ratingRepo) GetListRatingSubmissions(filter request.RatingSubmissionFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingSubmisson, *base.Pagination, error) {
+	var results []entity.RatingSubmisson
+	startDate, _ := time.Parse(util.LayoutDateOnly, filter.StartDate)
+	endDate, _ := time.Parse(util.LayoutDateOnly, filter.EndDate)
+	bsonUserUid := bson.D{}
+	bsonScore := bson.D{}
+	bsonRating := bson.D{}
+	bsonDate := bson.D{}
+	if len(filter.UserID) > 0 {
+		bsonUserUid = bson.D{{"user_id", bson.D{{"$in", filter.UserID}}}}
+	}
+	if len(filter.Score) > 0 {
+		bsonScore = bson.D{{"value", bson.D{{"$in", filter.Score}}}}
+	}
+	if len(filter.RatingID) > 0 {
+		bsonRating = bson.D{{"rating_id", bson.D{{"$in", filter.RatingID}}}}
+	}
+	if len(filter.StartDate) > 0 && len(filter.EndDate) > 0 {
+		bsonDate = bson.D{{"created_at", bson.D{{"$gt", startDate}, {"$lt", endDate}}}}
+	}
+
+	filter1 := bson.D{{"$and",
+
+		bson.A{
+			bson.D{{"$or",
+				bson.A{
+					bsonUserUid,
+				}}},
+			bson.D{{"$or",
+				bson.A{
+					bsonScore,
+				}}},
+			bson.D{{"$or",
+				bson.A{
+					bsonRating,
+				}}},
+			bson.D{{"$or",
+				bson.A{
+					bsonDate,
+				},
+			}},
+		},
+	},
+	}
+	collectionName := "ratingSubCol"
+	skip := int64(page)*limit - limit
+	cursor, err := r.db.Collection(collectionName).
+		Find(context.Background(), filter1,
+			&options.FindOptions{
+				Sort:  bson.D{bson.E{Key: sort, Value: dir}},
+				Limit: &limit,
+				Skip:  &skip,
+			})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	pagination := getPagination(r, page, limit, results, collectionName, filter1)
+	return results, pagination, nil
 }
 
 func (r *ratingRepo) CreateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) error {
@@ -677,31 +765,39 @@ func (r *ratingRepo) UpdateRatingTypeLikert(id primitive.ObjectID, input request
 		Type:          input.Type,
 		Description:   input.Description,
 		NumStatements: input.NumStatements,
-		Statement01:   input.Statement01,
-		Statement02:   input.Statement02,
-		Statement03:   input.Statement03,
-		Statement04:   input.Statement04,
-		Statement05:   input.Statement05,
-		Statement06:   input.Statement06,
-		Statement07:   input.Statement07,
-		Statement08:   input.Statement08,
-		Statement09:   input.Statement09,
-		Statement10:   input.Statement10,
 		Status:        input.Status,
 		UpdatedAt:     &timeUpdate,
 	}
 	filter := bson.D{{"_id", id}}
 	data := bson.D{{"$set", ratingTypeLikert}}
+	dataStatement := bson.D{{"$set", bson.D{
+		{"statement_01", input.Statement01},
+		{"statement_02", input.Statement02},
+		{"statement_03", input.Statement03},
+		{"statement_04", input.Statement04},
+		{"statement_05", input.Statement05},
+		{"statement_06", input.Statement06},
+		{"statement_07", input.Statement07},
+		{"statement_08", input.Statement08},
+		{"statement_09", input.Statement09},
+		{"statement_10", input.Statement10},
+	}}}
 	// transaction
 	errTransaction := r.db.Client().UseSession(ctx, func(sessionContext mongo.SessionContext) error {
 		err := sessionContext.StartTransaction()
 		if err != nil {
 			return err
 		}
-		err1 := r.db.Collection("ratingTypesLikertCol").FindOneAndUpdate(context.Background(), filter, data, &options.FindOneAndUpdateOptions{})
+		_, err1 := r.db.Collection("ratingTypesLikertCol").UpdateOne(context.Background(), filter, dataStatement, &options.UpdateOptions{})
 		if err1 != nil {
 			sessionContext.AbortTransaction(sessionContext)
-			return err1.Err()
+			return err1
+		}
+
+		err2 := r.db.Collection("ratingTypesLikertCol").FindOneAndUpdate(context.Background(), filter, data, &options.FindOneAndUpdateOptions{})
+		if err2 != nil {
+			sessionContext.AbortTransaction(sessionContext)
+			return err2.Err()
 		}
 		if err = sessionContext.CommitTransaction(sessionContext); err != nil {
 			return err
@@ -738,6 +834,7 @@ func (r *ratingRepo) GetRatingTypeLikerts(filter request.FilterRatingTypeLikert,
 
 	filter1 := bson.D{{"$and",
 		bson.A{
+			bsonStatus,
 			bson.D{{"$or",
 				bson.A{
 					bsonTypeIdsScore,
@@ -745,8 +842,9 @@ func (r *ratingRepo) GetRatingTypeLikerts(filter request.FilterRatingTypeLikert,
 		},
 	},
 	}
+	collectionName := "ratingTypesLikertCol"
 	skip := int64(page)*limit - limit
-	cursor, err := r.db.Collection("ratingTypesLikertCol").
+	cursor, err := r.db.Collection(collectionName).
 		Find(context.Background(), filter1,
 			&options.FindOptions{
 				Sort:  bson.D{bson.E{Key: sort, Value: dir}},
@@ -762,17 +860,6 @@ func (r *ratingRepo) GetRatingTypeLikerts(filter request.FilterRatingTypeLikert,
 			return nil, nil, err
 		}
 	}
-	pagination := getPagination(page, limit, results)
+	pagination := getPagination(r, page, limit, results, collectionName, filter1)
 	return results, pagination, nil
-}
-
-func getPagination(page int, limit int64, result interface{}) *base.Pagination {
-	var pagination base.Pagination
-	s := reflect.ValueOf(result)
-	pagination.Page = page
-	pagination.Limit = int(limit)
-	pagination.TotalRecords = int64(pagination.Limit*(pagination.Page-1)) + int64(s.Len())
-	pagination.TotalPage = int(math.Ceil(float64(pagination.TotalRecords) / float64(pagination.GetLimit())))
-	pagination.Records = int64(s.Len())
-	return &pagination
 }

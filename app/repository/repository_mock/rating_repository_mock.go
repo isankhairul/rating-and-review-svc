@@ -15,6 +15,31 @@ type RatingRepositoryMock struct {
 	Mock mock.Mock
 }
 
+func (repository *RatingRepositoryMock) GetRatingTypeNumByIdAndStatus(id primitive.ObjectID) (*entity.RatingTypesNumCol, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (repository *RatingRepositoryMock) GetRatingTypeLikertByIdAndStatus(id primitive.ObjectID) (*entity.RatingTypesLikertCol, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (repository *RatingRepositoryMock) GetRatingSubmissionByRatingId(id string) (*entity.RatingSubmisson, error) {
+	arguments := repository.Mock.Called(id)
+	submission, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84826")
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	if submission == objectId {
+		return nil, errors.New("Error")
+	}
+	if arguments.Get(0) == nil {
+		return nil, mongo.ErrNoDocuments
+	} else {
+		submission := arguments.Get(0).(entity.RatingSubmisson)
+		return &submission, nil
+	}
+}
+
 func (repository *RatingRepositoryMock) CreateRating(input request.SaveRatingRequest) (*entity.RatingsCol, error) {
 	//TODO implement me
 	panic("implement me")
@@ -40,6 +65,20 @@ func (repository *RatingRepositoryMock) GetRatingByName(name string) (*entity.Ra
 	panic("implement me")
 }
 
+func (repository *RatingRepositoryMock) GetRatingByType(id string) (*entity.RatingsCol, error) {
+	arguments := repository.Mock.Called(id)
+	rating := "629dce7bf1f26275e0d84826"
+	if rating == id {
+		return nil, errors.New("Error")
+	}
+	if arguments.Get(0) == nil {
+		return nil, mongo.ErrNoDocuments
+	} else {
+		rating := arguments.Get(0).(entity.RatingsCol)
+		return &rating, nil
+	}
+}
+
 func (repository *RatingRepositoryMock) CreateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) error {
 	if input.Type == "typeErr" {
 		return errors.New("Error")
@@ -62,7 +101,8 @@ func (repository *RatingRepositoryMock) GetRatingTypeLikertById(id primitive.Obj
 }
 
 func (repository *RatingRepositoryMock) UpdateRatingTypeLikert(id primitive.ObjectID, input request.SaveRatingTypeLikertRequest) error {
-	if input.Description == "failed" {
+	description := "failed"
+	if input.Description == &description {
 		return errors.New("Error")
 	}
 	return nil
@@ -135,7 +175,7 @@ func (repository *RatingRepositoryMock) GetRatingTypeNums(filter request.Filter,
 	return arguments.Get(0).([]entity.RatingTypesNumCol), arguments.Get(1).(*base.Pagination), nil
 }
 
-func (repository *RatingRepositoryMock) UpdateRatingTypeNum(id primitive.ObjectID, input request.CreateRatingTypeNumRequest) error {
+func (repository *RatingRepositoryMock) UpdateRatingTypeNum(id primitive.ObjectID, input request.EditRatingTypeNumRequest) error {
 	objectId, _ := primitive.ObjectIDFromHex("629ec07e6f3c2761ba2dc868")
 	if id == objectId {
 		return errors.New("Error")
@@ -220,8 +260,7 @@ func (repository *RatingRepositoryMock) FindRatingNumericTypeByRatingTypeID(rati
 
 func (repository *RatingRepositoryMock) GetListRatingSubmissions(filter request.RatingSubmissionFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingSubmisson, *base.Pagination, error) {
 	arguments := repository.Mock.Called(filter, page, limit, sort, dir)
-	sub := entity.RatingSubmisson{}
-	if arguments.Get(0) == sub {
+	if sort == "no data " {
 		return nil, nil, mongo.ErrNoDocuments
 	}
 	return arguments.Get(0).([]entity.RatingSubmisson), arguments.Get(1).(*base.Pagination), nil

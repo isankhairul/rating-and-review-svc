@@ -130,28 +130,36 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 		options...,
 	))
 
-	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + _struct.PrefixRating).Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + _struct.PrefixRating + "/").Handler(httptransport.NewServer(
 		ep.CreateRating,
 		decodeCreateRating,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + _struct.PrefixRating + "{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "ratings/summary").Handler(httptransport.NewServer(
+		ep.GetListRatingSummary,
+		decodeGetRatingSummary,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	ratingPathUid := _struct.PrefixBase + _struct.PrefixRating + "/{id}"
+	pr.Methods(http.MethodGet).Path(ratingPathUid).Handler(httptransport.NewServer(
 		ep.ShowRating,
 		decodeGetById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + _struct.PrefixRating + "{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPut).Path(ratingPathUid).Handler(httptransport.NewServer(
 		ep.UpdateRating,
 		decodeEditRatingById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + _struct.PrefixRating + "{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodDelete).Path(ratingPathUid).Handler(httptransport.NewServer(
 		ep.DeleteRating,
 		decodeGetById,
 		encoder.EncodeResponseHTTP,
@@ -187,7 +195,7 @@ func decodeGetRatingById(ctx context.Context, r *http.Request) (rqst interface{}
 }
 
 func decodeUpdateRatingById(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
-	var req request.CreateRatingTypeNumRequest
+	var req request.EditRatingTypeNumRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -336,6 +344,19 @@ func decodeEditRatingById(ctx context.Context, r *http.Request) (rqst interface{
 
 func decodeGetRatings(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
 	var req request.GetListRatingsRequest
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+
+	if err = schema.NewDecoder().Decode(&req, r.Form); err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+func decodeGetRatingSummary(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.GetListRatingSummaryRequest
 	if err := r.ParseForm(); err != nil {
 		return nil, err
 	}

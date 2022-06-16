@@ -26,43 +26,43 @@ type ReqCreateRatingTypeLikertBody struct {
 type SaveRatingTypeLikertRequest struct {
 	// Type of rating type likert
 	// in: string
-	Type string `json:"type"`
+	Type string `json:"type,omitempty"`
 	// Description of rating type likert
 	// in: string
-	Description string `json:"description"`
+	Description *string `json:"description,omitempty"`
 	// NumStatements of rating type likert
 	// in: integer
-	NumStatements int `json:"num_statements"`
+	NumStatements int `json:"num_statements,omitempty"`
 	// Statement 1 of rating type likert
 	// in: string
-	Statement01 *string `json:"statement_01"`
+	Statement01 *string `json:"statement_01,omitempty"`
 	// Statement 2 of rating type likert
 	// in: string
-	Statement02 *string `json:"statement_02"`
+	Statement02 *string `json:"statement_02,omitempty"`
 	// Statement 3 of rating type likert
 	// in: string
-	Statement03 *string `json:"statement_03"`
+	Statement03 *string `json:"statement_03,omitempty"`
 	// Statement 4 of rating type likert
 	// in: string
-	Statement04 *string `json:"statement_04"`
+	Statement04 *string `json:"statement_04,omitempty"`
 	// Statement 5 of rating type likert
 	// in: string
-	Statement05 *string `json:"statement_05"`
+	Statement05 *string `json:"statement_05,omitempty"`
 	// Statement 6 of rating type likert
 	// in: string
-	Statement06 *string `json:"statement_06"`
+	Statement06 *string `json:"statement_06,omitempty"`
 	// Statement 7 of rating type likert
 	// in: string
-	Statement07 *string `json:"statement_07"`
+	Statement07 *string `json:"statement_07,omitempty"`
 	// Statement 8 of rating type likert
 	// in: string
-	Statement08 *string `json:"statement_08"`
+	Statement08 *string `json:"statement_08,omitempty"`
 	// Statement 9 of rating type likert
 	// in: string
-	Statement09 *string `json:"statement_09"`
+	Statement09 *string `json:"statement_09,omitempty"`
 	// Statement 10 of rating type likert
 	// in: string
-	Statement10 *string `json:"statement_10"`
+	Statement10 *string `json:"statement_10,omitempty"`
 	// Status of rating type likert
 	// in: bool
 	Status *bool `json:"status"`
@@ -72,7 +72,7 @@ type SaveRatingTypeLikertRequest struct {
 
 // swagger:parameters getRatingTypeLikerts
 type GetRatingTypeLikertsRequest struct {
-	// Maximun records per page
+	// Maximum records per page
 	// in: query
 	// type: integer
 	Limit int64 ` json:"limit" schema:"limit" binding:"omitempty,numeric,min=1,max=100"`
@@ -105,5 +105,8 @@ type GetRatingTypeLikertRequest struct {
 
 func (req SaveRatingTypeLikertRequest) Validate() error {
 	return validation.ValidateStruct(&req,
-		validation.Field(&req.Type, validation.Match(regexp.MustCompile(regexType)).Error(message.ErrTypeFormatReq.Message)))
+		validation.Field(&req.Type, validation.Match(regexp.MustCompile(regexType)).Error(message.ErrTypeFormatReq.Message)),
+		validation.Field(&req.Type, validation.Required.Error(message.ErrReq.Message)),
+		validation.Field(&req.NumStatements, validation.Required.Error(message.ErrReq.Message)),
+	)
 }

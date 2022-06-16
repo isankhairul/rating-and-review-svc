@@ -87,6 +87,56 @@ definitions:
     type: object
     x-go-name: data
     x-go-package: go-klikdokter/app/model/base
+  EditRatingTypeNumRequest:
+    properties:
+      description:
+        description: |-
+          Description of rating type num
+          in: string
+        type: string
+        x-go-name: Description
+      intervals:
+        description: |-
+          Intervals of rating type num
+          in: integer
+        format: int64
+        type: integer
+        x-go-name: Intervals
+      max_score:
+        description: |-
+          Max Score of rating type num
+          in: integer
+        format: int64
+        type: integer
+        x-go-name: MaxScore
+      min_score:
+        description: |-
+          Min Score of rating type num
+          in: integer
+        format: int64
+        type: integer
+        x-go-name: MinScore
+      scale:
+        description: |-
+          Scale of rating type num
+          in: integer
+        format: int64
+        type: integer
+        x-go-name: Scale
+      status:
+        description: |-
+          Status of rating type num
+          in: bool
+        type: boolean
+        x-go-name: Status
+      type:
+        description: |-
+          Type of rating type num
+          in: string
+        type: string
+        x-go-name: Type
+    type: object
+    x-go-package: go-klikdokter/app/model/request
   MetaResponse:
     properties:
       code:
@@ -137,42 +187,15 @@ definitions:
     type: object
     x-go-name: Pagination
     x-go-package: go-klikdokter/app/model/base
-  ProductListRequest:
-    properties:
-      Limit:
-        description: |-
-          Maximun records per page
-          in: int32
-        format: int64
-        type: integer
-      Name:
-        description: |-
-          Name keyword of the product
-          in: string
-        type: string
-      Page:
-        description: |-
-          Page No
-          in: int32
-        format: int64
-        type: integer
-      Sku:
-        type: string
-      Sort:
-        example: name asc, uom desc
-        type: string
-      UOM:
-        description: |-
-          Sku of the product
-          in: string
-        type: string
-    type: object
-    x-go-package: go-klikdokter/app/model/request
   Rating:
     properties:
       comment_allowed:
         type: boolean
         x-go-name: CommentAllowed
+      created_at:
+        format: date-time
+        type: string
+        x-go-name: CreatedAt
       description:
         type: string
         x-go-name: Description
@@ -196,8 +219,126 @@ definitions:
       status:
         type: boolean
         x-go-name: Status
+      updated_at:
+        format: date-time
+        type: string
+        x-go-name: UpdatedAt
     type: object
     x-go-name: RatingsCol
+    x-go-package: go-klikdokter/app/model/entity
+  RatingTypeLikertResponse:
+    properties:
+      created_at:
+        format: date-time
+        type: string
+        x-go-name: CreatedAt
+      description:
+        type: string
+        x-go-name: Description
+      id:
+        $ref: '#/definitions/ObjectID'
+      num_statements:
+        format: int64
+        type: integer
+        x-go-name: NumStatements
+      statement_01:
+        type: string
+        x-go-name: Statement01
+      statement_02:
+        type: string
+        x-go-name: Statement02
+      statement_03:
+        type: string
+        x-go-name: Statement03
+      statement_04:
+        type: string
+        x-go-name: Statement04
+      statement_05:
+        type: string
+        x-go-name: Statement05
+      statement_06:
+        type: string
+        x-go-name: Statement06
+      statement_07:
+        type: string
+        x-go-name: Statement07
+      statement_08:
+        type: string
+        x-go-name: Statement08
+      statement_09:
+        type: string
+        x-go-name: Statement09
+      statement_10:
+        type: string
+        x-go-name: Statement10
+      status:
+        type: boolean
+        x-go-name: Status
+      type:
+        type: string
+        x-go-name: Type
+      updated_at:
+        format: date-time
+        type: string
+        x-go-name: UpdatedAt
+    type: object
+    x-go-package: go-klikdokter/app/model/response
+  RatingTypesLikertCol:
+    properties:
+      created_at:
+        format: date-time
+        type: string
+        x-go-name: CreatedAt
+      description:
+        type: string
+        x-go-name: Description
+      id:
+        $ref: '#/definitions/ObjectID'
+      num_statements:
+        format: int64
+        type: integer
+        x-go-name: NumStatements
+      statement_01:
+        type: string
+        x-go-name: Statement01
+      statement_02:
+        type: string
+        x-go-name: Statement02
+      statement_03:
+        type: string
+        x-go-name: Statement03
+      statement_04:
+        type: string
+        x-go-name: Statement04
+      statement_05:
+        type: string
+        x-go-name: Statement05
+      statement_06:
+        type: string
+        x-go-name: Statement06
+      statement_07:
+        type: string
+        x-go-name: Statement07
+      statement_08:
+        type: string
+        x-go-name: Statement08
+      statement_09:
+        type: string
+        x-go-name: Statement09
+      statement_10:
+        type: string
+        x-go-name: Statement10
+      status:
+        type: boolean
+        x-go-name: Status
+      type:
+        type: string
+        x-go-name: Type
+      updated_at:
+        format: date-time
+        type: string
+        x-go-name: UpdatedAt
+    type: object
     x-go-package: go-klikdokter/app/model/entity
   RatingTypesNumCol:
     properties:
@@ -238,39 +379,129 @@ definitions:
         x-go-name: UpdatedAt
     type: object
     x-go-package: go-klikdokter/app/model/entity
-  SaveProductRequest:
+  SaveRatingRequest:
     properties:
+      comment_allowed:
+        example: true
+        type: boolean
+        x-go-name: CommentAllowed
+      description:
+        example: Rating Group for Rumah Sakit RS Pondok Indah Bintaro Jaya
+        type: string
+        x-go-name: Description
       name:
-        description: |-
-          Name of the product
-          in: string
+        example: Rumah Sakit - RS Pondok Indah Bintaro Jaya
         type: string
         x-go-name: Name
-      sku:
+      rating_type:
+        example: standard-0.0-to-5.0
+        type: string
+        x-go-name: RatingType
+      rating_type_id:
+        example: 629dc84ff16b9b21f357a609
+        type: string
+        x-go-name: RatingTypeId
+      source_type:
+        example: hospital
+        type: string
+        x-go-name: SourceType
+      source_uid:
+        example: "2729"
+        type: string
+        x-go-name: SourceUid
+      status:
+        example: true
+        type: boolean
+        x-go-name: Status
+    type: object
+    x-go-package: go-klikdokter/app/model/request
+  SaveRatingTypeLikertRequest:
+    properties:
+      description:
         description: |-
-          Sku of the product
+          Description of rating type likert
           in: string
         type: string
-        x-go-name: Sku
-      uid:
+        x-go-name: Description
+      num_statements:
         description: |-
-          Uid of the product, use this on UPDATE function
-          in: int32
-        type: string
-        x-go-name: Uid
-      uom:
-        description: |-
-          Uom of the product
-          in: string
-        type: string
-        x-go-name: Uom
-      weight:
-        description: |-
-          Weight of the product
-          in: int32
-        format: int32
+          NumStatements of rating type likert
+          in: integer
+        format: int64
         type: integer
-        x-go-name: Weight
+        x-go-name: NumStatements
+      statement_01:
+        description: |-
+          Statement 1 of rating type likert
+          in: string
+        type: string
+        x-go-name: Statement01
+      statement_02:
+        description: |-
+          Statement 2 of rating type likert
+          in: string
+        type: string
+        x-go-name: Statement02
+      statement_03:
+        description: |-
+          Statement 3 of rating type likert
+          in: string
+        type: string
+        x-go-name: Statement03
+      statement_04:
+        description: |-
+          Statement 4 of rating type likert
+          in: string
+        type: string
+        x-go-name: Statement04
+      statement_05:
+        description: |-
+          Statement 5 of rating type likert
+          in: string
+        type: string
+        x-go-name: Statement05
+      statement_06:
+        description: |-
+          Statement 6 of rating type likert
+          in: string
+        type: string
+        x-go-name: Statement06
+      statement_07:
+        description: |-
+          Statement 7 of rating type likert
+          in: string
+        type: string
+        x-go-name: Statement07
+      statement_08:
+        description: |-
+          Statement 8 of rating type likert
+          in: string
+        type: string
+        x-go-name: Statement08
+      statement_09:
+        description: |-
+          Statement 9 of rating type likert
+          in: string
+        type: string
+        x-go-name: Statement09
+      statement_10:
+        description: |-
+          Statement 10 of rating type likert
+          in: string
+        type: string
+        x-go-name: Statement10
+      status:
+        description: |-
+          Status of rating type likert
+          in: bool
+        type: boolean
+        x-go-name: Status
+      type:
+        description: |-
+          Type of rating type likert
+          in: string
+        type: string
+        x-go-name: Type
     type: object
     x-go-package: go-klikdokter/app/model/request
   SuccessResponse:
@@ -295,9 +526,6 @@ definitions:
       comment:
         type: string
         x-go-name: Comment
-      id:
-        type: string
-        x-go-name: ID
       rating_id:
         type: string
         x-go-name: RatingID
@@ -358,7 +586,8 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - ratingSubmission
+      - RatingSubmission
+  /api/v1/rating-submissions/:
     post:
       description: Create Rating Submission
       operationId: ReqRatingSubmissonBody
@@ -378,7 +607,7 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - ratingSubmission
+      - RatingSubmission
   /api/v1/rating-submissions/{id}:
     delete:
       description: Delete Rating Submission
@@ -400,7 +629,7 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - ratingSubmission
+      - RatingSubmission
     get:
       description: Get Rating Submission By Id
       operationId: ReqRatingSubmissionById
@@ -421,7 +650,7 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - ratingSubmission
+      - RatingSubmission
     put:
       description: Update Rating Submission
       operationId: ReqUpdateRatingSubmissonBody
@@ -448,13 +677,13 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - ratingSubmission
-  /api/v1/rating-types-numeric:
+      - RatingSubmission
+  /api/v1/rating-types-likert:
     get:
-      description: Get Rating Type Nums
-      operationId: getRatingTypeNums
+      description: Get Likert Rating Types Listing
+      operationId: getRatingTypeLikerts
       parameters:
-      - description: Maximun records per page
+      - description: Maximum records per page
         format: int64
         in: query
         name: limit
@@ -490,9 +719,141 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - ratingTypeNum
+      - RatingTypesLikert
+  /api/v1/rating-types-likert/:
     post:
-      description: Create Rating Type Num
+      description: Create Likert Rating Types
+      operationId: createRatingTypeLikertRequest
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/SaveRatingTypeLikertRequest'
+        x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - RatingTypesLikert
+  /api/v1/rating-types-likert/{id}:
+    delete:
+      description: Delete Likert Rating Types
+      operationId: deleteRatingTypeLikert
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: Id
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - RatingTypesLikert
+    get:
+      description: Get Likert Rating Types by ID
+      operationId: getRatingTypeLikertById
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: Id
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - RatingTypesLikert
+    put:
+      description: Update Likert Rating Types
+      operationId: updateRatingTypeLikert
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: Id
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/SaveRatingTypeLikertRequest'
+        x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - RatingTypesLikert
+  /api/v1/rating-types-numeric:
+    get:
+      description: Get Numeric Rating Types Listing
+      operationId: getRatingTypeNums
+      parameters:
+      - description: Maximum records per page
+        format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - description: Page No
+        format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - example: name asc, uom desc
+        in: query
+        name: sort
+        type: string
+        x-go-name: Sort
+      - example: name asc, uom desc
+        in: query
+        name: dir
+        type: string
+        x-go-name: Dir
+      - in: query
+        name: filter
+        type: string
+        x-go-name: Filter
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - RatingTypeNum
+  /api/v1/rating-types-numeric/:
+    post:
+      description: Create Numeric Rating Types
       operationId: createRatingTypeNum
       parameters:
       - in: body
@@ -511,10 +872,10 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - ratingTypeNum
+      - RatingTypeNum
   /api/v1/rating-types-numeric/{id}:
     delete:
-      description: Update Rating Type Num
+      description: Delete Numeric Rating Type
       operationId: deleteRatingTypeNum
       parameters:
       - in: path
@@ -532,10 +893,10 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - ratingTypeNum
+      - RatingTypeNum
     get:
-      description: Get Rating Type Num By Id
-      operationId: getRatingById
+      description: Get Numeric Rating Types by ID
+      operationId: getRatingTypeNumById
       parameters:
       - in: path
         name: id
@@ -552,9 +913,9 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - ratingTypeNum
+      - RatingTypeNum
     put:
-      description: Update Rating Type Num
+      description: Update Numeric Rating Type
       operationId: updateRatingTypeNum
       parameters:
       - in: path
@@ -566,7 +927,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/CreateRatingTypeNumRequest'
+          $ref: '#/definitions/EditRatingTypeNumRequest'
         x-go-name: Body
       responses:
         "200":
@@ -578,7 +939,140 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - ratingTypeNum
+      - RatingTypeNum
+  /api/v1/ratings:
+    get:
+      description: Get list Rating
+      operationId: GetListRatingsRequest
+      parameters:
+      - in: query
+        name: filter
+        type: string
+        x-go-name: Filter
+      - format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - in: query
+        name: sort
+        type: string
+        x-go-name: Sort
+      - in: query
+        name: dir
+        type: string
+        x-go-name: Dir
+      responses:
+        "200":
+          $ref: '#/responses/RatingsCol'
+      tags:
+      - Ratings
+  /api/v1/ratings/:
+    post:
+      description: Create New Rating
+      operationId: CreateRatingRequest
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/SaveRatingRequest'
+        x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - Ratings
+  /api/v1/ratings/{id}:
+    delete:
+      description: Delete Rating
+      operationId: DeleteRatingRequest
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: Id
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - Ratings
+    get:
+      description: Get Rating By Id
+      operationId: GetRatingRequest
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: Id
+      responses:
+        "200":
+          $ref: '#/responses/RatingsCol'
+      tags:
+      - Ratings
+    put:
+      description: Update Rating
+      operationId: UpdateRatingRequest
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: Id
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/SaveRatingRequest'
+        x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - Ratings
+  /api/v1/ratings/summary:
+    get:
+      description: Get list Rating Summary
+      operationId: GetListRatingSummaryRequest
+      parameters:
+      - in: query
+        name: filter
+        type: string
+        x-go-name: Filter
+      - format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - in: query
+        name: sort
+        type: string
+        x-go-name: Sort
+      - in: query
+        name: dir
+        type: string
+        x-go-name: Dir
+      responses:
+        "200":
+          $ref: '#/responses/RatingsCol'
+      tags:
+      - Ratings
 produces:
 - application/json
 schemes:
