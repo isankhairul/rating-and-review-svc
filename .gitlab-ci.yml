@@ -1,0 +1,57 @@
+stages:
+  - testing
+  - scanning
+  - shipping
+
+go-test:
+  stage: testing
+  image:
+    name: golang:1.16-alpine
+  script:
+    - apk --no-cache add make git gcc libtool musl-dev ca-certificates dumb-init openssl
+    - go test -v ./...
+  allow_failure: true
+  only:
+    - test-ci
+  tags:
+    - $CI_COMMIT_BRANCH
+
+sonarqube-check:
+  stage: scanning
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0"
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "test-ci" || $CI_COMMIT_TAG =~ /.*sonar$/'
+  tags:
+    - $CI_COMMIT_BRANCH
+
+docker-build:
+  stage: shipping
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: ['']
+  script:
+    - export VERSION=$(date +%Y%m%d-%H%M)
+    - echo "CI_REGISTRY=$CI_REGISTRY, CI_COMMIT_TAG=$CI_COMMIT_TAG, CI_REGISTRY_USER=$CI_REGISTRY_USER, CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD, CI_PROJECT_DIR=$CI_PROJECT_DIR"
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(printf "%s:%s" "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - cat /kaniko/.docker/config.json
+    - >-
+      /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile docker/Dockerfile
+      --destination $CI_REGISTRY/$CI_REGISTRY_IMAGE:dev-$VERSION-$CI_PIPELINE_ID
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "test-ci" || $CI_COMMIT_TAG =~ /.*hotfix-stage$/'
+  tags:
+    - $CI_COMMIT_BRANCH

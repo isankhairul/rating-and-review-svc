@@ -5,11 +5,22 @@ log:
 
 #database settings
 database:
-  hostname: localhost
-  port: 5432
-  username: postgres
-  password: jiren1411
-  schema: testong
+  driver: ${DB_DRIVER}
+  hostname: ${DB_HOST}
+  port: ${DB_PORT}
+  username: ${DB_USERNAME}
+  password: ${DB_PASSWORD}
+  dbname: ${DB_NAME}
+  uri: ${MDB_URI}
+
+#server settings
+server:
+  port: 5600
+  env: prd
+  log-output: console
+  output-file-path: ./kd-microservice.log
+  config-path: .
+  service-name: kd-microservice
 
 #Access Control SETTING
 access-control:
@@ -18,3 +29,10 @@ access-control:
   allow-credentials: "true"
   allow-headers: "Origin, Content-Type, Authorization"
   request-headers: "Origin, Content-Type, Authorization"
+
+#source type available
+source-type: [
+  hospital,
+  article,
+  doctor
+]
