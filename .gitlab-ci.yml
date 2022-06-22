@@ -12,7 +12,7 @@ go-test:
     - go test -v ./...
   allow_failure: true
   only:
-    - test-ci
+    - develop
   tags:
     - $CI_COMMIT_BRANCH
 
@@ -32,7 +32,7 @@ sonarqube-check:
     - sonar-scanner
   allow_failure: true
   rules:
-    - if: '$CI_COMMIT_BRANCH == "test-ci" || $CI_COMMIT_TAG =~ /.*sonar$/'
+    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_TAG =~ /.*sonar$/'
   tags:
     - $CI_COMMIT_BRANCH
 
@@ -52,6 +52,6 @@ docker-build:
       --dockerfile docker/Dockerfile
       --destination $CI_REGISTRY/$CI_REGISTRY_IMAGE:dev-$VERSION-$CI_PIPELINE_ID
   rules:
-    - if: '$CI_COMMIT_BRANCH == "test-ci" || $CI_COMMIT_TAG =~ /.*hotfix-stage$/'
+    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_TAG =~ /.*hotfix-stage$/'
   tags:
     - $CI_COMMIT_BRANCH
