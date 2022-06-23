@@ -1,6 +1,38 @@
 basePath: /rating-svc
 definitions:
-  CreateRatingSubmissonRequest:
+  BodyUpdateRatingRequest:
+    properties:
+      comment_allowed:
+        example: true
+        type: boolean
+        x-go-name: CommentAllowed
+      description:
+        example: Rating Group for Rumah Sakit RS Pondok Indah Bintaro Jaya
+        type: string
+        x-go-name: Description
+      name:
+        example: Rumah Sakit - RS Pondok Indah Bintaro Jaya
+        type: string
+        x-go-name: Name
+      rating_type:
+        example: standard-0.0-to-5.0
+        type: string
+        x-go-name: RatingType
+      rating_type_id:
+        example: 629dc84ff16b9b21f357a609
+        type: string
+        x-go-name: RatingTypeId
+      source_type:
+        example: hospital
+        type: string
+        x-go-name: SourceType
+      source_uid:
+        example: "2729"
+        type: string
+        x-go-name: SourceUid
+    type: object
+    x-go-package: go-klikdokter/app/model/request
+  CreateRatingSubmissionRequest:
     properties:
       comment:
         type: string
@@ -8,9 +40,11 @@ definitions:
       ip_address:
         type: string
         x-go-name: IPAddress
-      rating_id:
-        type: string
-        x-go-name: RatingID
+      ratings:
+        items:
+          $ref: '#/definitions/RatingByType'
+        type: array
+        x-go-name: Ratings
       user_agent:
         type: string
         x-go-name: UserAgent
@@ -20,10 +54,6 @@ definitions:
       user_id_legacy:
         type: string
         x-go-name: UserIDLegacy
-      value:
-        format: double
-        type: number
-        x-go-name: Value
     type: object
     x-go-package: go-klikdokter/app/model/request
   CreateRatingTypeNumRequest:
@@ -226,6 +256,16 @@ definitions:
     type: object
     x-go-name: RatingsCol
     x-go-package: go-klikdokter/app/model/entity
+  RatingByType:
+    properties:
+      uid:
+        type: string
+        x-go-name: ID
+      value:
+        type: string
+        x-go-name: Value
+    type: object
+    x-go-package: go-klikdokter/app/model/request
   RatingTypeLikertResponse:
     properties:
       created_at:
@@ -540,8 +580,7 @@ definitions:
         type: string
         x-go-name: UserIDLegacy
       value:
-        format: double
-        type: number
+        type: string
         x-go-name: Value
     type: object
     x-go-package: go-klikdokter/app/model/request
@@ -595,7 +634,7 @@ paths:
       - in: body
         name: body
         schema:
-          $ref: '#/definitions/CreateRatingSubmissonRequest'
+          $ref: '#/definitions/CreateRatingSubmissionRequest'
         x-go-name: Body
       responses:
         "200":
@@ -1032,7 +1071,7 @@ paths:
       - in: body
         name: body
         schema:
-          $ref: '#/definitions/SaveRatingRequest'
+          $ref: '#/definitions/BodyUpdateRatingRequest'
         x-go-name: Body
       responses:
         "200":
@@ -1076,5 +1115,6 @@ paths:
 produces:
 - application/json
 schemes:
+- https
 - http
 swagger: "2.0"

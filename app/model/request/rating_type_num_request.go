@@ -128,9 +128,3 @@ func (req CreateRatingTypeNumRequest) Validate() error {
 		validation.Field(&req.Scale, validation.NotNil.Error((message.ErrScaleReq.Message))),
 	)
 }
-
-func (req EditRatingTypeNumRequest) Validate() error {
-	return validation.ValidateStruct(&req,
-		validation.Field(&req.Type, validation.Match(regexp.MustCompile(regexType)).Error(message.ErrTypeFormatReq.Message)),
-	)
-}

@@ -1,7 +1,7 @@
 //  KD Boilerplate Go kit:
 //   version: 1.0
 //   title: Boilerplate Go Kit Api
-//  Schemes: http
+//  Schemes: https, http
 //  Host:
 //  BasePath: /rating-svc
 //  Produces:

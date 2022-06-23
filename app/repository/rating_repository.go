@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
@@ -33,7 +34,7 @@ type RatingRepository interface {
 	GetRatingTypeNums(filter request.Filter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingTypesNumCol, *base.Pagination, error)
 
 	// Rating submission
-	CreateRatingSubmission(input request.CreateRatingSubmissonRequest) (*entity.RatingSubmisson, error)
+	CreateRatingSubmission(input []request.SaveRatingSubmission) (*[]entity.RatingSubmisson, error)
 	UpdateRatingSubmission(input request.UpdateRatingSubmissonRequest, id primitive.ObjectID) error
 	DeleteSubmission(id primitive.ObjectID) error
 	GetRatingSubmissionById(id primitive.ObjectID) (*entity.RatingSubmisson, error)
@@ -47,7 +48,7 @@ type RatingRepository interface {
 
 	CreateRating(input request.SaveRatingRequest) (*entity.RatingsCol, error)
 	GetRatingById(id primitive.ObjectID) (*entity.RatingsCol, error)
-	UpdateRating(id primitive.ObjectID, input request.SaveRatingRequest) (*entity.RatingsCol, error)
+	UpdateRating(id primitive.ObjectID, input request.BodyUpdateRatingRequest) (*entity.RatingsCol, error)
 	DeleteRating(id primitive.ObjectID) error
 	GetRatingsByParams(limit, page, dir int, sort string, filter request.RatingFilter) ([]entity.RatingsCol, *base.Pagination, error)
 	GetRatingByName(name string) (*entity.RatingsCol, error)
@@ -242,11 +243,27 @@ func (r *ratingRepo) GetRatingTypeNums(filter request.Filter, page int, limit in
 	return results, pagination, nil
 }
 
-func (r *ratingRepo) CreateRatingSubmission(input request.CreateRatingSubmissonRequest) (*entity.RatingSubmisson, error) {
-
+func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission) (*[]entity.RatingSubmisson, error) {
 	ratingSubmissionColl := r.db.Collection("ratingSubCol")
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
-	var ratingSubmission entity.RatingSubmisson
+	var ratingSubmission []entity.RatingSubmisson
+	var docs []interface{}
+	for _, args := range input {
+		docs = append(docs, bson.D{
+			{"rating_id", args.RatingID},
+			{"user_id", args.UserID},
+			{"user_id_legacy", args.UserIDLegacy},
+			{"comment", args.Comment},
+			{"value", args.Value},
+			{"ip_address", args.IPAddress},
+			{"user_agent", args.UserAgent},
+			{"created_at", time.Now().In(util.Loc)},
+			{"updated_at", time.Now().In(util.Loc)},
+		})
+	}
+	if len(docs) < 1 {
+		return nil, mongo.ErrNilValue
+	}
 
 	// transaction
 	errTransaction := r.db.Client().UseSession(ctx, func(sessionContext mongo.SessionContext) error {
@@ -254,17 +271,7 @@ func (r *ratingRepo) CreateRatingSubmission(input request.CreateRatingSubmissonR
 		if err != nil {
 			return err
 		}
-		result, err := ratingSubmissionColl.InsertOne(ctx, bson.M{
-			"rating_id":      input.RatingID,
-			"user_id":        input.UserID,
-			"user_id_legacy": input.UserIDLegacy,
-			"comment":        input.Comment,
-			"value":          input.Value,
-			"ip_address":     input.IPAddress,
-			"user_agent":     input.UserAgent,
-			"created_at":     time.Now().In(util.Loc),
-			"updated_at":     time.Now().In(util.Loc),
-		})
+		result, err := ratingSubmissionColl.InsertMany(ctx, docs)
 
 		if err != nil {
 			sessionContext.AbortTransaction(sessionContext)
@@ -273,7 +280,11 @@ func (r *ratingRepo) CreateRatingSubmission(input request.CreateRatingSubmissonR
 		if err = sessionContext.CommitTransaction(sessionContext); err != nil {
 			return err
 		}
-		ratingSubmission.ID = result.InsertedID.(primitive.ObjectID)
+		for _, argEs := range ratingSubmission {
+			for _, args := range result.InsertedIDs {
+				argEs.ID = args.(primitive.ObjectID)
+			}
+		}
 		return nil
 	})
 	if errTransaction != nil {
@@ -291,7 +302,7 @@ func (r *ratingRepo) UpdateRatingSubmission(input request.UpdateRatingSubmissonR
 		UserID:       input.UserID,
 		UserIDLegacy: input.UserIDLegacy,
 		Comment:      input.Comment,
-		Value:        input.Value,
+		Value:        fmt.Sprintf("%f", input.Value),
 		UpdatedAt:    timeUpdate,
 	}
 	filter := bson.D{{"_id", id}}
@@ -451,7 +462,7 @@ func (r *ratingRepo) GetRatingById(id primitive.ObjectID) (*entity.RatingsCol, e
 	return &rating, nil
 }
 
-func (r *ratingRepo) UpdateRating(id primitive.ObjectID, input request.SaveRatingRequest) (*entity.RatingsCol, error) {
+func (r *ratingRepo) UpdateRating(id primitive.ObjectID, input request.BodyUpdateRatingRequest) (*entity.RatingsCol, error) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
 	rating := entity.RatingsCol{
 		Name:           input.Name,
@@ -474,7 +485,7 @@ func (r *ratingRepo) UpdateRating(id primitive.ObjectID, input request.SaveRatin
 		err1 := r.db.Collection(entity.RatingsCol{}.CollectionName()).FindOneAndUpdate(context.Background(), filter, data, &options.FindOneAndUpdateOptions{})
 		if err1 != nil {
 			sessionContext.AbortTransaction(sessionContext)
-			return err
+			return err1.Err()
 		}
 		if err = sessionContext.CommitTransaction(sessionContext); err != nil {
 			return err
@@ -639,6 +650,9 @@ func (r *ratingRepo) GetListRatingSubmissions(filter request.RatingSubmissionFil
 	var results []entity.RatingSubmisson
 	startDate, _ := time.Parse(util.LayoutDateOnly, filter.StartDate)
 	endDate, _ := time.Parse(util.LayoutDateOnly, filter.EndDate)
+	if errD := endDate.Before(startDate); errD == true {
+		return nil, nil, errors.New("end_date can not before start_date")
+	}
 	bsonUserUid := bson.D{}
 	bsonScore := bson.D{}
 	bsonRating := bson.D{}

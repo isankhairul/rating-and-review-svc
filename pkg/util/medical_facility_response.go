@@ -1,11 +1,11 @@
 package util
 
 type ResponseHttp struct {
-	Meta metaResponse `json:"meta"`
+	Meta MetaResponse `json:"meta"`
 	Data Data         `json:"data"`
 }
 
-type metaResponse struct {
+type MetaResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Time    string `json:"time"`

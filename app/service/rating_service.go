@@ -14,6 +14,7 @@ import (
 	"go-klikdokter/pkg/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -27,7 +28,7 @@ type RatingService interface {
 	GetRatingTypeNums(input request.GetRatingTypeNumsRequest) ([]entity.RatingTypesNumCol, *base.Pagination, message.Message)
 
 	// Rating submission
-	CreateRatingSubmission(input request.CreateRatingSubmissonRequest) message.Message
+	CreateRatingSubmission(input request.CreateRatingSubmissionRequest) message.Message
 	UpdateRatingSubmission(input request.UpdateRatingSubmissonRequest) message.Message
 	GetRatingSubmission(id string) (*response.RatingSubmissonResponse, message.Message)
 	GetListRatingSubmissions(input request.ListRatingSubmissionRequest) ([]response.RatingSubmissonResponse, *base.Pagination, message.Message)
@@ -46,19 +47,21 @@ type RatingService interface {
 	UpdateRating(input request.UpdateRatingRequest) message.Message
 	DeleteRating(id string) message.Message
 	GetListRatings(input request.GetListRatingsRequest) ([]entity.RatingsCol, *base.Pagination, message.Message)
-	GetListRatingSummary(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryResponse, *base.Pagination, message.Message)
+	GetListRatingSummary(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryResponse, message.Message)
 }
 
 type ratingServiceImpl struct {
-	logger     log.Logger
-	ratingRepo repository.RatingRepository
+	logger          log.Logger
+	ratingRepo      repository.RatingRepository
+	medicalFacility util.MedicalFacilitySvc
 }
 
 func NewRatingService(
 	lg log.Logger,
 	rr repository.RatingRepository,
+	mf util.MedicalFacilitySvc,
 ) RatingService {
-	return &ratingServiceImpl{lg, rr}
+	return &ratingServiceImpl{lg, rr, mf}
 }
 
 // swagger:route POST /api/v1/rating-types-numeric/ RatingTypeNum createRatingTypeNum
@@ -72,7 +75,7 @@ func (s *ratingServiceImpl) CreateRatingTypeNum(input request.CreateRatingTypeNu
 	if *input.Scale < 0 || *input.Scale > 2 {
 		return nil, message.ErrScaleValueReq
 	}
-	if *input.MaxScore < *input.MinScore {
+	if *input.MaxScore <= *input.MinScore {
 		return nil, message.ErrMaxMin
 	}
 	check := true
@@ -120,30 +123,22 @@ func (s *ratingServiceImpl) GetRatingTypeNumById(input request.GetRatingTypeNumR
 	return result, message.SuccessMsg
 }
 
-// swagger:route PUT /api/v1/rating-types-numeric/{id} RatingTypeNum updateRatingTypeNum
-// Update Numeric Rating Type
-//
-// security:
-// responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
-func (s *ratingServiceImpl) UpdateRatingTypeNum(input request.EditRatingTypeNumRequest) message.Message {
-	objectId, err := primitive.ObjectIDFromHex(input.Id)
-	if err != nil {
-		return message.ErrNoData
-	}
+func checkConditionUpdateRatingTypeNum(s *ratingServiceImpl, input request.EditRatingTypeNumRequest) message.Message {
 	rating, err := s.ratingRepo.GetRatingByType(input.Id)
 	if err != nil && err != mongo.ErrNoDocuments {
 		return message.FailedMsg
 	}
-
 	if rating != nil {
+		msg := util.ValidInputUpdateRatingTypeNumRated(input)
+		if msg != message.SuccessMsg {
+			return msg
+		}
 		submissison, err := s.ratingRepo.GetRatingSubmissionByRatingId(rating.ID.Hex())
 		if err != nil && err != mongo.ErrNoDocuments {
 			return message.FailedMsg
 		}
 		if submissison != nil {
-			msg := util.ValidInputUpdateRatingTypeNum(input)
+			msg := util.ValidInputUpdateRatingTypeNumSubmission(input)
 			if msg != message.SuccessMsg {
 				return msg
 			}
@@ -156,6 +151,26 @@ func (s *ratingServiceImpl) UpdateRatingTypeNum(input request.EditRatingTypeNumR
 				Message: "interval must be " + strconv.Itoa(interval),
 			}
 		}
+	}
+	return message.SuccessMsg
+}
+
+// swagger:route PUT /api/v1/rating-types-numeric/{id} RatingTypeNum updateRatingTypeNum
+// Update Numeric Rating Type
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) UpdateRatingTypeNum(input request.EditRatingTypeNumRequest) message.Message {
+	objectId, err := primitive.ObjectIDFromHex(input.Id)
+	if err != nil {
+		return message.ErrNoData
+	}
+
+	msg := checkConditionUpdateRatingTypeNum(s, input)
+	if msg != message.SuccessMsg {
+		return msg
 	}
 
 	err = s.ratingRepo.UpdateRatingTypeNum(objectId, input)
@@ -187,7 +202,6 @@ func (s *ratingServiceImpl) DeleteRatingTypeNumById(input request.GetRatingTypeN
 	if err != nil && err != mongo.ErrNoDocuments {
 		return message.FailedMsg
 	}
-
 	if rating != nil {
 		submissison, err := s.ratingRepo.GetRatingSubmissionByRatingId(rating.ID.Hex())
 		if err != nil && err != mongo.ErrNoDocuments {
@@ -237,11 +251,14 @@ func (s *ratingServiceImpl) GetRatingTypeNums(input request.GetRatingTypeNumsReq
 	if input.Filter != "" {
 		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
 		if errMarshal != nil {
-			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+			return nil, nil, message.ErrUnmarshalRequest
 		}
 	}
 	ratingTypeNums, pagination, err := s.ratingRepo.GetRatingTypeNums(filter, input.Page, input.Limit, sort, dir)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil, message.ErrNoData
+		}
 		return nil, nil, message.FailedMsg
 	}
 	results := make([]entity.RatingTypesNumCol, 0)
@@ -260,64 +277,171 @@ func (s *ratingServiceImpl) GetRatingTypeNums(input request.GetRatingTypeNumsReq
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
-func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSubmissonRequest) message.Message {
+func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSubmissionRequest) message.Message {
 
 	// One of the following user_id and user_id_legacy must be filled.
 	if input.UserID == nil && input.UserIDLegacy == nil {
 		return message.UserUIDRequired
 	}
 
-	//The value must be valid according to requirements of rating type
-	// Find rating_type_id by rating_id
-	objecRatingtId, _ := primitive.ObjectIDFromHex(input.RatingID)
-	findT, errT := s.ratingRepo.FindRatingByRatingID(objecRatingtId)
-	if findT == nil || errT != nil {
-		return message.ErrRatingNotFound
-	}
+	var saveReq = make([]request.SaveRatingSubmission, 0)
 
-	// Find intervals of Numeric Rating Type by rating_type_id
-	objecRatingNumericTypeId, _ := primitive.ObjectIDFromHex(findT.RatingTypeId)
-	findN, errN := s.ratingRepo.FindRatingNumericTypeByRatingTypeID(objecRatingNumericTypeId)
-	if findN == nil || errN != nil {
-		return message.ErrRatingNumericTypeNotFound
-	}
+	for _, argRatings := range input.Ratings {
 
-	// The value must be valid according to requirements of rating type
-	values := util.ValidValue(*findN.MinScore, *findN.MaxScore, *findN.Intervals, *findN.Scale)
-	isInclude := util.ValidateValue(values, *input.Value)
-	if isInclude == false {
-		return message.Message{
-			Code:    message.ValidationFailCode,
-			Message: "value must be included in : " + fmt.Sprintf("%v", values),
+		//The value must be valid according to requirements of rating type
+		// Find rating_type_id by rating_id
+		objectRatingId, err := primitive.ObjectIDFromHex(argRatings.ID)
+		if err != nil {
+			return message.ErrRatingNotFound
+		}
+		rating, err := s.ratingRepo.FindRatingByRatingID(objectRatingId)
+		if err != nil {
+			return message.ErrRatingNotFound
+		}
+		if rating == nil || *rating.Status == false {
+			return message.ErrRatingNotFound
+		}
+
+		// Validate value
+		objectRatingTypeId, err := primitive.ObjectIDFromHex(rating.RatingTypeId)
+		if err != nil {
+			return message.ErrRatingNumericTypeNotFound
+		}
+		var validateMsg message.Message
+
+		// Numeric type
+		ratingNumericType, err := s.ratingRepo.FindRatingNumericTypeByRatingTypeID(objectRatingTypeId)
+		if ratingNumericType == nil || *ratingNumericType.Status == false || err != nil {
+			validateMsg = message.ErrRatingNumericTypeNotFound
+		} else {
+			value, er := strconv.ParseFloat(*argRatings.Value, 64)
+			if er != nil {
+				return message.ErrValueFormat
+			}
+			validateMsg = util.ValidateTypeNumeric(ratingNumericType, value)
+		}
+
+		if validateMsg.Code == message.ValidationFailCode {
+			return validateMsg
+		}
+
+		// Likert type
+		if validateMsg == message.ErrRatingNumericTypeNotFound {
+			ratingTypeLikert, err := s.ratingRepo.GetRatingTypeLikertByIdAndStatus(objectRatingTypeId)
+			if err != nil {
+				if errors.Is(mongo.ErrNoDocuments, err) {
+					return message.ErrTypeNotFound
+				}
+				return message.FailedMsg
+			}
+			if ratingTypeLikert == nil {
+				return message.ErrTypeNotFound
+			}
+			strValue := strings.Split(*argRatings.Value, ",")
+			if validateErr, validList := util.ValidateLikertType(ratingTypeLikert, strValue); validateErr != nil {
+				return message.Message{
+					Code:    message.ValidationFailCode,
+					Message: "value must be integer and include in " + fmt.Sprintf("%v", validList),
+				}
+			}
+		}
+
+		// A submission with a combination of either (rating_id and user_id) OR (rating_id and user_id_legacy) is allowed once
+		if input.UserID != nil && input.UserIDLegacy != nil && *input.UserID != "" && *input.UserIDLegacy != "" {
+			ratingSubmission, err := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID)
+			if ratingSubmission != nil && err == nil {
+				return message.UserRated
+			}
+			ratingSubmission, err = s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID)
+			if ratingSubmission != nil && err == nil {
+				return message.UserRated
+			}
+		}
+		if input.UserID == nil || *input.UserID == "" {
+			ratingSubmission, err := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID)
+			if ratingSubmission != nil && err == nil {
+				return message.UserRated
+			}
+		}
+		if input.UserIDLegacy == nil || *input.UserIDLegacy == "" {
+			ratingSubmission, err := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID)
+			if ratingSubmission != nil && err == nil {
+				return message.UserRated
+			}
+		}
+
+		// A submission with a combination of either (rating_id and user_id) OR (rating_id and user_id_legacy) is allowed once
+		if input.UserID != nil && input.UserIDLegacy != nil && *input.UserID != "" && *input.UserIDLegacy != "" {
+			ratingSubmission, err := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID)
+			if ratingSubmission != nil && err == nil {
+				return message.UserRated
+			}
+			ratingSubmission, err = s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID)
+			if ratingSubmission != nil && err == nil {
+				return message.UserRated
+			}
+		}
+		if input.UserID == nil || *input.UserID == "" {
+			ratingSubmission, err := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID)
+			if ratingSubmission != nil && err == nil {
+				return message.UserRated
+			}
+		}
+		if input.UserIDLegacy == nil || *input.UserIDLegacy == "" {
+			ratingSubmission, err := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID)
+			if ratingSubmission != nil && err == nil {
+				return message.UserRated
+			}
+		}
+
+		//The maximum length of user_agent allowed is 200 characters. Crop at 197 characters with triple dots (...) at the end.
+		if len(strings.TrimSpace(input.UserAgent)) > 200 {
+			return message.UserAgentTooLong
+		}
+
+		if isExisted := isIdExisted(saveReq, argRatings.ID); isExisted == false {
+			return message.ErrCannotSameRatingId
+		}
+
+		if ratingNumericType == nil {
+			saveReq = append(saveReq, request.SaveRatingSubmission{
+				RatingID:     argRatings.ID,
+				Value:        argRatings.Value,
+				UserID:       input.UserID,
+				UserIDLegacy: input.UserIDLegacy,
+				Comment:      "",
+				IPAddress:    input.IPAddress,
+				UserAgent:    input.UserAgent,
+			})
+		} else {
+			saveReq = append(saveReq, request.SaveRatingSubmission{
+				RatingID:     argRatings.ID,
+				Value:        argRatings.Value,
+				UserID:       input.UserID,
+				UserIDLegacy: input.UserIDLegacy,
+				Comment:      input.Comment,
+				IPAddress:    input.IPAddress,
+				UserAgent:    input.UserAgent,
+			})
 		}
 	}
-
-	//The maximum length of user_agent allowed is 200 characters. Crop at 197 characters with triple dots (...) at the end.
-	if len(strings.TrimSpace(input.UserAgent)) > 200 {
-		return message.UserAgentTooLong
+	if len(saveReq) < 0 {
+		return message.ErrTypeNotFound
 	}
-
-	// A submission with a combination of either (rating_id and user_id) OR (rating_id and user_id_legacy) is allowed once
-	var emptyStr = ""
-	if input.UserID == nil || input.UserID == &emptyStr {
-		findL, errL := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, input.RatingID)
-		if findL != nil || errL == nil {
-			return message.UserRated
-		}
-	}
-	if input.UserIDLegacy == nil || input.UserIDLegacy == &emptyStr {
-		find, errF := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, input.RatingID)
-		if find != nil && errF == nil {
-			return message.UserRated
-		}
-	}
-
-	_, errC := s.ratingRepo.CreateRatingSubmission(input)
-	if errC != nil {
+	_, err := s.ratingRepo.CreateRatingSubmission(saveReq)
+	if err != nil {
 		return message.ErrSaveData
 	}
 	return message.SuccessMsg
+}
 
+func isIdExisted(saveReq []request.SaveRatingSubmission, ratingId string) bool {
+	for _, args := range saveReq {
+		if ratingId == args.RatingID {
+			return false
+		}
+	}
+	return true
 }
 
 // swagger:route PUT /api/v1/rating-submissions/{id} RatingSubmission ReqUpdateRatingSubmissonBody
@@ -334,41 +458,95 @@ func (s *ratingServiceImpl) UpdateRatingSubmission(input request.UpdateRatingSub
 		return message.UserUIDRequired
 	}
 
+	// find Rating submission
+	objectRatingSubmissionId, err := primitive.ObjectIDFromHex(input.ID)
+	if err != nil {
+		return message.RatingSubmissionNotFound
+	}
+	ratingSubmission, err := s.ratingRepo.GetRatingSubmissionById(objectRatingSubmissionId)
+	if err != nil || ratingSubmission == nil {
+		return message.RatingSubmissionNotFound
+	}
+
 	//The value must be valid according to requirements of rating type
 	// Find rating_type_id by rating_id
-	objecRatingtId, _ := primitive.ObjectIDFromHex(input.RatingID)
-	findT, errT := s.ratingRepo.FindRatingByRatingID(objecRatingtId)
-	if findT == nil || errT != nil {
+	objectRatingId, err := primitive.ObjectIDFromHex(input.RatingID)
+	if err != nil {
+		return message.ErrRatingNotFound
+	}
+	rating, err := s.ratingRepo.FindRatingByRatingID(objectRatingId)
+	if err != nil {
+		return message.ErrRatingNotFound
+	}
+	if rating == nil || *rating.Status == false {
 		return message.ErrRatingNotFound
 	}
 
-	// Find intervals of Numeric Rating Type by rating_type_id
-	objecRatingNumericTypeId, _ := primitive.ObjectIDFromHex(findT.RatingTypeId)
-	findN, errN := s.ratingRepo.FindRatingNumericTypeByRatingTypeID(objecRatingNumericTypeId)
-	if findN == nil || errN != nil {
-		return message.ErrRatingNumericTypeNotFound
+	// Validate value
+	objectRatingTypeId, err := primitive.ObjectIDFromHex(rating.RatingTypeId)
+	if err != nil {
+		return message.ErrTypeNotFound
+	}
+	var validateMsg message.Message
+
+	// Numeric type
+	ratingNumericType, err := s.ratingRepo.FindRatingNumericTypeByRatingTypeID(objectRatingTypeId)
+	if ratingNumericType == nil || *ratingNumericType.Status == false || err != nil {
+		validateMsg = message.ErrRatingNumericTypeNotFound
+	} else {
+		value, er := strconv.ParseFloat(*input.Value, 64)
+		if er != nil {
+			return message.ErrValueFormat
+		}
+		validateMsg = util.ValidateTypeNumeric(ratingNumericType, value)
 	}
 
-	// The value must be valid according to requirements of rating type
-	values := util.ValidValue(*findN.MinScore, *findN.MaxScore, *findN.Intervals, *findN.Scale)
-	isInclude := util.ValidateValue(values, input.Value)
-	if isInclude == false {
-		return message.Message{
-			Code:    message.ValidationFailCode,
-			Message: "value must be included in : " + fmt.Sprintf("%v", values),
+	if validateMsg.Code == message.ValidationFailCode {
+		return validateMsg
+	}
+
+	// Likert type
+	if validateMsg == message.ErrRatingNumericTypeNotFound {
+		ratingTypeLikert, err := s.ratingRepo.GetRatingTypeLikertByIdAndStatus(objectRatingTypeId)
+		if err != nil {
+			if errors.Is(mongo.ErrNoDocuments, err) {
+				return message.ErrTypeNotFound
+			}
+			return message.FailedMsg
 		}
+		if ratingTypeLikert == nil {
+			return message.ErrTypeNotFound
+		}
+		strValue := strings.Split(*input.Value, ",")
+		if validateErr, validList := util.ValidateLikertType(ratingTypeLikert, strValue); validateErr != nil {
+			return message.Message{
+				Code:    message.ValidationFailCode,
+				Message: "value must be integer and include in " + fmt.Sprintf("%v", validList),
+			}
+		}
+		input.Comment = ""
 	}
 
 	// A submission with a combination of either (rating_id and user_id) OR (rating_id and user_id_legacy) is allowed once
-	if input.UserID == nil {
-		findL, errL := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, input.RatingID)
-		if findL != nil || errL == nil {
+	if input.UserID != nil && input.UserIDLegacy != nil && *input.UserID != "" && *input.UserIDLegacy != "" {
+		ratingSubmission, err = s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, input.ID)
+		if ratingSubmission != nil && err == nil {
+			return message.UserRated
+		}
+		ratingSubmission, err = s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, input.ID)
+		if ratingSubmission != nil && err == nil {
 			return message.UserRated
 		}
 	}
-	if input.UserIDLegacy == nil {
-		find, errF := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, input.RatingID)
-		if find != nil && errF == nil {
+	if input.UserID == nil || *input.UserID == "" {
+		ratingSubmission, err = s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, input.ID)
+		if ratingSubmission != nil && err == nil {
+			return message.UserRated
+		}
+	}
+	if input.UserIDLegacy == nil || *input.UserIDLegacy == "" {
+		ratingSubmission, err = s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, input.ID)
+		if ratingSubmission != nil && err == nil {
 			return message.UserRated
 		}
 	}
@@ -394,7 +572,6 @@ func (s *ratingServiceImpl) DeleteRatingSubmission(id string) message.Message {
 	if err != nil {
 		return message.ErrDataNotFound
 	}
-
 	err = s.ratingRepo.DeleteSubmission(objectId)
 	if err != nil {
 		if err.Error() == "user not found" {
@@ -417,7 +594,6 @@ func (s *ratingServiceImpl) GetRatingSubmission(id string) (*response.RatingSubm
 	if err != nil {
 		return nil, message.ErrDataNotFound
 	}
-
 	get, err := s.ratingRepo.GetRatingSubmissionById(objectId)
 	if err != nil {
 		fmt.Println("err.Error()", err.Error())
@@ -465,12 +641,14 @@ func (s *ratingServiceImpl) GetListRatingSubmissions(input request.ListRatingSub
 	if input.Filter != "" {
 		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
 		if errMarshal != nil {
-			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+			return nil, nil, message.FailedMsg
 		}
 	}
 	ratingSubmissions, pagination, err := s.ratingRepo.GetListRatingSubmissions(filter, input.Page, input.Limit, input.Sort, dir)
 	if err != nil || ratingSubmissions == nil {
-		return nil, nil, message.FailedMsg
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil, message.ErrNoData
+		}
 	}
 
 	results := make([]response.RatingSubmissonResponse, 0)
@@ -530,7 +708,6 @@ func (s *ratingServiceImpl) GetRatingTypeLikertById(input request.GetRatingTypeL
 	if err != nil {
 		return nil, message.ErrNoData
 	}
-
 	result, err := s.ratingRepo.GetRatingTypeLikertById(objectId)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -560,6 +737,27 @@ func (s *ratingServiceImpl) UpdateRatingTypeLikert(input request.SaveRatingTypeL
 			return message.ErrNoData
 		}
 		return message.FailedMsg
+	}
+
+	rating, err := s.ratingRepo.GetRatingByType(input.Id)
+	if err != nil && err != mongo.ErrNoDocuments {
+		return message.FailedMsg
+	}
+	if rating != nil {
+		errMsg := util.ValidInputUpdateRatingTypeLikertInRating(input)
+		if errMsg.Message != "" {
+			return errMsg
+		}
+		submissison, err := s.ratingRepo.GetRatingSubmissionByRatingId(rating.ID.Hex())
+		if err != nil && err != mongo.ErrNoDocuments {
+			return message.FailedMsg
+		}
+		if submissison != nil {
+			errMsg = util.ValidInputUpdateRatingTypeLikertInSubmission(input)
+			if errMsg.Message != "" {
+				return errMsg
+			}
+		}
 	}
 
 	errMsg := validateNumStatement(input)
@@ -593,7 +791,6 @@ func (s *ratingServiceImpl) DeleteRatingTypeLikertById(input request.GetRatingTy
 	if err != nil && err != mongo.ErrNoDocuments {
 		return message.FailedMsg
 	}
-
 	if rating != nil {
 		submissison, err := s.ratingRepo.GetRatingSubmissionByRatingId(rating.ID.Hex())
 		if err != nil && err != mongo.ErrNoDocuments {
@@ -642,12 +839,15 @@ func (s *ratingServiceImpl) GetRatingTypeLikerts(input request.GetRatingTypeLike
 	if input.Filter != "" {
 		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
 		if errMarshal != nil {
-			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+			return nil, nil, message.FailedMsg
 		}
 	}
 
 	ratingTypeLikerts, pagination, err := s.ratingRepo.GetRatingTypeLikerts(filter, input.Page, input.Limit, input.Sort, dir)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil, message.ErrNoData
+		}
 		return nil, nil, message.FailedMsg
 	}
 
@@ -666,26 +866,20 @@ func (s *ratingServiceImpl) GetRatingTypeLikerts(input request.GetRatingTypeLike
 // responses:
 //  200: SuccessResponse
 func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*entity.RatingsCol, message.Message) {
+
+	if input.Status == nil {
+		status := true
+		input.Status = &status
+	}
+
 	// check source exist
-	source, err := util.CallGetDetailMedicalFacility(input.SourceUid)
+	source, err := s.medicalFacility.CallGetDetailMedicalFacility(input.SourceUid)
 	if err != nil {
 		return nil, message.ErrFailedToCallGetMedicalFacility
 	}
 
 	if source.Meta.Code != message.GetMedicalFacilitySuccess.Code {
 		return nil, message.ErrSourceNotExist
-	}
-
-	// check duplicate name
-	rating, err := s.ratingRepo.GetRatingByName(input.Name)
-	if err != nil {
-		if !errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, message.FailedMsg
-		}
-	}
-
-	if rating != nil {
-		return nil, message.ErrDuplicateRatingName
 	}
 
 	// check rating type exist
@@ -722,6 +916,9 @@ func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*enti
 
 	result, err := s.ratingRepo.CreateRating(input)
 	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return nil, message.ErrDuplicateRatingName
+		}
 		return nil, message.FailedMsg
 	}
 	return result, message.SuccessMsg
@@ -761,7 +958,7 @@ func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) mess
 		return message.ErrDataNotFound
 	}
 
-	record, err := s.ratingRepo.GetRatingById(objectId)
+	_, err = s.ratingRepo.GetRatingById(objectId)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return message.ErrDataNotFound
@@ -770,63 +967,74 @@ func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) mess
 	}
 
 	// check source exist
-	source, err := util.CallGetDetailMedicalFacility(input.Body.SourceUid)
-	if err != nil {
-		return message.ErrFailedToCallGetMedicalFacility
+	if input.Body.SourceUid != "" {
+		source, err := s.medicalFacility.CallGetDetailMedicalFacility(input.Body.SourceUid)
+		if err != nil {
+			return message.ErrFailedToCallGetMedicalFacility
+		}
+
+		if source.Meta.Code != message.GetMedicalFacilitySuccess.Code {
+			return message.ErrSourceNotExist
+		}
 	}
 
-	if source.Meta.Code != message.GetMedicalFacilitySuccess.Code {
-		return message.ErrSourceNotExist
+	submission, err := s.ratingRepo.GetRatingSubmissionByRatingId(input.Id)
+	if err != nil && err != mongo.ErrNoDocuments {
+		return message.FailedMsg
+	}
+	if submission != nil {
+		errMsg := util.ValidInputUpdateRatingInSubmisson(input)
+		if errMsg.Message != "" {
+			return errMsg
+		}
 	}
 
-	// check duplicate name if name changed
-	if record.Name != input.Body.Name {
-		rating, err := s.ratingRepo.GetRatingByName(input.Body.Name)
+	// check rating type exist
+	if input.Body.RatingTypeId != "" {
+		if input.Body.RatingType == "" {
+			return message.ErrRatingTypeNotExist
+		}
+
+		ratingTypeId, err := primitive.ObjectIDFromHex(input.Body.RatingTypeId)
+		if err != nil {
+			return message.ErrRatingTypeNotExist
+		}
+
+		ratingTypeNum, err := s.ratingRepo.GetRatingTypeNumByIdAndStatus(ratingTypeId)
 		if err != nil {
 			if !errors.Is(err, mongo.ErrNoDocuments) {
 				return message.FailedMsg
 			}
 		}
-		if rating != nil {
-			return message.ErrDuplicateRatingName
+
+		ratingTypeLikert, err := s.ratingRepo.GetRatingTypeLikertByIdAndStatus(ratingTypeId)
+		if err != nil {
+			if !errors.Is(err, mongo.ErrNoDocuments) {
+				return message.FailedMsg
+			}
 		}
-	}
 
-	// check rating type exist
-	ratingTypeId, err := primitive.ObjectIDFromHex(input.Body.RatingTypeId)
-	if err != nil {
-		return message.ErrRatingTypeNotExist
-	}
-
-	ratingTypeNum, err := s.ratingRepo.GetRatingTypeNumByIdAndStatus(ratingTypeId)
-	if err != nil {
-		if !errors.Is(err, mongo.ErrNoDocuments) {
-			return message.FailedMsg
+		if ratingTypeNum == nil && ratingTypeLikert == nil {
+			return message.ErrRatingTypeNotExist
 		}
-	}
 
-	ratingTypeLikert, err := s.ratingRepo.GetRatingTypeLikertByIdAndStatus(ratingTypeId)
-	if err != nil {
-		if !errors.Is(err, mongo.ErrNoDocuments) {
-			return message.FailedMsg
+		if ratingTypeNum != nil && ratingTypeNum.Type != input.Body.RatingType {
+			return message.ErrRatingTypeNotExist
 		}
-	}
 
-	if ratingTypeNum == nil && ratingTypeLikert == nil {
-		return message.ErrRatingTypeNotExist
-	}
-
-	if ratingTypeNum != nil && ratingTypeNum.Type != input.Body.RatingType {
-		return message.ErrRatingTypeNotExist
-	}
-
-	if ratingTypeLikert != nil && ratingTypeLikert.Type != input.Body.RatingType {
+		if ratingTypeLikert != nil && ratingTypeLikert.Type != input.Body.RatingType {
+			return message.ErrRatingTypeNotExist
+		}
+	} else if input.Body.RatingType != "" {
 		return message.ErrRatingTypeNotExist
 	}
 
 	_, err = s.ratingRepo.UpdateRating(objectId, input.Body)
 	if err != nil {
-		return message.ErrSaveData
+		if mongo.IsDuplicateKeyError(err) {
+			return message.ErrDuplicateRatingName
+		}
+		return message.FailedMsg
 	}
 	return message.SuccessMsg
 }
@@ -906,29 +1114,30 @@ func (s *ratingServiceImpl) GetListRatings(input request.GetListRatingsRequest) 
 
 func validateNumStatement(input request.SaveRatingTypeLikertRequest) message.Message {
 	var errMsg message.Message
-	var data map[string]string
-	request, _ := json.Marshal(input)
-	json.Unmarshal(request, &data)
+	var myMap map[string]string
+	count := 1
+	datas, _ := json.Marshal(input)
+	json.Unmarshal(datas, &myMap)
 
 	for i := 1; i <= 10; i++ {
-		var statement string
+		var a string
 		if i < 10 {
-			statement = fmt.Sprint("statement_0", i)
+			a = fmt.Sprint("statement_0", i)
 		} else {
-			statement = fmt.Sprint("statement_", i)
+			a = fmt.Sprint("statement_", i)
 		}
-		dataStatement := data[statement]
-		if i == input.NumStatements+1 {
-			if dataStatement != "" {
+		data := myMap[a]
+		if data != "" {
+			if count == input.NumStatements+1 {
 				errMsg = message.ErrMatchNumState
 				return errMsg
 			}
-		} else if i <= input.NumStatements {
-			if dataStatement == "" {
-				errMsg = message.ErrMatchNumState
-				return errMsg
-			}
+			count++
 		}
+	}
+	if count <= input.NumStatements {
+		errMsg = message.ErrMatchNumState
+		return errMsg
 	}
 	return errMsg
 }
@@ -938,7 +1147,7 @@ func validateNumStatement(input request.SaveRatingTypeLikertRequest) message.Mes
 //
 // responses:
 //  200: RatingsCol
-func (s *ratingServiceImpl) GetListRatingSummary(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryResponse, *base.Pagination, message.Message) {
+func (s *ratingServiceImpl) GetListRatingSummary(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryResponse, message.Message) {
 	input.MakeDefaultValueIfEmpty()
 	var dir int
 	if input.Dir == "asc" {
@@ -952,59 +1161,101 @@ func (s *ratingServiceImpl) GetListRatingSummary(input request.GetListRatingSumm
 	if input.Filter != "" {
 		errMarshal := json.Unmarshal([]byte(input.Filter), &filterForRating)
 		if errMarshal != nil {
-			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+			return nil, message.ErrUnmarshalRequest
 		}
 	}
 
-	findRatings, _, errR := s.ratingRepo.GetRatingsByParams(input.Limit, input.Page, dir, input.Sort, filterForRating)
-	if errR != nil {
-		return nil, nil, message.FailedMsg
+	if len(filterForRating.SourceUid) <= 0 {
+		return nil, message.ErrSourceUidRequire
 	}
 
-	//find rating summary by score, start_date(created_at), end_date(created_at), rating_id
+	findR, _, errR := s.ratingRepo.GetRatingsByParams(input.Limit, input.Page, dir, input.Sort, filterForRating)
+	if errR != nil {
+		return nil, message.FailedMsg
+	}
+
+	//find rating summary, start_date(created_at), end_date(created_at), rating_id
 	var rates = []string{}
-	for _, args := range findRatings {
+	for _, args := range findR {
 		rates = append(rates, args.ID.Hex())
 	}
 
-	var filterForRatingSub = request.RatingSubmissionFilter{
+	var filterforRatingSub = request.RatingSubmissionFilter{
 		RatingID: rates,
 	}
 
 	if input.Filter != "" {
-		errMarshal := json.Unmarshal([]byte(input.Filter), &filterForRatingSub)
+		errMarshal := json.Unmarshal([]byte(input.Filter), &filterforRatingSub)
 		if errMarshal != nil {
-			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+			return nil, message.ErrUnmarshalRequest
 		}
 	}
 
-	findSubs, pagination, errS := s.ratingRepo.GetListRatingSubmissions(filterForRatingSub, input.Page, int64(input.Limit), input.Sort, dir)
-	if errS != nil {
-		return nil, nil, message.FailedMsg
+	findS, _, err := s.ratingRepo.GetListRatingSubmissions(filterforRatingSub, input.Page, int64(input.Limit), input.Sort, dir)
+	if err != nil {
+		return nil, message.Message{
+			Code:    message.ValidationFailCode,
+			Message: "end_date can not before start_date",
+		}
 	}
 
-	results := make([]response.RatingSummaryResponse, 0)
+	var min, max float64
+	if filterforRatingSub.Score == nil {
+		min, max = 0, 10
+	} else {
+		min, max = getScore(filterforRatingSub.Score)
+	}
 
-	for _, args := range findSubs {
-		for _, argsR := range findRatings {
-			if argsR.ID.Hex() == args.RatingID {
-				totalReviews := len(findSubs)
-				results = append(results, response.RatingSummaryResponse{
-					RatingID: args.RatingID,
-					UserID:   args.UserID,
-					//To do : get value
-					UserIDLegacy: args.UserIDLegacy,
-					TotalReview:  totalReviews,
-					Value:        args.Value,
-					SourceUID:    argsR.SourceUid,
-					Name:         argsR.Name,
-				})
+	// Handler response
+	results := make([]response.RatingSummaryResponse, 0)
+	for _, args := range filterForRating.SourceUid {
+		var totalSub int
+		var valueRate float64
+		var avgValue float64
+		for _, argRs := range findR {
+			if argRs.SourceUid != args {
+				continue
+			}
+			for _, argSs := range findS {
+				if argSs.RatingID != argRs.ID.Hex() {
+					continue
+				}
+				value, _ := strconv.ParseFloat(argSs.Value, 64)
+				totalSub += 1
+				valueRate += value
+			}
+			avgValue = valueRate / float64(totalSub)
+			if math.IsNaN(avgValue) {
+				avgValue = 0
 			}
 		}
-	}
-	if len(findSubs) == 0 {
-		return results, pagination, message.SuccessMsg
+		avgValue = util.RoundFloatWithPrecision(avgValue, 1)
+		if filterScore(min, max, avgValue) {
+			results = append(results, response.RatingSummaryResponse{
+				SourceUID:   args,
+				TotalReview: totalSub,
+				Value:       avgValue,
+			})
+		}
 	}
 
-	return results, pagination, message.SuccessMsg
+	if len(filterForRating.SourceUid) == 0 {
+		return results, message.SuccessMsg
+	}
+
+	return results, message.SuccessMsg
+}
+
+func filterScore(min float64, max float64, value float64) bool {
+	if value >= min && value <= max {
+		return true
+	}
+	return false
+}
+
+func getScore(score []string) (float64, float64) {
+	var min, max float64
+	min, _ = strconv.ParseFloat(score[0], 64)
+	min, _ = strconv.ParseFloat(score[1], 64)
+	return min, max
 }

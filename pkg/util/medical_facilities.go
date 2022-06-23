@@ -7,7 +7,19 @@ import (
 	"net/http"
 )
 
-func CallGetDetailMedicalFacility(uid string) (*ResponseHttp, error) {
+type medicalFacility struct {
+	responseHttp ResponseHttp
+}
+
+type MedicalFacilitySvc interface {
+	CallGetDetailMedicalFacility(uid string) (*ResponseHttp, error)
+}
+
+func NewMedicalFacilitySvc(rH ResponseHttp) MedicalFacilitySvc {
+	return &medicalFacility{rH}
+}
+
+func (medicalFacility) CallGetDetailMedicalFacility(uid string) (*ResponseHttp, error) {
 	url := _struct.MedicalFacilityDomain + _struct.MedicalFacilityPath + uid
 
 	client := &http.Client{}
