@@ -21,17 +21,17 @@ type ListRatingSubmissionRequest struct {
 }
 
 type RatingSubmissionFilter struct {
-	UserID    []string  `json:"user_uid"`
-	Score     []float64 `json:"score"`
-	RatingID  []string  `json:"rating_id"`
-	StartDate string    `json:"start_date"`
-	EndDate   string    `json:"end_date"`
+	UserID    []string `json:"user_uid"`
+	Score     []string `json:"score"`
+	RatingID  []string `json:"rating_id"`
+	StartDate string   `json:"start_date"`
+	EndDate   string   `json:"end_date"`
 }
 
 // swagger:parameters ReqRatingSubmissonBody
 type ReqRatingSubmissonBody struct {
 	//  in: body
-	Body CreateRatingSubmissonRequest `json:"body"`
+	Body CreateRatingSubmissionRequest `json:"body"`
 }
 
 // swagger:parameters ReqRatingSubmissionById ReqDeleteRatingSubmissionById
@@ -54,14 +54,28 @@ type ReqUpdateRatingSubmissonBody struct {
 	Body UpdateRatingSubmissonRequest `json:"body"`
 }
 
-type CreateRatingSubmissonRequest struct {
-	RatingID     string   `json:"rating_id" bson:"rating_id"`
-	UserID       *string  `json:"user_id" bson:"user_id"`
-	UserIDLegacy *string  `json:"user_id_legacy" bson:"user_id_legacy"`
-	Comment      string   `json:"comment" bson:"comment"`
-	Value        *float64 `json:"value" bson:"value"`
-	IPAddress    string   `json:"ip_address" bson:"ip_address"`
-	UserAgent    string   `json:"user_agent" bson:"user_agent"`
+type RatingByType struct {
+	ID    string  `json:"uid" bson:"uid"`
+	Value *string `json:"value" bson:"value"`
+}
+
+type CreateRatingSubmissionRequest struct {
+	Ratings      []RatingByType `json:"ratings" bson:"ratings"`
+	UserID       *string        `json:"user_id" bson:"user_id"`
+	UserIDLegacy *string        `json:"user_id_legacy" bson:"user_id_legacy"`
+	Comment      string         `json:"comment" bson:"comment"`
+	IPAddress    string         `json:"ip_address" bson:"ip_address"`
+	UserAgent    string         `json:"user_agent" bson:"user_agent"`
+}
+
+type SaveRatingSubmission struct {
+	RatingID     string  `json:"rating_id" bson:"rating_id"`
+	UserID       *string `json:"user_id" bson:"user_id"`
+	UserIDLegacy *string `json:"user_id_legacy" bson:"user_id_legacy"`
+	Comment      string  `json:"comment" bson:"comment"`
+	Value        *string `json:"value" bson:"value"`
+	IPAddress    string  `json:"ip_address" bson:"ip_address"`
+	UserAgent    string  `json:"user_agent" bson:"user_agent"`
 }
 
 type UpdateRatingSubmissonRequest struct {
@@ -70,15 +84,21 @@ type UpdateRatingSubmissonRequest struct {
 	UserID       *string   `json:"user_id,omitempty" bson:"user_id"`
 	UserIDLegacy *string   `json:"user_id_legacy,omitempty" bson:"user_id_legacy"`
 	Comment      string    `json:"comment,omitempty" bson:"comment"`
-	Value        float64   `json:"value,omitempty" bson:"value"`
+	Value        *string   `json:"value,omitempty" bson:"value"`
 	UpdatedAt    time.Time `json:"updated_at,omitempty" bson:"updated_at"`
 }
 
-func (req CreateRatingSubmissonRequest) Validate() error {
+func (req CreateRatingSubmissionRequest) Validate() error {
 	return validation.ValidateStruct(&req,
-		validation.Field(&req.RatingID, validation.Required.Error(message.ErrReq.Message)),
-		validation.Field(&req.Value, validation.Required.Error(message.ErrReq.Message)),
+		validation.Field(&req.Ratings, validation.Required.Error(message.ErrReq.Message)),
 		validation.Field(&req.IPAddress, validation.Match(regexp.MustCompile(regexIP)).Error(message.ErrIPFormatReq.Message)),
+	)
+}
+
+func (req RatingByType) Validate() error {
+	return validation.ValidateStruct(&req,
+		validation.Field(&req.ID, validation.Required.Error(message.ErrReq.Message)),
+		validation.Field(&req.Value, validation.Required.Error(message.ErrReq.Message)),
 	)
 }
 

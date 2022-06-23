@@ -17,7 +17,25 @@ type UpdateRatingRequest struct {
 	// required: true
 	Id string `json:"id"`
 	// in: body
-	Body SaveRatingRequest `json:"body"`
+	Body BodyUpdateRatingRequest `json:"body"`
+}
+
+// swagger:model BodyUpdateRatingRequest
+type BodyUpdateRatingRequest struct {
+	// example: Rumah Sakit - RS Pondok Indah Bintaro Jaya
+	Name string `json:"name"`
+	// example: Rating Group for Rumah Sakit RS Pondok Indah Bintaro Jaya
+	Description *string `json:"description"`
+	// example: 2729
+	SourceUid string `json:"source_uid"`
+	// example: hospital
+	SourceType string `json:"source_type"`
+	// example: standard-0.0-to-5.0
+	RatingType string `json:"rating_type"`
+	// example: 629dc84ff16b9b21f357a609
+	RatingTypeId string `json:"rating_type_id"`
+	// example: true
+	CommentAllowed *bool `json:"comment_allowed"`
 }
 
 // swagger:parameters GetListRatingsRequest
@@ -71,6 +89,13 @@ func (req SaveRatingRequest) Validate() error {
 		validation.Field(&req.SourceUid, validation.Required),
 		validation.Field(&req.RatingTypeId, validation.Required),
 		validation.Field(&req.RatingType, validation.Required),
+	)
+}
+
+func (req BodyUpdateRatingRequest) Validate() error {
+	sourceType := viper.GetStringSlice("source-type")
+	return validation.ValidateStruct(&req,
+		validation.Field(&req.SourceType, validation.In(sourceType[0], sourceType[1], sourceType[2])),
 	)
 }
 

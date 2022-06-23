@@ -199,7 +199,7 @@ func decodeUpdateRatingById(ctx context.Context, r *http.Request) (rqst interfac
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
-	err = req.Validate()
+	//err = req.Validate()
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +222,7 @@ func decodeGetRatingTypeNums(ctx context.Context, r *http.Request) (rqst interfa
 }
 
 func decodeCreateRatingSubmission(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
-	var req request.CreateRatingSubmissonRequest
+	var req request.CreateRatingSubmissionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -309,7 +309,7 @@ func decodeUpdateRatingTypeLikertById(ctx context.Context, r *http.Request) (rqs
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
-	err = req.Validate()
+	//err = req.Validate()
 	if err != nil {
 		return nil, err
 	}

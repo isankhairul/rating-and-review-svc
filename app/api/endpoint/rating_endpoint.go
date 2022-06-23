@@ -129,7 +129,7 @@ func makeGetRatingTypeNums(s service.RatingService) endpoint.Endpoint {
 
 func makeCreateRatingSubmission(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
-		req := rqst.(request.CreateRatingSubmissonRequest)
+		req := rqst.(request.CreateRatingSubmissionRequest)
 		msg := s.CreateRatingSubmission(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -295,11 +295,11 @@ func makeGetListRatings(s service.RatingService) endpoint.Endpoint {
 func makGetListRatingSummary(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetListRatingSummaryRequest)
-		result, pagination, msg := s.GetListRatingSummary(req)
+		result, msg := s.GetListRatingSummary(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 		}
 
-		return base.SetHttpResponse(msg.Code, msg.Message, result, pagination), nil
+		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
 	}
 }
