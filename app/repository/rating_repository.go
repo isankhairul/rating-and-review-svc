@@ -54,6 +54,7 @@ type RatingRepository interface {
 	GetRatingTypeNumByIdAndStatus(id primitive.ObjectID) (*entity.RatingTypesNumCol, error)
 	GetRatingTypeLikertByIdAndStatus(id primitive.ObjectID) (*entity.RatingTypesLikertCol, error)
 	GetRatingByType(id string) (*entity.RatingsCol, error)
+	GetRatingBySourceUidAndSourceType(sourceUid, sourceType string) (*entity.RatingsCol, error)
 
 	CreateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) error
 	GetRatingTypeLikertById(id primitive.ObjectID) (*entity.RatingTypesLikertCol, error)
@@ -468,8 +469,6 @@ func (r *ratingRepo) UpdateRating(id primitive.ObjectID, input request.BodyUpdat
 		Description:    input.Description,
 		SourceUid:      input.SourceUid,
 		SourceType:     input.SourceType,
-		RatingType:     input.RatingType,
-		RatingTypeId:   input.RatingTypeId,
 		CommentAllowed: input.CommentAllowed,
 		UpdatedAt:      time.Now().In(util.Loc),
 	}
@@ -591,6 +590,20 @@ func (r *ratingRepo) GetRatingByType(id string) (*entity.RatingsCol, error) {
 	err := r.db.Collection(entity.RatingsCol{}.CollectionName()).FindOne(ctx, bson.M{"rating_type_id": id}).Decode(&rating)
 	if err != nil {
 
+		return nil, err
+	}
+	return &rating, nil
+}
+
+func (r *ratingRepo) GetRatingBySourceUidAndSourceType(sourceUid, sourceType string) (*entity.RatingsCol, error) {
+	var rating entity.RatingsCol
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	bsonFilter := bson.D{{"$and", bson.A{
+		bson.D{{"source_uid", sourceUid}},
+		bson.D{{"source_type", sourceType}},
+	}}}
+	err := r.db.Collection(entity.RatingsCol{}.CollectionName()).FindOne(ctx, bsonFilter).Decode(&rating)
+	if err != nil {
 		return nil, err
 	}
 	return &rating, nil

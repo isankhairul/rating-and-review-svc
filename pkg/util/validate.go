@@ -147,19 +147,6 @@ func ValidInputUpdateRatingTypeLikertInSubmission(input request.SaveRatingTypeLi
 	return errMsg
 }
 
-func ValidInputUpdateRatingInSubmisson(input request.UpdateRatingRequest) message.Message {
-	var errMsg message.Message
-	if input.Body.RatingTypeId != "" {
-		errMsg = message.ErrCannotModifiedRatingTypeId
-		return errMsg
-	}
-	if input.Body.RatingType != "" {
-		errMsg = message.ErrCannotModifiedRatingType
-		return errMsg
-	}
-	return errMsg
-}
-
 func ValidateTypeNumeric(input *entity.RatingTypesNumCol, value float64) message.Message {
 	// The value must be valid according to requirements of rating type
 	values := ValidValue(*input.MinScore, *input.MaxScore, *input.Intervals, *input.Scale)

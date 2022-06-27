@@ -30,10 +30,6 @@ type BodyUpdateRatingRequest struct {
 	SourceUid string `json:"source_uid"`
 	// example: hospital
 	SourceType string `json:"source_type"`
-	// example: standard-0.0-to-5.0
-	RatingType string `json:"rating_type"`
-	// example: 629dc84ff16b9b21f357a609
-	RatingTypeId string `json:"rating_type_id"`
 	// example: true
 	CommentAllowed *bool `json:"comment_allowed"`
 }
@@ -83,9 +79,13 @@ type DeleteRatingRequest struct {
 
 func (req SaveRatingRequest) Validate() error {
 	sourceType := viper.GetStringSlice("source-type")
+	validationSourceType := make([]interface{}, len(sourceType))
+	for i, v := range sourceType {
+		validationSourceType[i] = v
+	}
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.Name, validation.Required),
-		validation.Field(&req.SourceType, validation.Required, validation.In(sourceType[0], sourceType[1], sourceType[2])),
+		validation.Field(&req.SourceType, validation.Required, validation.In(validationSourceType...)),
 		validation.Field(&req.SourceUid, validation.Required),
 		validation.Field(&req.RatingTypeId, validation.Required),
 		validation.Field(&req.RatingType, validation.Required),
@@ -94,8 +94,12 @@ func (req SaveRatingRequest) Validate() error {
 
 func (req BodyUpdateRatingRequest) Validate() error {
 	sourceType := viper.GetStringSlice("source-type")
+	validationSourceType := make([]interface{}, len(sourceType))
+	for i, v := range sourceType {
+		validationSourceType[i] = v
+	}
 	return validation.ValidateStruct(&req,
-		validation.Field(&req.SourceType, validation.In(sourceType[0], sourceType[1], sourceType[2])),
+		validation.Field(&req.SourceType, validation.In(validationSourceType...)),
 	)
 }
 

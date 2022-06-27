@@ -14,14 +14,6 @@ definitions:
         example: Rumah Sakit - RS Pondok Indah Bintaro Jaya
         type: string
         x-go-name: Name
-      rating_type:
-        example: standard-0.0-to-5.0
-        type: string
-        x-go-name: RatingType
-      rating_type_id:
-        example: 629dc84ff16b9b21f357a609
-        type: string
-        x-go-name: RatingTypeId
       source_type:
         example: hospital
         type: string

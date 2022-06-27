@@ -73,6 +73,7 @@ var WrongScoreFilter = Message{Code: ValidationFailCode, Message: "Wrong score f
 var WrongFilter = Message{Code: ValidationFailCode, Message: "Wrong filter"}
 var ErrValueFormatForNumericType = Message{Code: ValidationFailCode, Message: "Wrong value format for numeric type"}
 var ErrLikertTypeNotFound = Message{Code: ValidationFailCode, Message: "Likert type not found"}
+var ErrExistingSourceUidAndSourceType = Message{Code: ValidationFailCode, Message: "Source uid and source type have already existed"}
 
 // Code 39000 - 39999 Server error
 var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}
