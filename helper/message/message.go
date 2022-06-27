@@ -44,7 +44,6 @@ var ErrRatingNotFound = Message{Code: DataNotFoundCode, Message: "Rating not fou
 var ErrRatingNumericTypeNotFound = Message{Code: DataNotFoundCode, Message: "Rating Numeric Type Not Found"}
 var ErrValueFormat = Message{Code: ValidationFailCode, Message: "Value is wrong format"}
 var ErrRatingTypeNotExist = Message{Code: ValidationFailCode, Message: "Rating type not exist"}
-var ErrRatingTypeIdFormatReq = Message{Code: ValidationFailCode, Message: "Rating type id is wrong format"}
 var ErrDuplicateRatingName = Message{Code: ValidationFailCode, Message: "Rating name has already existed"}
 var ErrSourceNotExist = Message{Code: ValidationFailCode, Message: "Source not exist"}
 var ErrFailedToCallGetMedicalFacility = Message{Code: ValidationFailCode, Message: "Failed to call get medical facility"}
@@ -66,12 +65,14 @@ var ErrCannotModifiedStatement = Message{Code: ValidationFailCode, Message: "Sta
 var ErrCannotModifiedNumStatement = Message{Code: ValidationFailCode, Message: "Num Statement cannot be modified because this rating type is in use and has submission"}
 var ErrCannotModifiedType = Message{Code: ValidationFailCode, Message: "Type cannot be modified because this rating type is in use"}
 var ErrSourceUidRequire = Message{Code: ValidationFailCode, Message: "Source_uid is required"}
-var NoSummary = Message{Code: ValidationFailCode, Message: "Have no rating submission yet"}
 var ErrMaxMin = Message{Code: ValidationFailCode, Message: "min_score can not be less than max_score"}
 var ErrTypeNotFound = Message{Code: ValidationFailCode, Message: "Rating type not found"}
-var OneOfTypesInvalid = Message{Code: ValidationFailCode, Message: "Numeric or Likert type is can not be created"}
 var ErrCannotSameRatingId = Message{Code: ValidationFailCode, Message: "Cannot create rating submission with same rating"}
 var RatingSubmissionNotFound = Message{Code: DataNotFoundCode, Message: "Rating submission not found"}
+var WrongScoreFilter = Message{Code: ValidationFailCode, Message: "Wrong score filter format"}
+var WrongFilter = Message{Code: ValidationFailCode, Message: "Wrong filter"}
+var ErrValueFormatForNumericType = Message{Code: ValidationFailCode, Message: "Wrong value format for numeric type"}
+var ErrLikertTypeNotFound = Message{Code: ValidationFailCode, Message: "Likert type not found"}
 var ErrExistingSourceUidAndSourceType = Message{Code: ValidationFailCode, Message: "Source uid and source type have already existed"}
 
 // Code 39000 - 39999 Server error

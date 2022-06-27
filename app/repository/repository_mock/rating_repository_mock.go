@@ -348,7 +348,11 @@ func (_m *RatingRepositoryMock) GetRatingByName(name string) (*entity.RatingsCol
 // GetRatingTypeLikertByIdAndStatus provides a mock function with given fields: id
 func (_m *RatingRepositoryMock) GetRatingTypeLikertByIdAndStatus(id primitive.ObjectID) (*entity.RatingTypesLikertCol, error) {
 	ret := _m.Mock.Called(id)
-
+	objectId2, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84820")
+	if id == objectId2 {
+		num := ret.Get(0).(entity.RatingTypesLikertCol)
+		return &num, nil
+	}
 	var r0 *entity.RatingTypesLikertCol
 	if rf, ok := ret.Get(0).(func(primitive.ObjectID) *entity.RatingTypesLikertCol); ok {
 		r0 = rf(id)

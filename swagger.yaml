@@ -561,10 +561,6 @@ definitions:
       rating_id:
         type: string
         x-go-name: RatingID
-      updated_at:
-        format: date-time
-        type: string
-        x-go-name: UpdatedAt
       user_id:
         type: string
         x-go-name: UserID

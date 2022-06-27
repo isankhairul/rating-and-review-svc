@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
@@ -303,7 +302,7 @@ func (r *ratingRepo) UpdateRatingSubmission(input request.UpdateRatingSubmissonR
 		UserID:       input.UserID,
 		UserIDLegacy: input.UserIDLegacy,
 		Comment:      input.Comment,
-		Value:        fmt.Sprintf("%f", input.Value),
+		Value:        *input.Value,
 		UpdatedAt:    timeUpdate,
 	}
 	filter := bson.D{{"_id", id}}
@@ -667,20 +666,20 @@ func (r *ratingRepo) GetListRatingSubmissions(filter request.RatingSubmissionFil
 		return nil, nil, errors.New("end_date can not before start_date")
 	}
 	bsonUserUid := bson.D{}
-	bsonScore := bson.D{}
 	bsonRating := bson.D{}
 	bsonDate := bson.D{}
 	if len(filter.UserID) > 0 {
 		bsonUserUid = bson.D{{"user_id", bson.D{{"$in", filter.UserID}}}}
 	}
-	if len(filter.Score) > 0 {
-		bsonScore = bson.D{{"value", bson.D{{"$in", filter.Score}}}}
-	}
 	if len(filter.RatingID) > 0 {
 		bsonRating = bson.D{{"rating_id", bson.D{{"$in", filter.RatingID}}}}
 	}
 	if len(filter.StartDate) > 0 && len(filter.EndDate) > 0 {
-		bsonDate = bson.D{{"created_at", bson.D{{"$gt", startDate}, {"$lt", endDate}}}}
+		if startDate == endDate {
+			bsonDate = bson.D{{"created_at", bson.D{{"$gt", startDate}, {"$lt", startDate.AddDate(0, 0, 1)}}}}
+		} else {
+			bsonDate = bson.D{{"created_at", bson.D{{"$gt", startDate}, {"$lt", endDate}}}}
+		}
 	}
 
 	filter1 := bson.D{{"$and",
@@ -689,10 +688,6 @@ func (r *ratingRepo) GetListRatingSubmissions(filter request.RatingSubmissionFil
 			bson.D{{"$or",
 				bson.A{
 					bsonUserUid,
-				}}},
-			bson.D{{"$or",
-				bson.A{
-					bsonScore,
 				}}},
 			bson.D{{"$or",
 				bson.A{
