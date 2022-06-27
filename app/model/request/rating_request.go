@@ -79,9 +79,13 @@ type DeleteRatingRequest struct {
 
 func (req SaveRatingRequest) Validate() error {
 	sourceType := viper.GetStringSlice("source-type")
+	validationSourceType := make([]interface{}, len(sourceType))
+	for i, v := range sourceType {
+		validationSourceType[i] = v
+	}
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.Name, validation.Required),
-		validation.Field(&req.SourceType, validation.Required, validation.In(sourceType[0], sourceType[1], sourceType[2])),
+		validation.Field(&req.SourceType, validation.Required, validation.In(validationSourceType...)),
 		validation.Field(&req.SourceUid, validation.Required),
 		validation.Field(&req.RatingTypeId, validation.Required),
 		validation.Field(&req.RatingType, validation.Required),
@@ -90,8 +94,12 @@ func (req SaveRatingRequest) Validate() error {
 
 func (req BodyUpdateRatingRequest) Validate() error {
 	sourceType := viper.GetStringSlice("source-type")
+	validationSourceType := make([]interface{}, len(sourceType))
+	for i, v := range sourceType {
+		validationSourceType[i] = v
+	}
 	return validation.ValidateStruct(&req,
-		validation.Field(&req.SourceType, validation.In(sourceType[0], sourceType[1], sourceType[2])),
+		validation.Field(&req.SourceType, validation.In(validationSourceType...)),
 	)
 }
 
