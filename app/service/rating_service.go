@@ -1019,7 +1019,7 @@ func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) mess
 			}
 		}
 
-		if rating != nil && rating.SourceUid == input.Body.SourceUid && rating.SourceType == input.Body.SourceType {
+		if rating != nil {
 			return message.ErrExistingSourceUidAndSourceType
 		}
 	}
