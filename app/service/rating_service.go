@@ -143,15 +143,15 @@ func checkConditionUpdateRatingTypeNum(s *ratingServiceImpl, input request.EditR
 				return msg
 			}
 		}
-	} else {
-		interval := util.ValidInterval(*input.MinScore, *input.MaxScore, *input.Scale)
-		if *input.Intervals != interval {
-			return message.Message{
-				Code:    message.ValidationFailCode,
-				Message: "interval must be " + strconv.Itoa(interval),
-			}
+	}
+	interval := util.ValidInterval(*input.MinScore, *input.MaxScore, *input.Scale)
+	if *input.Intervals != interval {
+		return message.Message{
+			Code:    message.ValidationFailCode,
+			Message: "interval must be " + strconv.Itoa(interval),
 		}
 	}
+
 	return message.SuccessMsg
 }
 
