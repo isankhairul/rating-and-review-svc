@@ -21,11 +21,11 @@ type ListRatingSubmissionRequest struct {
 }
 
 type RatingSubmissionFilter struct {
-	UserID    []string `json:"user_uid"`
-	Score     []string `json:"score"`
-	RatingID  []string `json:"rating_id"`
-	StartDate string   `json:"start_date"`
-	EndDate   string   `json:"end_date"`
+	UserID    []string  `json:"user_uid"`
+	Score     []float64 `json:"score"`
+	RatingID  []string  `json:"rating_id"`
+	StartDate string    `json:"start_date"`
+	EndDate   string    `json:"end_date"`
 }
 
 // swagger:parameters ReqRatingSubmissonBody
@@ -85,7 +85,7 @@ type UpdateRatingSubmissonRequest struct {
 	UserIDLegacy *string   `json:"user_id_legacy,omitempty" bson:"user_id_legacy"`
 	Comment      string    `json:"comment,omitempty" bson:"comment"`
 	Value        *string   `json:"value,omitempty" bson:"value"`
-	UpdatedAt    time.Time `json:"updated_at,omitempty" bson:"updated_at"`
+	UpdatedAt    time.Time `json:"-,omitempty" bson:"updated_at"`
 }
 
 func (req CreateRatingSubmissionRequest) Validate() error {

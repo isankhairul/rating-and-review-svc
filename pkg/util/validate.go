@@ -6,6 +6,7 @@ import (
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/helper/message"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strconv"
 )
 
@@ -225,6 +226,52 @@ func ValidateLikertType(input *entity.RatingTypesLikertCol, value []string) (err
 func IsInclude(arrValue []int, value float64) bool {
 	for _, args := range arrValue {
 		if int(value) == args {
+			return true
+		}
+	}
+	return false
+}
+
+func ValidateUserIdAndUserIdLegacy(ratingId string, id *string, idLegacy *string, ratingSubmission *entity.RatingSubmisson, err error) bool {
+	if ratingSubmission != nil {
+		if ratingSubmission.RatingID == ratingId && ratingSubmission.UserID != nil {
+			if *ratingSubmission.UserID == *id {
+				return true
+			}
+		}
+
+		if ratingSubmission.RatingID == ratingId && ratingSubmission.UserIDLegacy != nil {
+			if *ratingSubmission.UserIDLegacy == *idLegacy {
+				return true
+			}
+		}
+
+		if err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+func ValidateUserIdAndUserIdLegacyForUpdate(subId primitive.ObjectID, ratingId primitive.ObjectID, id *string, idLegacy *string, ratingSubmission *entity.RatingSubmisson, err error) bool {
+	if ratingSubmission != nil {
+		if ratingSubmission.ID == subId {
+			return false
+		}
+
+		if ratingSubmission.RatingID == ratingId.Hex() && ratingSubmission.UserID != nil {
+			if *ratingSubmission.UserID == *id {
+				return true
+			}
+		}
+
+		if ratingSubmission.RatingID == ratingId.Hex() && ratingSubmission.UserIDLegacy != nil {
+			if *ratingSubmission.UserIDLegacy == *idLegacy {
+				return true
+			}
+		}
+
+		if err == nil {
 			return true
 		}
 	}
