@@ -30,10 +30,6 @@ type BodyUpdateRatingRequest struct {
 	SourceUid string `json:"source_uid"`
 	// example: hospital
 	SourceType string `json:"source_type"`
-	// example: standard-0.0-to-5.0
-	RatingType string `json:"rating_type"`
-	// example: 629dc84ff16b9b21f357a609
-	RatingTypeId string `json:"rating_type_id"`
 	// example: true
 	CommentAllowed *bool `json:"comment_allowed"`
 }

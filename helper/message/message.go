@@ -72,6 +72,7 @@ var ErrTypeNotFound = Message{Code: ValidationFailCode, Message: "Rating type no
 var OneOfTypesInvalid = Message{Code: ValidationFailCode, Message: "Numeric or Likert type is can not be created"}
 var ErrCannotSameRatingId = Message{Code: ValidationFailCode, Message: "Cannot create rating submission with same rating"}
 var RatingSubmissionNotFound = Message{Code: DataNotFoundCode, Message: "Rating submission not found"}
+var ErrExistingSourceUidAndSourceType = Message{Code: ValidationFailCode, Message: "Source uid and source type have already existed"}
 
 // Code 39000 - 39999 Server error
 var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}

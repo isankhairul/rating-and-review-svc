@@ -872,6 +872,18 @@ func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*enti
 		input.Status = &status
 	}
 
+	// check source uid and source type not exist
+	rating, err := s.ratingRepo.GetRatingBySourceUidAndSourceType(input.SourceUid, input.SourceType)
+	if err != nil {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, message.FailedMsg
+		}
+	}
+
+	if rating != nil {
+		return nil, message.ErrExistingSourceUidAndSourceType
+	}
+
 	// check source exist
 	source, err := s.medicalFacility.CallGetDetailMedicalFacility(input.SourceUid)
 	if err != nil {
@@ -958,12 +970,26 @@ func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) mess
 		return message.ErrDataNotFound
 	}
 
-	_, err = s.ratingRepo.GetRatingById(objectId)
+	currentRating, err := s.ratingRepo.GetRatingById(objectId)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return message.ErrDataNotFound
 		}
 		return message.FailedMsg
+	}
+
+	// check source uid and source type not exist
+	if currentRating.SourceUid != input.Body.SourceUid || currentRating.SourceType != input.Body.SourceType {
+		rating, err := s.ratingRepo.GetRatingBySourceUidAndSourceType(input.Body.SourceUid, input.Body.SourceType)
+		if err != nil {
+			if !errors.Is(err, mongo.ErrNoDocuments) {
+				return message.FailedMsg
+			}
+		}
+
+		if rating != nil && rating.SourceUid == input.Body.SourceUid && rating.SourceType == input.Body.SourceType {
+			return message.ErrExistingSourceUidAndSourceType
+		}
 	}
 
 	// check source exist
@@ -976,57 +1002,6 @@ func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) mess
 		if source.Meta.Code != message.GetMedicalFacilitySuccess.Code {
 			return message.ErrSourceNotExist
 		}
-	}
-
-	submission, err := s.ratingRepo.GetRatingSubmissionByRatingId(input.Id)
-	if err != nil && err != mongo.ErrNoDocuments {
-		return message.FailedMsg
-	}
-	if submission != nil {
-		errMsg := util.ValidInputUpdateRatingInSubmisson(input)
-		if errMsg.Message != "" {
-			return errMsg
-		}
-	}
-
-	// check rating type exist
-	if input.Body.RatingTypeId != "" {
-		if input.Body.RatingType == "" {
-			return message.ErrRatingTypeNotExist
-		}
-
-		ratingTypeId, err := primitive.ObjectIDFromHex(input.Body.RatingTypeId)
-		if err != nil {
-			return message.ErrRatingTypeNotExist
-		}
-
-		ratingTypeNum, err := s.ratingRepo.GetRatingTypeNumByIdAndStatus(ratingTypeId)
-		if err != nil {
-			if !errors.Is(err, mongo.ErrNoDocuments) {
-				return message.FailedMsg
-			}
-		}
-
-		ratingTypeLikert, err := s.ratingRepo.GetRatingTypeLikertByIdAndStatus(ratingTypeId)
-		if err != nil {
-			if !errors.Is(err, mongo.ErrNoDocuments) {
-				return message.FailedMsg
-			}
-		}
-
-		if ratingTypeNum == nil && ratingTypeLikert == nil {
-			return message.ErrRatingTypeNotExist
-		}
-
-		if ratingTypeNum != nil && ratingTypeNum.Type != input.Body.RatingType {
-			return message.ErrRatingTypeNotExist
-		}
-
-		if ratingTypeLikert != nil && ratingTypeLikert.Type != input.Body.RatingType {
-			return message.ErrRatingTypeNotExist
-		}
-	} else if input.Body.RatingType != "" {
-		return message.ErrRatingTypeNotExist
 	}
 
 	_, err = s.ratingRepo.UpdateRating(objectId, input.Body)
