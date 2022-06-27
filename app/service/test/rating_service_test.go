@@ -566,14 +566,11 @@ func TestDeleteRatingSubmissionWrongId(t *testing.T) {
 	assert.Equal(t, message.ErrDataNotFound, msg)
 }
 
-func TestCreateRatingSubmissionSuccess(t *testing.T) {
-	minScore := 0
-	maxScore := 5
-	intervals := 6
-	valueRate := "5"
-	numericID := "629dce7bf1f26275e0d84826"
-	likertID := "629dce7bf1f26275e0d84826"
+func TestCreateRatingSubmissionSuccessLikertType(t *testing.T) {
+	valueRate := "1"
+	likertID := "629dce7bf1f26275e0d84820"
 	objectId, _ := primitive.ObjectIDFromHex(id)
+	objectLikertId, _ := primitive.ObjectIDFromHex(likertID)
 	input := request.CreateRatingSubmissionRequest{
 		Ratings: []request.RatingByType{
 			{
@@ -592,19 +589,17 @@ func TestCreateRatingSubmissionSuccess(t *testing.T) {
 	}
 
 	rating := entity.RatingsCol{
-		RatingTypeId:   id,
+		ID:             objectId,
+		RatingTypeId:   likertID,
 		CommentAllowed: &Bool,
 		Status:         &Bool,
 	}
 
-	num := entity.RatingTypesNumCol{
-		ID:          objectId,
-		Status:      &Bool,
-		MinScore:    &minScore,
-		MaxScore:    &maxScore,
-		Description: &Desc,
-		Scale:       &Scale,
-		Intervals:   &intervals,
+	likert := entity.RatingTypesLikertCol{
+		ID:            objectLikertId,
+		Description:   &description,
+		NumStatements: 1,
+		Statement01:   &description,
 	}
 
 	saveReq := []request.SaveRatingSubmission{
@@ -615,13 +610,11 @@ func TestCreateRatingSubmissionSuccess(t *testing.T) {
 		},
 	}
 
-	objectNumericId, _ := primitive.ObjectIDFromHex(numericID)
-	objectLikertId, _ := primitive.ObjectIDFromHex(likertID)
 	ratingRepository.Mock.On("FindRatingByRatingID", objectId).Return(rating, nil)
 	ratingRepository.Mock.On("FindRatingSubmissionByUserIDLegacyAndRatingID", &id, id).Return(nil, gorm.ErrRecordNotFound)
 	ratingRepository.Mock.On("FindRatingSubmissionByUserIDAndRatingID", &id, id).Return(nil, gorm.ErrRecordNotFound)
-	ratingRepository.Mock.On("FindRatingNumericTypeByRatingTypeID", objectNumericId).Return(num, nil)
-	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(num, nil)
+	ratingRepository.Mock.On("FindRatingNumericTypeByRatingTypeID", objectLikertId).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
 	ratingRepository.Mock.On("CreateRatingSubmission", saveReq).Return(sub, nil)
 
 	msg := svc.CreateRatingSubmission(input)
@@ -629,11 +622,231 @@ func TestCreateRatingSubmissionSuccess(t *testing.T) {
 	assert.Equal(t, message.SuccessMsg, msg)
 }
 
+func TestCreateRatingSubmissionFailFindRating(t *testing.T) {
+	valueRate := "1"
+	likertID := "629dce7bf1f26275e0d84820"
+	objectLikertId, _ := primitive.ObjectIDFromHex(likertID)
+	input := request.CreateRatingSubmissionRequest{
+		Ratings: []request.RatingByType{
+			{
+				ID:    likertID,
+				Value: &valueRate,
+			},
+		},
+		UserID:       &id,
+		UserIDLegacy: &id,
+	}
+
+	sub := entity.RatingSubmisson{
+		UserID:       &id,
+		UserIDLegacy: &id,
+		RatingID:     id,
+	}
+
+	likert := entity.RatingTypesLikertCol{
+		ID:            objectLikertId,
+		Description:   &description,
+		NumStatements: 1,
+		Statement01:   &description,
+	}
+
+	saveReq := []request.SaveRatingSubmission{
+		{
+			UserID:       &id,
+			UserIDLegacy: &id,
+			RatingID:     id,
+		},
+	}
+
+	ratingRepository.Mock.On("FindRatingByRatingID", objectLikertId).Return(nil, gorm.ErrRecordNotFound)
+	ratingRepository.Mock.On("FindRatingSubmissionByUserIDLegacyAndRatingID", &id, id).Return(nil, gorm.ErrRecordNotFound)
+	ratingRepository.Mock.On("FindRatingSubmissionByUserIDAndRatingID", &id, id).Return(nil, gorm.ErrRecordNotFound)
+	ratingRepository.Mock.On("FindRatingNumericTypeByRatingTypeID", objectLikertId).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
+	ratingRepository.Mock.On("CreateRatingSubmission", saveReq).Return(sub, nil)
+
+	msg := svc.CreateRatingSubmission(input)
+
+	assert.Equal(t, message.ErrRatingNotFound, msg)
+}
+
+func TestCreateRatingSubmissionFailAgentTooLong(t *testing.T) {
+	valueRate := "1"
+	likertID := "629dce7bf1f26275e0d84820"
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	objectLikertId, _ := primitive.ObjectIDFromHex(likertID)
+	input := request.CreateRatingSubmissionRequest{
+		Ratings: []request.RatingByType{
+			{
+				ID:    id,
+				Value: &valueRate,
+			},
+		},
+		UserID:       &id,
+		UserIDLegacy: &id,
+		UserAgent:    "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789",
+	}
+
+	sub := entity.RatingSubmisson{
+		UserID:       &id,
+		UserIDLegacy: &id,
+		RatingID:     id,
+	}
+
+	rating := entity.RatingsCol{
+		ID:             objectId,
+		RatingTypeId:   likertID,
+		CommentAllowed: &Bool,
+		Status:         &Bool,
+	}
+
+	likert := entity.RatingTypesLikertCol{
+		ID:            objectLikertId,
+		Description:   &description,
+		NumStatements: 1,
+		Statement01:   &description,
+	}
+
+	saveReq := []request.SaveRatingSubmission{
+		{
+			UserID:       &id,
+			UserIDLegacy: &id,
+			RatingID:     id,
+		},
+	}
+
+	ratingRepository.Mock.On("FindRatingByRatingID", objectId).Return(rating, nil)
+	ratingRepository.Mock.On("FindRatingSubmissionByUserIDLegacyAndRatingID", &id, id).Return(nil, gorm.ErrRecordNotFound)
+	ratingRepository.Mock.On("FindRatingSubmissionByUserIDAndRatingID", &id, id).Return(nil, gorm.ErrRecordNotFound)
+	ratingRepository.Mock.On("FindRatingNumericTypeByRatingTypeID", objectLikertId).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
+	ratingRepository.Mock.On("CreateRatingSubmission", saveReq).Return(sub, nil)
+
+	msg := svc.CreateRatingSubmission(input)
+
+	assert.Equal(t, message.UserAgentTooLong, msg)
+}
+
+func TestCreateRatingSubmissionFailLikertType(t *testing.T) {
+	valueRate := "2"
+	likertID := "629dce7bf1f26275e0d84820"
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	objectLikertId, _ := primitive.ObjectIDFromHex(likertID)
+	input := request.CreateRatingSubmissionRequest{
+		Ratings: []request.RatingByType{
+			{
+				ID:    id,
+				Value: &valueRate,
+			},
+		},
+		UserID:       &id,
+		UserIDLegacy: &id,
+	}
+
+	sub := entity.RatingSubmisson{
+		UserID:       &id,
+		UserIDLegacy: &id,
+		RatingID:     id,
+	}
+
+	rating := entity.RatingsCol{
+		ID:             objectId,
+		RatingTypeId:   likertID,
+		CommentAllowed: &Bool,
+		Status:         &Bool,
+	}
+
+	likert := entity.RatingTypesLikertCol{
+		ID:            objectLikertId,
+		Description:   &description,
+		NumStatements: 1,
+		Statement01:   &description,
+	}
+
+	saveReq := []request.SaveRatingSubmission{
+		{
+			UserID:       &id,
+			UserIDLegacy: &id,
+			RatingID:     id,
+		},
+	}
+
+	ratingRepository.Mock.On("FindRatingByRatingID", objectId).Return(rating, nil)
+	ratingRepository.Mock.On("FindRatingSubmissionByUserIDLegacyAndRatingID", &id, id).Return(nil, gorm.ErrRecordNotFound)
+	ratingRepository.Mock.On("FindRatingSubmissionByUserIDAndRatingID", &id, id).Return(nil, gorm.ErrRecordNotFound)
+	ratingRepository.Mock.On("FindRatingNumericTypeByRatingTypeID", objectLikertId).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
+	ratingRepository.Mock.On("CreateRatingSubmission", saveReq).Return(sub, nil)
+
+	msg := svc.CreateRatingSubmission(input)
+
+	assert.Equal(t, message.Message{
+		Code:    message.ValidationFailCode,
+		Message: "value must be integer and include in [1]",
+	}, msg)
+}
+
+func TestCreateRatingSubmissionFailUidNull(t *testing.T) {
+	valueRate := "1"
+	likertID := "629dce7bf1f26275e0d84820"
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	objectLikertId, _ := primitive.ObjectIDFromHex(likertID)
+	input := request.CreateRatingSubmissionRequest{
+		Ratings: []request.RatingByType{
+			{
+				ID:    id,
+				Value: &valueRate,
+			},
+		},
+		UserID:       nil,
+		UserIDLegacy: nil,
+	}
+
+	sub := entity.RatingSubmisson{
+		UserID:       &id,
+		UserIDLegacy: &id,
+		RatingID:     id,
+	}
+
+	rating := entity.RatingsCol{
+		ID:             objectId,
+		RatingTypeId:   likertID,
+		CommentAllowed: &Bool,
+		Status:         &Bool,
+	}
+
+	likert := entity.RatingTypesLikertCol{
+		ID:            objectLikertId,
+		Description:   &description,
+		NumStatements: 1,
+		Statement01:   &description,
+	}
+
+	saveReq := []request.SaveRatingSubmission{
+		{
+			UserID:       &id,
+			UserIDLegacy: &id,
+			RatingID:     id,
+		},
+	}
+
+	ratingRepository.Mock.On("FindRatingByRatingID", objectId).Return(rating, nil)
+	ratingRepository.Mock.On("FindRatingSubmissionByUserIDLegacyAndRatingID", &id, id).Return(nil, gorm.ErrRecordNotFound)
+	ratingRepository.Mock.On("FindRatingSubmissionByUserIDAndRatingID", &id, id).Return(nil, gorm.ErrRecordNotFound)
+	ratingRepository.Mock.On("FindRatingNumericTypeByRatingTypeID", objectLikertId).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
+	ratingRepository.Mock.On("CreateRatingSubmission", saveReq).Return(sub, nil)
+
+	msg := svc.CreateRatingSubmission(input)
+
+	assert.Equal(t, message.UserUIDRequired, msg)
+}
+
 func TestUpdateRatingSubmissionSuccess(t *testing.T) {
 	minScore := 0
 	maxScore := 5
 	intervals := 6
-	valueRate := "5"
+	valueRate := "1"
 	numericID := "629dce7bf1f26275e0d84826"
 	likertID := "629dce7bf1f26275e0d84826"
 	objectId, _ := primitive.ObjectIDFromHex(id)
@@ -683,11 +896,65 @@ func TestUpdateRatingSubmissionSuccess(t *testing.T) {
 	assert.Equal(t, message.SuccessMsg, msg)
 }
 
+func TestUpdateRatingSubmissionFailUidNull(t *testing.T) {
+	minScore := 0
+	maxScore := 5
+	intervals := 6
+	valueRate := "1"
+	numericID := "629dce7bf1f26275e0d84826"
+	likertID := "629dce7bf1f26275e0d84826"
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	input := request.UpdateRatingSubmissonRequest{
+		ID:           id,
+		UserID:       nil,
+		UserIDLegacy: nil,
+		Value:        &valueRate,
+		RatingID:     id,
+	}
+
+	sub := entity.RatingSubmisson{
+		UserID:       &id,
+		UserIDLegacy: &id,
+		RatingID:     id,
+	}
+
+	rating := entity.RatingsCol{
+		ID:             objectId,
+		RatingTypeId:   id,
+		CommentAllowed: &Bool,
+		Status:         &Bool,
+	}
+
+	num := entity.RatingTypesNumCol{
+		ID:          objectId,
+		Status:      &Bool,
+		MinScore:    &minScore,
+		MaxScore:    &maxScore,
+		Description: &Desc,
+		Scale:       &Scale,
+		Intervals:   &intervals,
+	}
+
+	objectNumericId, _ := primitive.ObjectIDFromHex(numericID)
+	objectLikertId, _ := primitive.ObjectIDFromHex(likertID)
+	ratingRepository.Mock.On("GetRatingSubmissionById", objectId).Return(sub, nil)
+	ratingRepository.Mock.On("FindRatingByRatingID", objectId).Return(rating, nil)
+	ratingRepository.Mock.On("FindRatingSubmissionByUserIDLegacyAndRatingID", &id, id).Return(nil, gorm.ErrRecordNotFound)
+	ratingRepository.Mock.On("FindRatingSubmissionByUserIDAndRatingID", &id, id).Return(nil, gorm.ErrRecordNotFound)
+	ratingRepository.Mock.On("FindRatingNumericTypeByRatingTypeID", objectNumericId).Return(num, nil)
+	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(num, nil)
+	ratingRepository.Mock.On("UpdateRatingSubmission", input).Return(sub, nil)
+
+	msg := svc.UpdateRatingSubmission(input)
+
+	assert.Equal(t, message.UserUIDRequired, msg)
+}
+
 func TestGetListRatingSubmission(t *testing.T) {
 	matchStrValuePtr := "match"
 	input := request.ListRatingSubmissionRequest{
 		Dir:    "asc",
-		Filter: "{\"user_uid\":[\"a12346fb-bd93-fedc-abcd-0739865540cb\",\"0739865540cb-bd93-fedc-abcd-a12346fb\"],\"score\":[\"4\"]}",
+		Filter: "{\"user_uid\":[\"a12346fb-bd93-fedc-abcd-0739865540cb\",\"0739865540cb-bd93-fedc-abcd-a12346fb\"],\"score\":[4]}",
 	}
 
 	filter := request.RatingSubmissionFilter{}
@@ -718,7 +985,7 @@ func TestGetListRatingSubmissionMarshalErr(t *testing.T) {
 	matchStrValuePtr := "match"
 	input := request.ListRatingSubmissionRequest{
 		Dir:    "asc",
-		Filter: "{\"user_uid\":[\"a12346fb-bd93-fedc-abcd-0739865540cb\",\"0739865540cb-bd93-fedc-abcd-a12346fb\"],\"score\":[4]}",
+		Filter: "{\"user_uid\":[\"a12346fb-bd93-fedc-abcd-0739865540cb\",\"0739865540cb-bd93-fedc-abcd-a12346fb\"],\"score\":[\"4\"]}",
 	}
 
 	filter := request.RatingSubmissionFilter{}
@@ -742,7 +1009,7 @@ func TestGetListRatingSubmissionMarshalErr(t *testing.T) {
 
 	_, _, msg := svc.GetListRatingSubmissions(input)
 
-	assert.Equal(t, message.FailedMsg, msg)
+	assert.Equal(t, message.WrongFilter, msg)
 }
 
 func TestCreateRatingTypeLikert(t *testing.T) {
@@ -1959,7 +2226,7 @@ func TestGetListRatingSummary(t *testing.T) {
 		Dir:    "desc",
 		Page:   0,
 		Limit:  0,
-		Filter: "{\"source_uid\": [\"2729\", \"2951\"],\"score\":[\"4\",\"5\"]}",
+		Filter: "{\"source_uid\": [\"2729\", \"2951\"],\"score\":[4,5]}",
 	}
 	result := []entity.RatingSubmisson{
 		{
@@ -1991,7 +2258,7 @@ func TestGetListRatingSummary(t *testing.T) {
 		TotalPage: 1,
 	}
 	ratingRepository.Mock.On("GetRatingsByParams", request.RatingFilter{SourceUid: []string{"2729", "2951"}, RatingTypeId: []string(nil)}, 1, 50, "updated_at", -1).Return(result2, &paginationResult, nil)
-	ratingRepository.Mock.On("GetListRatingSubmissions", request.RatingSubmissionFilter{UserID: []string(nil), Score: []string{"4", "5"}, RatingID: []string{"629ec07e6f3c2761ba2dc468", "629ec07e6f3c2761ba2dc848"}, StartDate: "", EndDate: ""}, 1, int64(50), "updated_at", -1).Return(result, &paginationResult, nil)
+	ratingRepository.Mock.On("GetListRatingSubmissions", request.RatingSubmissionFilter{UserID: []string(nil), Score: []float64{4, 5}, RatingID: []string{"629ec07e6f3c2761ba2dc468", "629ec07e6f3c2761ba2dc848"}, StartDate: "", EndDate: ""}, 1, int64(50), "updated_at", -1).Return(result, &paginationResult, nil)
 	_, msg := svc.GetListRatingSummary(req)
 	assert.Equal(t, message.SuccessMsg, msg)
 }
