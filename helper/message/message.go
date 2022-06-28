@@ -42,6 +42,11 @@ var UserUIDRequired = Message{Code: ValidationFailCode, Message: "One of the fol
 var UserRated = Message{Code: ValidationFailCode, Message: "Duplicate submissions by the same user for rating is not allowed"}
 var ErrRatingNotFound = Message{Code: DataNotFoundCode, Message: "Rating not found"}
 var ErrRatingNumericTypeNotFound = Message{Code: DataNotFoundCode, Message: "Rating Numeric Type Not Found"}
+var RatingSubmissionNotFound = Message{Code: DataNotFoundCode, Message: "Rating submission not found"}
+var WrongScoreFilter = Message{Code: ValidationFailCode, Message: "Wrong score filter format"}
+var WrongFilter = Message{Code: ValidationFailCode, Message: "Wrong filter"}
+var ErrValueFormatForNumericType = Message{Code: ValidationFailCode, Message: "Wrong value format for numeric type"}
+var ErrLikertTypeNotFound = Message{Code: ValidationFailCode, Message: "Likert type not found"}
 var ErrValueFormat = Message{Code: ValidationFailCode, Message: "Value is wrong format"}
 var ErrRatingTypeNotExist = Message{Code: ValidationFailCode, Message: "Rating type not exist"}
 var ErrDuplicateRatingName = Message{Code: ValidationFailCode, Message: "Rating name has already existed"}
@@ -68,12 +73,8 @@ var ErrSourceUidRequire = Message{Code: ValidationFailCode, Message: "Source_uid
 var ErrMaxMin = Message{Code: ValidationFailCode, Message: "min_score can not be less than max_score"}
 var ErrTypeNotFound = Message{Code: ValidationFailCode, Message: "Rating type not found"}
 var ErrCannotSameRatingId = Message{Code: ValidationFailCode, Message: "Cannot create rating submission with same rating"}
-var RatingSubmissionNotFound = Message{Code: DataNotFoundCode, Message: "Rating submission not found"}
-var WrongScoreFilter = Message{Code: ValidationFailCode, Message: "Wrong score filter format"}
-var WrongFilter = Message{Code: ValidationFailCode, Message: "Wrong filter"}
-var ErrValueFormatForNumericType = Message{Code: ValidationFailCode, Message: "Wrong value format for numeric type"}
-var ErrLikertTypeNotFound = Message{Code: ValidationFailCode, Message: "Likert type not found"}
 var ErrExistingSourceUidAndSourceType = Message{Code: ValidationFailCode, Message: "Source uid and source type have already existed"}
+var ErrRatingSubmissionNotFound = Message{Code: ValidationFailCode, Message: "Rating submission not found"}
 
 // Code 39000 - 39999 Server error
 var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}

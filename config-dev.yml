@@ -30,8 +30,8 @@ security:
 cache:
   redis:
     host: localhost
-    user: 
-    password: 
+    user:
+    password:
     port: 6379
 
 #Access Control SETTING

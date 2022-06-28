@@ -34,7 +34,7 @@ type RatingRepository interface {
 
 	// Rating submission
 	CreateRatingSubmission(input []request.SaveRatingSubmission) (*[]entity.RatingSubmisson, error)
-	UpdateRatingSubmission(input request.UpdateRatingSubmissonRequest, id primitive.ObjectID) error
+	UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest, id primitive.ObjectID) error
 	DeleteSubmission(id primitive.ObjectID) error
 	GetRatingSubmissionById(id primitive.ObjectID) (*entity.RatingSubmisson, error)
 
@@ -293,7 +293,7 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 	return &ratingSubmission, nil
 }
 
-func (r *ratingRepo) UpdateRatingSubmission(input request.UpdateRatingSubmissonRequest, id primitive.ObjectID) error {
+func (r *ratingRepo) UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest, id primitive.ObjectID) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
 	var timeUpdate time.Time
 	timeUpdate = time.Now().In(util.Loc)
@@ -595,20 +595,6 @@ func (r *ratingRepo) GetRatingByType(id string) (*entity.RatingsCol, error) {
 	return &rating, nil
 }
 
-func (r *ratingRepo) GetRatingBySourceUidAndSourceType(sourceUid, sourceType string) (*entity.RatingsCol, error) {
-	var rating entity.RatingsCol
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	bsonFilter := bson.D{{"$and", bson.A{
-		bson.D{{"source_uid", sourceUid}},
-		bson.D{{"source_type", sourceType}},
-	}}}
-	err := r.db.Collection(entity.RatingsCol{}.CollectionName()).FindOne(ctx, bsonFilter).Decode(&rating)
-	if err != nil {
-		return nil, err
-	}
-	return &rating, nil
-}
-
 func (r *ratingRepo) GetRatingTypeNumByIdAndStatus(id primitive.ObjectID) (*entity.RatingTypesNumCol, error) {
 	var ratingTypeNum entity.RatingTypesNumCol
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
@@ -643,6 +629,20 @@ func (r *ratingRepo) GetRatingTypeLikertByIdAndStatus(id primitive.ObjectID) (*e
 		return nil, err
 	}
 	return &ratingTypeLikert, nil
+}
+
+func (r *ratingRepo) GetRatingBySourceUidAndSourceType(sourceUid, sourceType string) (*entity.RatingsCol, error) {
+	var rating entity.RatingsCol
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	bsonFilter := bson.D{{"$and", bson.A{
+		bson.D{{"source_uid", sourceUid}},
+		bson.D{{"source_type", sourceType}},
+	}}}
+	err := r.db.Collection(entity.RatingsCol{}.CollectionName()).FindOne(ctx, bsonFilter).Decode(&rating)
+	if err != nil {
+		return nil, err
+	}
+	return &rating, nil
 }
 
 func (r *ratingRepo) Paginate(value interface{}, pagination *base.Pagination, db *gorm.DB, currRecord int64) func(db *gorm.DB) *gorm.DB {

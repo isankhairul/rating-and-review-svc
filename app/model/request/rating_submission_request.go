@@ -28,8 +28,8 @@ type RatingSubmissionFilter struct {
 	EndDate   string    `json:"end_date"`
 }
 
-// swagger:parameters ReqRatingSubmissonBody
-type ReqRatingSubmissonBody struct {
+// swagger:parameters ReqRatingSubmissionBody
+type ReqRatingSubmissionBody struct {
 	//  in: body
 	Body CreateRatingSubmissionRequest `json:"body"`
 }
@@ -42,8 +42,8 @@ type ReqRatingSubmissionById struct {
 	ID string `json:"id"`
 }
 
-// swagger:parameters ReqUpdateRatingSubmissonBody
-type ReqUpdateRatingSubmissonBody struct {
+// swagger:parameters ReqUpdateRatingSubmissionBody
+type ReqUpdateRatingSubmissionBody struct {
 	// ID of Rating Submission
 	// in: path
 	// required: true
@@ -51,7 +51,7 @@ type ReqUpdateRatingSubmissonBody struct {
 
 	// in: body
 	// required: true
-	Body UpdateRatingSubmissonRequest `json:"body"`
+	Body UpdateRatingSubmissionRequest `json:"body"`
 }
 
 type RatingByType struct {
@@ -78,7 +78,7 @@ type SaveRatingSubmission struct {
 	UserAgent    string  `json:"user_agent" bson:"user_agent"`
 }
 
-type UpdateRatingSubmissonRequest struct {
+type UpdateRatingSubmissionRequest struct {
 	ID           string    `json:"-"`
 	RatingID     string    `json:"rating_id,omitempty" bson:"rating_id"`
 	UserID       *string   `json:"user_id,omitempty" bson:"user_id"`
@@ -102,7 +102,7 @@ func (req RatingByType) Validate() error {
 	)
 }
 
-func (req UpdateRatingSubmissonRequest) Validate() error {
+func (req UpdateRatingSubmissionRequest) Validate() error {
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.RatingID, validation.Required.Error(message.ErrReq.Message)),
 		validation.Field(&req.Value, validation.Required.Error(message.ErrReq.Message)),

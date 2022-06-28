@@ -140,7 +140,7 @@ func makeCreateRatingSubmission(s service.RatingService) endpoint.Endpoint {
 
 func makeUpdateRatingSubmission(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
-		req := rqst.(request.UpdateRatingSubmissonRequest)
+		req := rqst.(request.UpdateRatingSubmissionRequest)
 		msg := s.UpdateRatingSubmission(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
