@@ -237,7 +237,7 @@ func decodeCreateRatingSubmission(ctx context.Context, r *http.Request) (rqst in
 }
 
 func decodeUpdateRatingSubmission(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
-	var req request.UpdateRatingSubmissonRequest
+	var req request.UpdateRatingSubmissionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}

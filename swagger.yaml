@@ -452,6 +452,7 @@ definitions:
       description:
         description: |-
           Description of rating type likert
+          Statement 1 of rating type likert
           in: string
         type: string
         x-go-name: Description
@@ -553,7 +554,7 @@ definitions:
     type: object
     x-go-name: responseHttp
     x-go-package: go-klikdokter/app/model/base
-  UpdateRatingSubmissonRequest:
+  UpdateRatingSubmissionRequest:
     properties:
       comment:
         type: string
@@ -617,7 +618,7 @@ paths:
   /api/v1/rating-submissions/:
     post:
       description: Create Rating Submission
-      operationId: ReqRatingSubmissonBody
+      operationId: ReqRatingSubmissionBody
       parameters:
       - in: body
         name: body
@@ -680,7 +681,7 @@ paths:
       - RatingSubmission
     put:
       description: Update Rating Submission
-      operationId: ReqUpdateRatingSubmissonBody
+      operationId: ReqUpdateRatingSubmissionBody
       parameters:
       - description: ID of Rating Submission
         in: path
@@ -692,7 +693,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/UpdateRatingSubmissonRequest'
+          $ref: '#/definitions/UpdateRatingSubmissionRequest'
         x-go-name: Body
       responses:
         "200":

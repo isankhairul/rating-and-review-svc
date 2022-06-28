@@ -221,7 +221,7 @@ func (repository *RatingRepositoryMock) CreateRatingSubmission(input []request.S
 	}
 	return nil, nil
 }
-func (repository *RatingRepositoryMock) UpdateRatingSubmission(input request.UpdateRatingSubmissonRequest, id primitive.ObjectID) error {
+func (repository *RatingRepositoryMock) UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest, id primitive.ObjectID) error {
 	ratingSubmissionCol := entity.RatingSubmisson{}
 	ratingSubmissionCol.ID = id
 	return nil
@@ -280,6 +280,9 @@ func (repository *RatingRepositoryMock) GetListRatingSubmissions(filter request.
 	arguments := repository.Mock.Called(filter, page, limit, sort, dir)
 	if sort == "no data " {
 		return nil, nil, mongo.ErrNoDocuments
+	}
+	if sort == "wrong filter" {
+		return nil, nil, gorm.ErrInvalidDB
 	}
 	return arguments.Get(0).([]entity.RatingSubmisson), arguments.Get(1).(*base.Pagination), nil
 }
