@@ -40,8 +40,8 @@ type RatingRepository interface {
 
 	GetListRatingSubmissions(filter request.RatingSubmissionFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingSubmisson, *base.Pagination, error)
 	GetRatingSubmissionByRatingId(id string) (*entity.RatingSubmisson, error)
-	FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string) (*entity.RatingSubmisson, error)
-	FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string) (*entity.RatingSubmisson, error)
+	FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string, sourceTransId string) (*entity.RatingSubmisson, error)
+	FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string, sourceTransId string) (*entity.RatingSubmisson, error)
 	FindRatingByRatingID(ratingId primitive.ObjectID) (*entity.RatingsCol, error)
 	FindRatingNumericTypeByRatingTypeID(ratingTypeId primitive.ObjectID) (*entity.RatingTypesNumCol, error)
 
@@ -257,6 +257,7 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 			{"value", args.Value},
 			{"ip_address", args.IPAddress},
 			{"user_agent", args.UserAgent},
+			{"source_trans_id", args.SourceTransID},
 			{"created_at", time.Now().In(util.Loc)},
 			{"updated_at", time.Now().In(util.Loc)},
 		})
@@ -298,12 +299,10 @@ func (r *ratingRepo) UpdateRatingSubmission(input request.UpdateRatingSubmission
 	var timeUpdate time.Time
 	timeUpdate = time.Now().In(util.Loc)
 	ratingSubmiss := entity.RatingSubmisson{
-		RatingID:     input.RatingID,
-		UserID:       input.UserID,
-		UserIDLegacy: input.UserIDLegacy,
-		Comment:      input.Comment,
-		Value:        *input.Value,
-		UpdatedAt:    timeUpdate,
+		RatingID:  input.RatingID,
+		Comment:   input.Comment,
+		Value:     *input.Value,
+		UpdatedAt: timeUpdate,
 	}
 	filter := bson.D{{"_id", id}}
 	data := bson.D{{"$set", ratingSubmiss}}
@@ -353,11 +352,11 @@ func (r *ratingRepo) GetRatingSubmissionByRatingId(id string) (*entity.RatingSub
 	return &ratingSubmission, nil
 }
 
-func (r *ratingRepo) FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string) (*entity.RatingSubmisson, error) {
+func (r *ratingRepo) FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string, sourceTransId string) (*entity.RatingSubmisson, error) {
 	var ratingSubmission entity.RatingSubmisson
 	ratingSubmissionColl := r.db.Collection("ratingSubCol")
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := ratingSubmissionColl.FindOne(ctx, bson.M{"user_id": &userId, "rating_id": ratingId}).Decode(&ratingSubmission)
+	err := ratingSubmissionColl.FindOne(ctx, bson.M{"user_id": &userId, "rating_id": ratingId, "source_trans_id": sourceTransId}).Decode(&ratingSubmission)
 	if err != nil {
 
 		return nil, err
@@ -365,11 +364,11 @@ func (r *ratingRepo) FindRatingSubmissionByUserIDAndRatingID(userId *string, rat
 	return &ratingSubmission, nil
 }
 
-func (r *ratingRepo) FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string) (*entity.RatingSubmisson, error) {
+func (r *ratingRepo) FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string, sourceTransId string) (*entity.RatingSubmisson, error) {
 	var ratingSubmission entity.RatingSubmisson
 	ratingSubmissionColl := r.db.Collection("ratingSubCol")
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := ratingSubmissionColl.FindOne(ctx, bson.M{"user_id_legacy": &userIdLegacy, "rating_id": ratingId}).Decode(&ratingSubmission)
+	err := ratingSubmissionColl.FindOne(ctx, bson.M{"user_id_legacy": &userIdLegacy, "rating_id": ratingId, "source_trans_id": sourceTransId}).Decode(&ratingSubmission)
 	if err != nil {
 
 		return nil, err
@@ -513,7 +512,13 @@ func (r *ratingRepo) GetRatingsByParams(limit, page, dir int, sort string, filte
 
 	bsonSourceUid := bson.D{}
 	bsonRatingTypeId := bson.D{}
+	bsonSourceType := bson.D{}
 
+	if filter.SourceType != "" {
+		if filter.SourceType != "all" {
+			bsonSourceType = bson.D{{"source_type", filter.SourceType}}
+		}
+	}
 	if len(filter.SourceUid) > 0 {
 		bsonSourceUid = bson.D{{"source_uid", bson.D{{"$in", filter.SourceUid}}}}
 	}
@@ -525,6 +530,7 @@ func (r *ratingRepo) GetRatingsByParams(limit, page, dir int, sort string, filte
 
 		bson.A{
 			bsonStatus,
+			bsonSourceType,
 			bson.D{{"$or",
 				bson.A{
 					bsonSourceUid,
@@ -675,11 +681,7 @@ func (r *ratingRepo) GetListRatingSubmissions(filter request.RatingSubmissionFil
 		bsonRating = bson.D{{"rating_id", bson.D{{"$in", filter.RatingID}}}}
 	}
 	if len(filter.StartDate) > 0 && len(filter.EndDate) > 0 {
-		if startDate == endDate {
-			bsonDate = bson.D{{"created_at", bson.D{{"$gt", startDate}, {"$lt", startDate.AddDate(0, 0, 1)}}}}
-		} else {
-			bsonDate = bson.D{{"created_at", bson.D{{"$gt", startDate}, {"$lt", endDate}}}}
-		}
+		bsonDate = bson.D{{"created_at", bson.D{{"$gt", startDate}, {"$lt", endDate.AddDate(0, 0, 1)}}}}
 	}
 
 	filter1 := bson.D{{"$and",

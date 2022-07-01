@@ -60,38 +60,39 @@ type RatingByType struct {
 }
 
 type CreateRatingSubmissionRequest struct {
-	Ratings      []RatingByType `json:"ratings" bson:"ratings"`
-	UserID       *string        `json:"user_id" bson:"user_id"`
-	UserIDLegacy *string        `json:"user_id_legacy" bson:"user_id_legacy"`
-	Comment      string         `json:"comment" bson:"comment"`
-	IPAddress    string         `json:"ip_address" bson:"ip_address"`
-	UserAgent    string         `json:"user_agent" bson:"user_agent"`
+	Ratings       []RatingByType `json:"ratings" bson:"ratings"`
+	UserID        *string        `json:"user_id" bson:"user_id"`
+	UserIDLegacy  *string        `json:"user_id_legacy" bson:"user_id_legacy"`
+	Comment       string         `json:"comment" bson:"comment"`
+	IPAddress     string         `json:"ip_address" bson:"ip_address"`
+	UserAgent     string         `json:"user_agent" bson:"user_agent"`
+	SourceTransID string         `json:"source_trans_id" bson:"source_trans_id"`
 }
 
 type SaveRatingSubmission struct {
-	RatingID     string  `json:"rating_id" bson:"rating_id"`
-	UserID       *string `json:"user_id" bson:"user_id"`
-	UserIDLegacy *string `json:"user_id_legacy" bson:"user_id_legacy"`
-	Comment      string  `json:"comment" bson:"comment"`
-	Value        *string `json:"value" bson:"value"`
-	IPAddress    string  `json:"ip_address" bson:"ip_address"`
-	UserAgent    string  `json:"user_agent" bson:"user_agent"`
+	RatingID      string  `json:"rating_id" bson:"rating_id"`
+	UserID        *string `json:"user_id" bson:"user_id"`
+	UserIDLegacy  *string `json:"user_id_legacy" bson:"user_id_legacy"`
+	Comment       string  `json:"comment" bson:"comment"`
+	Value         *string `json:"value" bson:"value"`
+	IPAddress     string  `json:"ip_address" bson:"ip_address"`
+	UserAgent     string  `json:"user_agent" bson:"user_agent"`
+	SourceTransID string  `json:"source_trans_id" bson:"source_trans_id"`
 }
 
 type UpdateRatingSubmissionRequest struct {
-	ID           string    `json:"-"`
-	RatingID     string    `json:"rating_id,omitempty" bson:"rating_id"`
-	UserID       *string   `json:"user_id,omitempty" bson:"user_id"`
-	UserIDLegacy *string   `json:"user_id_legacy,omitempty" bson:"user_id_legacy"`
-	Comment      string    `json:"comment,omitempty" bson:"comment"`
-	Value        *string   `json:"value,omitempty" bson:"value"`
-	UpdatedAt    time.Time `json:"-,omitempty" bson:"updated_at"`
+	ID        string    `json:"-"`
+	RatingID  string    `json:"rating_id,omitempty" bson:"rating_id"`
+	Comment   string    `json:"comment,omitempty" bson:"comment"`
+	Value     *string   `json:"value,omitempty" bson:"value"`
+	UpdatedAt time.Time `json:"-,omitempty" bson:"updated_at"`
 }
 
 func (req CreateRatingSubmissionRequest) Validate() error {
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.Ratings, validation.Required.Error(message.ErrReq.Message)),
 		validation.Field(&req.IPAddress, validation.Match(regexp.MustCompile(regexIP)).Error(message.ErrIPFormatReq.Message)),
+		validation.Field(&req.SourceTransID, validation.Required.Error(message.ErrReq.Message)),
 	)
 }
 

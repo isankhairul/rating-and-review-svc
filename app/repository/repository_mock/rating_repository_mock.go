@@ -222,8 +222,9 @@ func (repository *RatingRepositoryMock) CreateRatingSubmission(input []request.S
 	return nil, nil
 }
 func (repository *RatingRepositoryMock) UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest, id primitive.ObjectID) error {
-	ratingSubmissionCol := entity.RatingSubmisson{}
-	ratingSubmissionCol.ID = id
+	if input.RatingID != "629dce7bf1f26275e0d84826" {
+		return errors.New("can not be updated")
+	}
 	return nil
 }
 func (repository *RatingRepositoryMock) DeleteSubmission(id primitive.ObjectID) error {
@@ -239,27 +240,38 @@ func (repository *RatingRepositoryMock) GetRatingSubmissionById(id primitive.Obj
 	if id != objectId {
 		return nil, mongo.ErrNoDocuments
 	}
+	var res = "success"
 	sub := arguments.Get(0).(entity.RatingSubmisson)
+	sub.UserIDLegacy = &res
 	return &sub, nil
 }
-func (repository *RatingRepositoryMock) FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string) (*entity.RatingSubmisson, error) {
-	arguments := repository.Mock.Called(userId, ratingId)
-	if *userId == "629dce7bf1f26275e0d84826" && ratingId == "629dce7bf1f26275e0d84826" {
+func (repository *RatingRepositoryMock) FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string, sourceTransId string) (*entity.RatingSubmisson, error) {
+	arguments := repository.Mock.Called(userId, ratingId, sourceTransId)
+	if *userId == "629dce7bf1f26275e0d84826" && ratingId == "629dce7bf1f26275e0d84826" && sourceTransId == "629dce7bf1f26275e0d84826" {
 		return nil, errors.New("record found")
 	}
 	sub := arguments.Get(0).(entity.RatingSubmisson)
 	return &sub, nil
 }
-func (repository *RatingRepositoryMock) FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string) (*entity.RatingSubmisson, error) {
-	if *userIdLegacy == "629dce7bf1f26275e0d84826" && ratingId == "629dce7bf1f26275e0d84826" {
+func (repository *RatingRepositoryMock) FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string, sourceTransId string) (*entity.RatingSubmisson, error) {
+	arguments := repository.Mock.Called(userIdLegacy, ratingId, sourceTransId)
+	var res = "success"
+	if *userIdLegacy == "629dce7bf1f26275e0d84826" && ratingId == "629dce7bf1f26275e0d84826" && sourceTransId == "629dce7bf1f26275e0d84826" {
+		return nil, gorm.ErrRecordNotFound
+	} else if *userIdLegacy == res {
 		return nil, gorm.ErrRecordNotFound
 	}
-	sub := entity.RatingSubmisson{}
+	sub := arguments.Get(0).(entity.RatingSubmisson)
 	return &sub, nil
 }
 func (repository *RatingRepositoryMock) FindRatingByRatingID(ratingId primitive.ObjectID) (*entity.RatingsCol, error) {
 	arguments := repository.Mock.Called(ratingId)
 	objectId, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84826")
+	objectIdT, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84827")
+	if ratingId == objectIdT {
+		rat := arguments.Get(0).(entity.RatingsCol)
+		return &rat, nil
+	}
 	if ratingId != objectId {
 		return nil, errors.New("user not found")
 	}
@@ -278,7 +290,7 @@ func (repository *RatingRepositoryMock) FindRatingNumericTypeByRatingTypeID(rati
 
 func (repository *RatingRepositoryMock) GetListRatingSubmissions(filter request.RatingSubmissionFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingSubmisson, *base.Pagination, error) {
 	arguments := repository.Mock.Called(filter, page, limit, sort, dir)
-	if sort == "no data " {
+	if sort == "no data" {
 		return nil, nil, mongo.ErrNoDocuments
 	}
 	if sort == "wrong filter" {

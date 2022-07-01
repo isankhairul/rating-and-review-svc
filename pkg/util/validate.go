@@ -38,11 +38,9 @@ func ValidateValue(vArray []float64, v float64) bool {
 }
 
 func ValidInterval(min int, max int, scale int) int {
-	var interval int
+	var interval = 0
 	if scale == 0 || scale == 1 || scale == 2 {
 		interval = (max-min)*(scale+1) + 1
-	} else {
-		return 0
 	}
 	return interval
 }
@@ -219,16 +217,16 @@ func IsInclude(arrValue []int, value float64) bool {
 	return false
 }
 
-func ValidateUserIdAndUserIdLegacy(ratingId string, id *string, idLegacy *string, ratingSubmission *entity.RatingSubmisson, err error) bool {
+func ValidateUserIdAndUserIdLegacy(input request.CreateRatingSubmissionRequest, ratingId string, id *string, idLegacy *string, ratingSubmission *entity.RatingSubmisson, err error) bool {
 	if ratingSubmission != nil {
 		if ratingSubmission.RatingID == ratingId && ratingSubmission.UserID != nil {
-			if *ratingSubmission.UserID == *id {
+			if *ratingSubmission.UserID == *id && input.SourceTransID == ratingSubmission.SourceTransID {
 				return true
 			}
 		}
 
 		if ratingSubmission.RatingID == ratingId && ratingSubmission.UserIDLegacy != nil {
-			if *ratingSubmission.UserIDLegacy == *idLegacy {
+			if *ratingSubmission.UserIDLegacy == *idLegacy && input.SourceTransID == ratingSubmission.SourceTransID {
 				return true
 			}
 		}
@@ -240,25 +238,25 @@ func ValidateUserIdAndUserIdLegacy(ratingId string, id *string, idLegacy *string
 	return false
 }
 
-func ValidateUserIdAndUserIdLegacyForUpdate(subId primitive.ObjectID, ratingId primitive.ObjectID, id *string, idLegacy *string, ratingSubmission *entity.RatingSubmisson, err error) bool {
+func ValidateUserIdAndUserIdLegacyForUpdate(input request.UpdateRatingSubmissionRequest, subId primitive.ObjectID, sourceTransId string, id *string, idLegacy *string, ratingSubmission *entity.RatingSubmisson, err error) bool {
 	if ratingSubmission != nil {
 		if ratingSubmission.ID == subId {
 			return false
 		}
 
-		if ratingSubmission.RatingID == ratingId.Hex() && ratingSubmission.UserID != nil {
-			if *ratingSubmission.UserID == *id {
+		if input.RatingID == ratingSubmission.RatingID && ratingSubmission.UserID != nil {
+			if *ratingSubmission.UserID == *id && ratingSubmission.SourceTransID == sourceTransId {
 				return true
 			}
 		}
 
-		if ratingSubmission.RatingID == ratingId.Hex() && ratingSubmission.UserIDLegacy != nil {
-			if *ratingSubmission.UserIDLegacy == *idLegacy {
+		if input.RatingID == ratingSubmission.RatingID && ratingSubmission.UserIDLegacy != nil {
+			if *ratingSubmission.UserIDLegacy == *idLegacy && ratingSubmission.SourceTransID == sourceTransId {
 				return true
 			}
 		}
 
-		if err == nil {
+		if err != nil {
 			return true
 		}
 	}

@@ -6,4 +6,5 @@ type RatingSubmissonResponse struct {
 	UserIDLegacy *string `json:"user_id_legacy" bson:"user_id_legacy"`
 	Comment      string  `json:"comment" bson:"comment"`
 	Value        string  `json:"value" bson:"value"`
+	SourTransID  string  `json:"sour_trans_id" bson:"sour_trans_id"`
 }

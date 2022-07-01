@@ -7,6 +7,10 @@ type GetListRatingSummaryRequest struct {
 	Page   int    `json:"page" schema:"page" binding:"omitempty,numeric,min=1"`
 	Sort   string `json:"sort" schema:"sort" binding:"omitempty"`
 	Dir    string `json:"dir" schema:"dir" binding:"omitempty"`
+	// SourceType
+	// in: path
+	// required: true
+	SourceType string `json:"source_type"`
 }
 
 func (r *GetListRatingSummaryRequest) MakeDefaultValueIfEmpty() {
