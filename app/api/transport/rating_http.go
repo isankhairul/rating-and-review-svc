@@ -137,7 +137,7 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "ratings/summary").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "ratings/summary/{source_type}").Handler(httptransport.NewServer(
 		ep.GetListRatingSummary,
 		decodeGetRatingSummary,
 		encoder.EncodeResponseHTTP,
@@ -364,6 +364,6 @@ func decodeGetRatingSummary(ctx context.Context, r *http.Request) (rqst interfac
 	if err = schema.NewDecoder().Decode(&req, r.Form); err != nil {
 		return nil, err
 	}
-
+	req.SourceType = mux.Vars(r)["source_type"]
 	return req, nil
 }

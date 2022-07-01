@@ -350,14 +350,14 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 
 		// A submission with a combination of either (rating_id and user_id) OR (rating_id and user_id_legacy) is allowed once
 		if input.UserID != &empty && input.UserIDLegacy != &empty {
-			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID)
-			val := util.ValidateUserIdAndUserIdLegacy(rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er)
+			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID, input.SourceTransID)
+			val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er)
 			if val {
 				return message.UserRated
 			}
 			if !val {
-				ratingSubmission, er = s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID)
-				valL := util.ValidateUserIdAndUserIdLegacy(rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er)
+				ratingSubmission, er = s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID, input.SourceTransID)
+				valL := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er)
 				if valL {
 					return message.UserRated
 
@@ -366,15 +366,15 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 		}
 
 		if input.UserID == &empty {
-			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID)
-			if val := util.ValidateUserIdAndUserIdLegacy(rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val == true {
+			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID, input.SourceTransID)
+			if val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val == true {
 				return message.UserRated
 			}
 		}
 
 		if input.UserIDLegacy == &empty {
-			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID)
-			if val := util.ValidateUserIdAndUserIdLegacy(rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val == true {
+			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID, input.SourceTransID)
+			if val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val == true {
 				return message.UserRated
 			}
 		}
@@ -390,23 +390,25 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 
 		if ratingNumericType == nil {
 			saveReq = append(saveReq, request.SaveRatingSubmission{
-				RatingID:     argRatings.ID,
-				Value:        argRatings.Value,
-				UserID:       input.UserID,
-				UserIDLegacy: input.UserIDLegacy,
-				Comment:      "",
-				IPAddress:    input.IPAddress,
-				UserAgent:    input.UserAgent,
+				RatingID:      argRatings.ID,
+				Value:         argRatings.Value,
+				UserID:        input.UserID,
+				UserIDLegacy:  input.UserIDLegacy,
+				Comment:       "",
+				IPAddress:     input.IPAddress,
+				UserAgent:     input.UserAgent,
+				SourceTransID: input.SourceTransID,
 			})
 		} else {
 			saveReq = append(saveReq, request.SaveRatingSubmission{
-				RatingID:     argRatings.ID,
-				Value:        argRatings.Value,
-				UserID:       input.UserID,
-				UserIDLegacy: input.UserIDLegacy,
-				Comment:      input.Comment,
-				IPAddress:    input.IPAddress,
-				UserAgent:    input.UserAgent,
+				RatingID:      argRatings.ID,
+				Value:         argRatings.Value,
+				UserID:        input.UserID,
+				UserIDLegacy:  input.UserIDLegacy,
+				Comment:       input.Comment,
+				IPAddress:     input.IPAddress,
+				UserAgent:     input.UserAgent,
+				SourceTransID: input.SourceTransID,
 			})
 		}
 	}
@@ -449,21 +451,7 @@ func (s *ratingServiceImpl) UpdateRatingSubmission(input request.UpdateRatingSub
 		return message.ErrRatingNotFound
 	}
 
-	var empty = ""
-
-	// One of the following user_id and user_id_legacy must be filled
-
-	if input.UserID == nil || *input.UserID == "" {
-		input.UserID = &empty
-	}
-
-	if input.UserIDLegacy == nil || *input.UserIDLegacy == "" {
-		input.UserIDLegacy = &empty
-	}
-
-	if input.UserID == &empty && input.UserIDLegacy == &empty {
-		return message.UserUIDRequired
-	}
+	empty := ""
 
 	// find Rating submission
 	ratingSubmission, err := s.ratingRepo.GetRatingSubmissionById(objectRatingSubmissionId)
@@ -525,32 +513,41 @@ func (s *ratingServiceImpl) UpdateRatingSubmission(input request.UpdateRatingSub
 	}
 
 	// A submission with a combination of either (rating_id and user_id) OR (rating_id and user_id_legacy) is allowed once
-	if input.UserID != &empty && input.UserIDLegacy != &empty {
-		ratingSubmission, err = s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, rating.ID.Hex())
-		val := util.ValidateUserIdAndUserIdLegacyForUpdate(objectRatingSubmissionId, rating.ID, input.UserID, input.UserIDLegacy, ratingSubmission, err)
+
+	if ratingSubmission.UserID == nil {
+		ratingSubmission.UserID = &empty
+	}
+
+	if ratingSubmission.UserIDLegacy == nil {
+		ratingSubmission.UserIDLegacy = &empty
+	}
+
+	if ratingSubmission.UserID != &empty && ratingSubmission.UserIDLegacy != &empty {
+		ratingSubmissionV, err := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(ratingSubmission.UserIDLegacy, input.RatingID, ratingSubmission.SourceTransID)
+		val := util.ValidateUserIdAndUserIdLegacyForUpdate(input, objectRatingSubmissionId, ratingSubmission.SourceTransID, ratingSubmission.UserID, ratingSubmission.UserIDLegacy, ratingSubmissionV, err)
 		if val {
 			return message.UserRated
 		}
 		if !val {
-			ratingSubmission, err = s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, rating.ID.Hex())
-			val = util.ValidateUserIdAndUserIdLegacyForUpdate(objectRatingSubmissionId, rating.ID, input.UserID, input.UserIDLegacy, ratingSubmission, err)
+			ratingSubmissionV2, err := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(ratingSubmission.UserID, input.RatingID, ratingSubmission.SourceTransID)
+			val = util.ValidateUserIdAndUserIdLegacyForUpdate(input, objectRatingSubmissionId, ratingSubmission.SourceTransID, ratingSubmission.UserID, ratingSubmission.UserIDLegacy, ratingSubmissionV2, err)
 			if val {
 				return message.UserRated
 			}
 		}
 	}
 
-	if input.UserID == &empty {
-		ratingSubmission, err = s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, rating.ID.Hex())
-		val := util.ValidateUserIdAndUserIdLegacyForUpdate(objectRatingSubmissionId, rating.ID, input.UserID, input.UserIDLegacy, ratingSubmission, err)
+	if ratingSubmission.UserID == &empty {
+		ratingSubmissionV, err := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(ratingSubmission.UserIDLegacy, ratingSubmission.RatingID, ratingSubmission.SourceTransID)
+		val := util.ValidateUserIdAndUserIdLegacyForUpdate(input, objectRatingSubmissionId, ratingSubmission.SourceTransID, ratingSubmission.UserID, ratingSubmission.UserIDLegacy, ratingSubmissionV, err)
 		if val {
 			return message.UserRated
 		}
 	}
 
-	if input.UserIDLegacy == &empty {
-		ratingSubmission, err = s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, rating.ID.Hex())
-		val := util.ValidateUserIdAndUserIdLegacyForUpdate(objectRatingSubmissionId, rating.ID, input.UserID, input.UserIDLegacy, ratingSubmission, err)
+	if ratingSubmission.UserIDLegacy == &empty {
+		ratingSubmissionV, err := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(ratingSubmission.UserID, input.RatingID, ratingSubmission.SourceTransID)
+		val := util.ValidateUserIdAndUserIdLegacyForUpdate(input, objectRatingSubmissionId, ratingSubmission.SourceTransID, ratingSubmission.UserID, ratingSubmission.UserIDLegacy, ratingSubmissionV, err)
 		if val {
 			return message.UserRated
 		}
@@ -601,7 +598,6 @@ func (s *ratingServiceImpl) GetRatingSubmission(id string) (*response.RatingSubm
 	}
 	get, err := s.ratingRepo.GetRatingSubmissionById(objectId)
 	if err != nil {
-		fmt.Println("err.Error()", err.Error())
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, message.ErrRatingSubmissionNotFound
 		}
@@ -665,6 +661,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissions(input request.ListRatingSub
 				UserIDLegacy: args.UserIDLegacy,
 				Comment:      args.Comment,
 				Value:        args.Value,
+				SourTransID:  args.SourceTransID,
 			})
 		}
 	}
@@ -1010,18 +1007,16 @@ func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) mess
 		return message.FailedMsg
 	}
 
-	// check source uid and source type not exist
-	if currentRating.SourceUid != input.Body.SourceUid || currentRating.SourceType != input.Body.SourceType {
-		rating, err := s.ratingRepo.GetRatingBySourceUidAndSourceType(input.Body.SourceUid, input.Body.SourceType)
-		if err != nil {
-			if !errors.Is(err, mongo.ErrNoDocuments) {
-				return message.FailedMsg
-			}
+	// check rating has rating submission
+	ratingSubmission, err := s.ratingRepo.GetRatingSubmissionByRatingId(input.Id)
+	if err != nil {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
+			return message.FailedMsg
 		}
+	}
 
-		if rating != nil {
-			return message.ErrExistingSourceUidAndSourceType
-		}
+	if ratingSubmission != nil && (input.Body.SourceUid != "" || input.Body.SourceType != "") {
+		return message.ErrCanNotUpdateSourceTypeOrSoureUid
 	}
 
 	// check source exist
@@ -1033,6 +1028,28 @@ func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) mess
 
 		if source.Meta.Code != message.GetMedicalFacilitySuccess.Code {
 			return message.ErrSourceNotExist
+		}
+	}
+
+	// check source uid and source type not exist
+	if (input.Body.SourceUid != "" && currentRating.SourceUid != input.Body.SourceUid) || (input.Body.SourceType != "" && currentRating.SourceType != input.Body.SourceType) {
+		var sourceUid = input.Body.SourceUid
+		var sourceType = input.Body.SourceType
+		if sourceUid == "" {
+			sourceUid = currentRating.SourceUid
+		}
+		if sourceType == "" {
+			sourceType = currentRating.SourceType
+		}
+		rating, err := s.ratingRepo.GetRatingBySourceUidAndSourceType(sourceUid, sourceType)
+		if err != nil {
+			if !errors.Is(err, mongo.ErrNoDocuments) {
+				return message.FailedMsg
+			}
+		}
+
+		if rating != nil {
+			return message.ErrExistingSourceUidAndSourceType
 		}
 	}
 
@@ -1203,7 +1220,7 @@ func updateRatingTypeLikertHaveSubmission(s *ratingServiceImpl, input request.Sa
 	return message.SuccessMsg
 }
 
-// swagger:route GET /api/v1/ratings/summary Ratings GetListRatingSummaryRequest
+// swagger:route GET /api/v1/ratings/summary/{source_type} Ratings GetListRatingSummaryRequest
 // Get list Rating Summary
 //
 // responses:
@@ -1219,6 +1236,7 @@ func (s *ratingServiceImpl) GetListRatingSummary(input request.GetListRatingSumm
 
 	//find ratings by source_uid --> find rating submissions by id of rating
 	filterForRating := request.RatingFilter{}
+	filterForRating.SourceType = input.SourceType
 	if input.Filter != "" {
 		errMarshal := json.Unmarshal([]byte(input.Filter), &filterForRating)
 		if errMarshal != nil {
@@ -1264,18 +1282,19 @@ func (s *ratingServiceImpl) GetListRatingSummary(input request.GetListRatingSumm
 	if filterForRatingSub.Score == nil {
 		min, max = 0, 10
 	} else {
+		if len(filterForRatingSub.Score) > 2 || len(filterForRatingSub.Score) < 2 {
+			return nil, message.WrongScoreFilter
+		}
 		min, max = getScore(filterForRatingSub.Score)
 	}
-	if len(filterForRatingSub.Score) > 2 && len(filterForRatingSub.Score) < 2 {
-		return nil, message.WrongScoreFilter
-	}
 
-	// Handler response
-	results := CalculateValue(filterForRating, findR, findS, min, max)
+	results := make([]response.RatingSummaryResponse, 0)
 
-	if len(filterForRating.SourceUid) == 0 {
+	if len(filterForRating.SourceUid) == 0 || len(findR) == 0 || len(findS) == 0 {
 		return results, message.SuccessMsg
 	}
+	// Handler response
+	results = CalculateValue(filterForRating, findR, findS, min, max)
 
 	return results, message.SuccessMsg
 }
@@ -1285,7 +1304,8 @@ func CalculateValue(filterForRating request.RatingFilter, rating []entity.Rating
 	for _, args := range filterForRating.SourceUid {
 		var totalSub int
 		var valueRate float64
-		var avgValue float64
+		var avgValue float64 = 0
+		var totalReview int
 		for _, argRs := range rating {
 			if argRs.SourceUid != args {
 				continue
@@ -1294,14 +1314,14 @@ func CalculateValue(filterForRating request.RatingFilter, rating []entity.Rating
 				if argSs.RatingID != argRs.ID.Hex() {
 					continue
 				}
+				var avgValuePerSub float64
+				var total float64
 				values := make([]float64, 0)
 				strValue := strings.Split(argSs.Value, ",")
 				for _, argVs := range strValue {
 					value, _ := strconv.ParseFloat(argVs, 64)
 					values = append(values, value)
 				}
-				var avgValuePerSub float64
-				var total float64
 				for _, argVPS := range values {
 					total += argVPS
 				}
@@ -1309,16 +1329,16 @@ func CalculateValue(filterForRating request.RatingFilter, rating []entity.Rating
 				totalSub += len(values)
 				valueRate += avgValuePerSub
 			}
-			avgValue = valueRate / float64(totalSub)
-			if math.IsNaN(avgValue) {
-				avgValue = 0
+			totalReview = len(ratingSubmission)
+			if !math.IsNaN(avgValue) {
+				avgValue = valueRate / float64(len(ratingSubmission))
 			}
 		}
 		avgValue = util.RoundFloatWithPrecision(avgValue, 1)
 		if filterScore(min, max, avgValue) {
 			results = append(results, response.RatingSummaryResponse{
 				SourceUID:   args,
-				TotalReview: totalSub,
+				TotalReview: totalReview,
 				Value:       avgValue,
 			})
 		}
@@ -1336,6 +1356,6 @@ func filterScore(min float64, max float64, value float64) bool {
 func getScore(score []float64) (float64, float64) {
 	var min, max float64
 	min = score[0]
-	min = score[1]
+	max = score[1]
 	return min, max
 }

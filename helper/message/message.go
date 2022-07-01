@@ -39,7 +39,7 @@ var ErrIntervalsValueReq = Message{Code: ValidationFailCode, Message: "Intervals
 var UserAgentTooLong = Message{Code: ValidationFailCode, Message: "The maximum length of user_agent allowed is 200 characters"}
 var ErrIPFormatReq = Message{Code: ValidationFailCode, Message: "Wrong IP format"}
 var UserUIDRequired = Message{Code: ValidationFailCode, Message: "One of the following user_id and user_id_legacy must be filled"}
-var UserRated = Message{Code: ValidationFailCode, Message: "Duplicate submissions by the same user for rating is not allowed"}
+var UserRated = Message{Code: ValidationFailCode, Message: "Duplicate submissions by the same user id, rating id and source_trans_id is not allowed"}
 var ErrRatingNotFound = Message{Code: DataNotFoundCode, Message: "Rating not found"}
 var ErrRatingNumericTypeNotFound = Message{Code: DataNotFoundCode, Message: "Rating Numeric Type Not Found"}
 var RatingSubmissionNotFound = Message{Code: DataNotFoundCode, Message: "Rating submission not found"}
@@ -75,6 +75,7 @@ var ErrTypeNotFound = Message{Code: ValidationFailCode, Message: "Rating type no
 var ErrCannotSameRatingId = Message{Code: ValidationFailCode, Message: "Cannot create rating submission with same rating"}
 var ErrExistingSourceUidAndSourceType = Message{Code: ValidationFailCode, Message: "Source uid and source type have already existed"}
 var ErrRatingSubmissionNotFound = Message{Code: ValidationFailCode, Message: "Rating submission not found"}
+var ErrCanNotUpdateSourceTypeOrSoureUid = Message{Code: ValidationFailCode, Message: "Can not update source uid or source type if rating has rating submission"}
 
 // Code 39000 - 39999 Server error
 var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}
