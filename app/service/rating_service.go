@@ -509,7 +509,7 @@ func (s *ratingServiceImpl) UpdateRatingSubmission(input request.UpdateRatingSub
 				Message: "value must be integer and include in " + fmt.Sprintf("%v", validList),
 			}
 		}
-		input.Comment = ""
+		input.Comment = empty
 	}
 
 	// A submission with a combination of either (rating_id and user_id) OR (rating_id and user_id_legacy) is allowed once
@@ -607,8 +607,9 @@ func (s *ratingServiceImpl) GetRatingSubmission(id string) (*response.RatingSubm
 		RatingID:     get.RatingID,
 		UserID:       get.UserID,
 		UserIDLegacy: get.UserIDLegacy,
-		Comment:      get.Comment,
+		Comment:      *get.Comment,
 		Value:        get.Value,
+		SourTransID:  get.SourceTransID,
 	}
 	return &result, message.SuccessMsg
 }
@@ -659,7 +660,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissions(input request.ListRatingSub
 				RatingID:     args.RatingID,
 				UserID:       args.UserID,
 				UserIDLegacy: args.UserIDLegacy,
-				Comment:      args.Comment,
+				Comment:      *args.Comment,
 				Value:        args.Value,
 				SourTransID:  args.SourceTransID,
 			})
@@ -1254,7 +1255,7 @@ func (s *ratingServiceImpl) GetListRatingSummary(input request.GetListRatingSumm
 	}
 
 	//find rating summary, start_date(created_at), end_date(created_at), rating_id
-	var rates = []string{}
+	var rates = []string(nil)
 	for _, args := range findR {
 		rates = append(rates, args.ID.Hex())
 	}
