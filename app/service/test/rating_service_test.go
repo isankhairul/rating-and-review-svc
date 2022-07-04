@@ -41,7 +41,6 @@ var (
 	value         = "4"
 	id            = "629dce7bf1f26275e0d84826"
 	description   = "alo"
-	idNil         = ""
 	res           = "success"
 	valueFailed   = "failed"
 	Desc          = "Description"
@@ -326,7 +325,7 @@ func TestUpdateRatingTypeNumFailed2(t *testing.T) {
 	objectId2, _ := primitive.ObjectIDFromHex("62a6e2f78be76898e8ccc2e9")
 	submissison := entity.RatingSubmisson{
 		ID:       objectId2,
-		Comment:  "dlfslkjdf",
+		Comment:  &Desc,
 		RatingID: "62a6e2ae8be76898e8ccc2e8",
 	}
 	objectId, _ := primitive.ObjectIDFromHex("629ec0736f3c2761ba2dc867")
@@ -461,7 +460,7 @@ func TestDeleteRatingTypeNumByIdErrThisRatingTypeIsInUse(t *testing.T) {
 	objectId2, _ := primitive.ObjectIDFromHex("62a6e2f78be76898e8ccc2e9")
 	submissison := entity.RatingSubmisson{
 		ID:       objectId2,
-		Comment:  "dlfslkjdf",
+		Comment:  &Desc,
 		RatingID: "62a6e2ae8be76898e8ccc2e8",
 	}
 	ratingRepository.Mock.On("GetRatingByType", req.Id).Return(rating)
@@ -504,7 +503,8 @@ func TestGetRatingTypeNums(t *testing.T) {
 func TestGetRatingSubmissionSuccess(t *testing.T) {
 	objectId, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84826")
 	sub := entity.RatingSubmisson{
-		ID: objectId,
+		ID:      objectId,
+		Comment: &Desc,
 	}
 
 	ratingRepository.Mock.On("GetRatingSubmissionById", objectId).Return(sub, nil)
@@ -1028,6 +1028,7 @@ func TestGetListRatingSubmission(t *testing.T) {
 			UserID:       &matchStrValuePtr,
 			UserIDLegacy: &matchStrValuePtr,
 			Value:        value,
+			Comment:      &Desc,
 		},
 	}
 
@@ -1405,7 +1406,7 @@ func TestDeleteRatingTypeLikertByIdErrThisRatingTypeIsInUse(t *testing.T) {
 	objectId2, _ := primitive.ObjectIDFromHex("62a6e2f78be76898e8ccc2e9")
 	submissison := entity.RatingSubmisson{
 		ID:       objectId2,
-		Comment:  "dlfslkjdf",
+		Comment:  &Desc,
 		RatingID: "62a6e2ae8be76898e8ccc2e8",
 	}
 	ratingRepository.Mock.On("GetRatingByType", req.Id).Return(rating)
@@ -2159,12 +2160,12 @@ func TestGetListRatingSummary(t *testing.T) {
 	result := []entity.RatingSubmisson{
 		{
 			RatingID: "629ec07e6f3c2761ba2dc468",
-			Comment:  description,
+			Comment:  &Desc,
 			Value:    value,
 		},
 		{
 			RatingID: "629ec07e6f3c2761ba2dc848",
-			Comment:  description,
+			Comment:  &Desc,
 			Value:    value,
 		},
 	}
@@ -2368,12 +2369,12 @@ func TestGetListRatingSummaryWrongScoreFilter(t *testing.T) {
 	result := []entity.RatingSubmisson{
 		{
 			RatingID: "629ec07e6f3c2761ba2dc468",
-			Comment:  description,
+			Comment:  &Desc,
 			Value:    value,
 		},
 		{
 			RatingID: "629ec07e6f3c2761ba2dc848",
-			Comment:  description,
+			Comment:  &Desc,
 			Value:    value,
 		},
 	}
@@ -2414,12 +2415,12 @@ func TestGetListRatingSummaryNoScoreFilter(t *testing.T) {
 	result := []entity.RatingSubmisson{
 		{
 			RatingID: "629ec07e6f3c2761ba2dc468",
-			Comment:  description,
+			Comment:  &Desc,
 			Value:    value,
 		},
 		{
 			RatingID: "629ec07e6f3c2761ba2dc848",
-			Comment:  description,
+			Comment:  &Desc,
 			Value:    value,
 		},
 	}
@@ -2460,12 +2461,12 @@ func TestGetListRatingSummaryErrSourceUidRequired(t *testing.T) {
 	result := []entity.RatingSubmisson{
 		{
 			RatingID: "629ec07e6f3c2761ba2dc468",
-			Comment:  description,
+			Comment:  &Desc,
 			Value:    value,
 		},
 		{
 			RatingID: "629ec07e6f3c2761ba2dc848",
-			Comment:  description,
+			Comment:  &Desc,
 			Value:    value,
 		},
 	}

@@ -300,7 +300,7 @@ func (r *ratingRepo) UpdateRatingSubmission(input request.UpdateRatingSubmission
 	timeUpdate = time.Now().In(util.Loc)
 	ratingSubmiss := entity.RatingSubmisson{
 		RatingID:  input.RatingID,
-		Comment:   input.Comment,
+		Comment:   &input.Comment,
 		Value:     *input.Value,
 		UpdatedAt: timeUpdate,
 	}

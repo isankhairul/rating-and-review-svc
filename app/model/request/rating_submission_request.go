@@ -93,6 +93,7 @@ func (req CreateRatingSubmissionRequest) Validate() error {
 		validation.Field(&req.Ratings, validation.Required.Error(message.ErrReq.Message)),
 		validation.Field(&req.IPAddress, validation.Match(regexp.MustCompile(regexIP)).Error(message.ErrIPFormatReq.Message)),
 		validation.Field(&req.SourceTransID, validation.Required.Error(message.ErrReq.Message)),
+		validation.Field(&req.Comment, validation.NotNil),
 	)
 }
 
@@ -107,5 +108,6 @@ func (req UpdateRatingSubmissionRequest) Validate() error {
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.RatingID, validation.Required.Error(message.ErrReq.Message)),
 		validation.Field(&req.Value, validation.Required.Error(message.ErrReq.Message)),
+		validation.Field(&req.Comment, validation.NotNil),
 	)
 }
