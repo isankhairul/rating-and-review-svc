@@ -1506,7 +1506,7 @@ func TestCreateRating(t *testing.T) {
 		Data: util.Data{},
 	}
 
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.SourceUid).Return(medicalFacilityResponseHttp, nil)
 	ratingRepository.Mock.On("GetRatingTypeNumByIdAndStatus", ObjRatingTypeId).Return(ratingTypeNum, nil)
 	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", ObjRatingTypeId).Return(nil, nil)
@@ -1548,7 +1548,7 @@ func TestCreateRatingErrRatingTypeNotExist2(t *testing.T) {
 	ratingTypeLikert := &entity.RatingTypesLikertCol{
 		Type: "testfailed1",
 	}
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.SourceUid).Return(medicalFacilityResponseHttp, nil)
 	ratingRepository.Mock.On("GetRatingTypeNumByIdAndStatus", ObjRatingTypeId).Return(ratingTypeNum, nil)
 	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", ObjRatingTypeId).Return(ratingTypeLikert, nil)
@@ -1583,7 +1583,7 @@ func TestCreateRatingErrRatingTypeNotExist1(t *testing.T) {
 		Data: util.Data{},
 	}
 
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.SourceUid).Return(medicalFacilityResponseHttp, nil)
 	ratingRepository.Mock.On("GetRatingTypeNumByIdAndStatus", ObjRatingTypeId).Return(nil, nil)
 	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", ObjRatingTypeId).Return(nil, nil)
@@ -1611,7 +1611,7 @@ func TestCreateRatingFailed1(t *testing.T) {
 		Data: util.Data{},
 	}
 
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.SourceUid).Return(medicalFacilityResponseHttp, nil)
 
 	_, mgs := svc.CreateRating(req)
@@ -1635,7 +1635,7 @@ func TestCreateRatingFailed3(t *testing.T) {
 		Data: util.Data{},
 	}
 
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.SourceUid).Return(medicalFacilityResponseHttp, nil)
 	_, mgs := svc.CreateRating(req)
 	assert.Equal(t, message.ErrRatingTypeNotExist, mgs)
@@ -1659,7 +1659,7 @@ func TestCreateRatingFailed5(t *testing.T) {
 		Data: util.Data{},
 	}
 
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.SourceUid).Return(medicalFacilityResponseHttp, nil)
 	ratingRepository.Mock.On("GetRatingTypeNumByIdAndStatus", ObjRatingTypeId).Return(nil, e)
 
@@ -1689,7 +1689,7 @@ func TestCreateRatingFailed6(t *testing.T) {
 		Data: util.Data{},
 	}
 
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.SourceUid).Return(medicalFacilityResponseHttp, nil)
 	ratingRepository.Mock.On("GetRatingTypeNumByIdAndStatus", ObjRatingTypeId).Return(ratingTypeNum, nil)
 	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", ObjRatingTypeId).Return(nil, e)
@@ -1715,7 +1715,7 @@ func TestCreateRatingFailed7(t *testing.T) {
 		Data: util.Data{},
 	}
 
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, nil)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.SourceUid).Return(medicalFacilityResponseHttp, nil)
 	ratingRepository.Mock.On("GetRatingTypeNumByIdAndStatus", ObjRatingTypeId).Return(nil, nil)
 	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", ObjRatingTypeId).Return(nil, nil)
@@ -1729,7 +1729,7 @@ func TestCreateRatingFailed8(t *testing.T) {
 		Name: name + "68",
 	}
 
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, e)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.SourceUid, req.SourceType).Return(nil, e)
 
 	_, mgs := svc.CreateRating(req)
 	assert.Equal(t, message.FailedMsg, mgs)
@@ -1747,10 +1747,10 @@ func TestCreateRatingFailed9(t *testing.T) {
 		SourceType: "69",
 	}
 
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.SourceUid, req.SourceType).Return(rating, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.SourceUid, req.SourceType).Return(rating, nil)
 
 	_, mgs := svc.CreateRating(req)
-	assert.Equal(t, message.ErrExistingSourceUidAndSourceType, mgs)
+	assert.Equal(t, message.ErrExistingRatingTypeIdSourceUidAndSourceType, mgs)
 }
 
 func TestUpdateRating(t *testing.T) {
@@ -1777,7 +1777,7 @@ func TestUpdateRating(t *testing.T) {
 		Data: util.Data{},
 	}
 
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.Body.SourceUid, req.Body.SourceType).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.Body.SourceUid, req.Body.SourceType).Return(nil, nil)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.Body.SourceUid).Return(medicalFacilityResponseHttp, nil)
 	ratingRepository.Mock.On("GetRatingById", ObjRatingId).Return(rating, nil)
 	ratingRepository.Mock.On("GetRatingSubmissionByRatingId", req.Id).Once().Return(nil, nil)
@@ -1811,7 +1811,7 @@ func TestUpdateRatingFailed(t *testing.T) {
 		Data: util.Data{},
 	}
 
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.Body.SourceUid, req.Body.SourceType).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.Body.SourceUid, req.Body.SourceType).Return(nil, nil)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.Body.SourceUid).Return(medicalFacilityResponseHttp, nil)
 	ratingRepository.Mock.On("GetRatingById", ObjRatingId).Return(rating, nil)
 	ratingRepository.Mock.On("GetRatingSubmissionByRatingId", req.Id).Return(nil, nil)
@@ -1845,7 +1845,7 @@ func TestUpdateRatingFailed1(t *testing.T) {
 		Data: util.Data{},
 	}
 
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.Body.SourceUid, req.Body.SourceType).Return(nil, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.Body.SourceUid, req.Body.SourceType).Return(nil, nil)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.Body.SourceUid).Return(medicalFacilityResponseHttp, nil)
 	ratingRepository.Mock.On("GetRatingById", ObjRatingId).Return(rating, nil)
 	mgs := svc.UpdateRating(req)
@@ -1877,7 +1877,7 @@ func TestUpdateRatingFailed2(t *testing.T) {
 	}
 
 	ratingRepository.Mock.On("GetRatingById", ObjRatingId).Return(rating, nil)
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.Body.SourceUid, req.Body.SourceType).Return(nil, e)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.Body.SourceUid, req.Body.SourceType).Return(nil, e)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.Body.SourceUid).Return(medicalFacilityResponseHttpSuccess, nil)
 	ratingRepository.Mock.On("GetRatingSubmissionByRatingId", req.Id).Return(nil, nil)
 	mgs := svc.UpdateRating(req)
@@ -1911,9 +1911,9 @@ func TestUpdateRatingFailed3(t *testing.T) {
 	ratingRepository.Mock.On("GetRatingById", ObjRatingId).Return(rating, nil)
 	ratingRepository.Mock.On("GetRatingSubmissionByRatingId", req.Id).Return(nil, nil)
 	medicalFacility.Mock.On("CallGetDetailMedicalFacility", req.Body.SourceUid).Return(medicalFacilityResponseHttp, nil)
-	ratingRepository.Mock.On("GetRatingBySourceUidAndSourceType", req.Body.SourceUid, req.Body.SourceType).Return(rating, nil)
+	ratingRepository.Mock.On("GetRatingByRatingTypeSourceUidAndSourceType", req.Body.SourceUid, req.Body.SourceType).Return(rating, nil)
 	mgs := svc.UpdateRating(req)
-	assert.Equal(t, message.ErrExistingSourceUidAndSourceType, mgs)
+	assert.Equal(t, message.ErrExistingRatingTypeIdSourceUidAndSourceType, mgs)
 }
 
 func TestUpdateRatingFailed4(t *testing.T) {

@@ -902,8 +902,8 @@ func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*enti
 		input.Status = &status
 	}
 
-	// check source uid and source type not exist
-	rating, err := s.ratingRepo.GetRatingBySourceUidAndSourceType(input.SourceUid, input.SourceType)
+	// check rating type id, source uid and source type not exist
+	rating, err := s.ratingRepo.GetRatingByRatingTypeSourceUidAndSourceType(input.RatingTypeId, input.SourceUid, input.SourceType)
 	if err != nil {
 		if !errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, message.FailedMsg
@@ -911,7 +911,7 @@ func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*enti
 	}
 
 	if rating != nil {
-		return nil, message.ErrExistingSourceUidAndSourceType
+		return nil, message.ErrExistingRatingTypeIdSourceUidAndSourceType
 	}
 
 	// check source exist
@@ -1042,7 +1042,7 @@ func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) mess
 		if sourceType == "" {
 			sourceType = currentRating.SourceType
 		}
-		rating, err := s.ratingRepo.GetRatingBySourceUidAndSourceType(sourceUid, sourceType)
+		rating, err := s.ratingRepo.GetRatingByRatingTypeSourceUidAndSourceType(currentRating.RatingTypeId, sourceUid, sourceType)
 		if err != nil {
 			if !errors.Is(err, mongo.ErrNoDocuments) {
 				return message.FailedMsg
@@ -1050,7 +1050,7 @@ func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) mess
 		}
 
 		if rating != nil {
-			return message.ErrExistingSourceUidAndSourceType
+			return message.ErrExistingRatingTypeIdSourceUidAndSourceType
 		}
 	}
 

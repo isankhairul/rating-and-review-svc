@@ -73,7 +73,7 @@ var ErrSourceUidRequire = Message{Code: ValidationFailCode, Message: "Source_uid
 var ErrMaxMin = Message{Code: ValidationFailCode, Message: "min_score can not be less than max_score"}
 var ErrTypeNotFound = Message{Code: ValidationFailCode, Message: "Rating type not found"}
 var ErrCannotSameRatingId = Message{Code: ValidationFailCode, Message: "Cannot create rating submission with same rating"}
-var ErrExistingSourceUidAndSourceType = Message{Code: ValidationFailCode, Message: "Source uid and source type have already existed"}
+var ErrExistingRatingTypeIdSourceUidAndSourceType = Message{Code: ValidationFailCode, Message: "Rating type id, source uid and source type have already existed"}
 var ErrRatingSubmissionNotFound = Message{Code: ValidationFailCode, Message: "Rating submission not found"}
 var ErrCanNotUpdateSourceTypeOrSoureUid = Message{Code: ValidationFailCode, Message: "Can not update source uid or source type if rating has rating submission"}
 

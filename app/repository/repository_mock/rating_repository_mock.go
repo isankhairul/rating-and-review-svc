@@ -15,7 +15,7 @@ type RatingRepositoryMock struct {
 	Mock mock.Mock
 }
 
-func (_m *RatingRepositoryMock) GetRatingBySourceUidAndSourceType(sourceUid, sourceType string) (*entity.RatingsCol, error) {
+func (_m *RatingRepositoryMock) GetRatingByRatingTypeSourceUidAndSourceType(ratingTypeId, sourceUid, sourceType string) (*entity.RatingsCol, error) {
 	ret := _m.Mock.Called(sourceUid, sourceType)
 
 	var r0 *entity.RatingsCol
