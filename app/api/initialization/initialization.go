@@ -6,8 +6,9 @@ import (
 	"go-klikdokter/helper/_struct"
 	"go-klikdokter/helper/config"
 	"go-klikdokter/helper/database"
-	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
+
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/go-kit/log"
 	"github.com/spf13/viper"
@@ -42,14 +43,17 @@ func DbInit() (*gorm.DB, error) {
 func InitRouting(db *mongo.Database, logger log.Logger) *http.ServeMux {
 	// Service registry
 	ratingSvc := registry.RegisterRatingService(db, logger)
+	publicRatingSvc := registry.RegisterPublicRatingService(db, logger)
 
 	// Transport initialization
 	swagHttp := transport.SwaggerHttpHandler(log.With(logger, "SwaggerTransportLayer", "HTTP")) //don't delete or change this !!
 	ratingHttp := transport.RatingHttpHandler(ratingSvc, log.With(logger, "RatingTransportLayer", "HTTP"))
+	publicRatingHttp := transport.PublicRatingHttpHandler(publicRatingSvc, log.With(logger, "PublicRatingTransportLayer", "HTTP"))
 
 	// Routing path
 	mux := http.NewServeMux()
 	mux.Handle("/", swagHttp) //don't delete or change this!!
+	mux.Handle(_struct.PrefixBase+"public/", publicRatingHttp)
 	mux.Handle(_struct.PrefixBase, ratingHttp)
 
 	return mux
