@@ -7,13 +7,14 @@ import (
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/pkg/util"
+	"math"
+	"reflect"
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"math"
-	"reflect"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -258,6 +259,7 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 			{"ip_address", args.IPAddress},
 			{"user_agent", args.UserAgent},
 			{"source_trans_id", args.SourceTransID},
+			{"like_counter", 0},
 			{"created_at", time.Now().In(util.Loc)},
 			{"updated_at", time.Now().In(util.Loc)},
 		})
