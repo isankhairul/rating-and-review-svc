@@ -24,6 +24,25 @@ definitions:
         x-go-name: SourceUid
     type: object
     x-go-package: go-klikdokter/app/model/request
+  CreateRatingSubHelpfulRequest:
+    properties:
+      ip_address:
+        type: string
+        x-go-name: IPAddress
+      rating_submission_id:
+        type: string
+        x-go-name: RatingSubmissionID
+      user_agent:
+        type: string
+        x-go-name: UserAgent
+      user_id:
+        type: string
+        x-go-name: UserID
+      user_id_legacy:
+        type: string
+        x-go-name: UserIDLegacy
+    type: object
+    x-go-package: go-klikdokter/app/model/request
   CreateRatingSubmissionRequest:
     properties:
       comment:
@@ -261,19 +280,82 @@ definitions:
         x-go-name: Value
     type: object
     x-go-package: go-klikdokter/app/model/request
+  RatingSubHelpfulCol:
+    properties:
+      id:
+        $ref: '#/definitions/ObjectID'
+      ip_address:
+        type: string
+        x-go-name: IPAddress
+      rating_submission_id:
+        type: string
+        x-go-name: RatingSubmissionID
+      user_agent:
+        type: string
+        x-go-name: UserAgent
+      user_id:
+        type: string
+        x-go-name: UserID
+      user_id_legacy:
+        type: string
+        x-go-name: UserIDLegacy
+    type: object
+    x-go-package: go-klikdokter/app/model/entity
   RatingTypeLikertResponse:
     properties:
-      ratings:
-        items:
-          type: object
-        type: array
-        x-go-name: Ratings
-      source_type:
+      created_at:
+        format: date-time
         type: string
-        x-go-name: SourceType
-      source_uid:
+        x-go-name: CreatedAt
+      description:
         type: string
-        x-go-name: SourceUID
+        x-go-name: Description
+      id:
+        $ref: '#/definitions/ObjectID'
+      num_statements:
+        format: int64
+        type: integer
+        x-go-name: NumStatements
+      statement_01:
+        type: string
+        x-go-name: Statement01
+      statement_02:
+        type: string
+        x-go-name: Statement02
+      statement_03:
+        type: string
+        x-go-name: Statement03
+      statement_04:
+        type: string
+        x-go-name: Statement04
+      statement_05:
+        type: string
+        x-go-name: Statement05
+      statement_06:
+        type: string
+        x-go-name: Statement06
+      statement_07:
+        type: string
+        x-go-name: Statement07
+      statement_08:
+        type: string
+        x-go-name: Statement08
+      statement_09:
+        type: string
+        x-go-name: Statement09
+      statement_10:
+        type: string
+        x-go-name: Statement10
+      status:
+        type: boolean
+        x-go-name: Status
+      type:
+        type: string
+        x-go-name: Type
+      updated_at:
+        format: date-time
+        type: string
+        x-go-name: UpdatedAt
     type: object
     x-go-name: RatingBySourceTypeAndActorResponse
     x-go-package: go-klikdokter/app/model/response
@@ -532,6 +614,27 @@ info:
   title: 'KD Boilerplate Go kit:'
   version: "1.0"
 paths:
+  /api/v1/public/helpful_rating_submission/:
+    post:
+      description: Create Helpful Rating Submission
+      operationId: ReqRatingSubHelpfulBody
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/CreateRatingSubHelpfulRequest'
+        x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - PublicRating
   /api/v1/public/ratings/{source_type}/{source_uid}:
     get:
       description: Get Rating By Source Type and Source UID

@@ -3,6 +3,7 @@ package repository_mock
 import (
 	"errors"
 	"go-klikdokter/app/model/entity"
+	"go-klikdokter/app/model/request"
 
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -45,4 +46,15 @@ func (repository *PublicRatingRepositoryMock) GetRatingTypeNumById(id primitive.
 		ratingType := arguments.Get(0).(entity.RatingTypesNumCol)
 		return &ratingType, nil
 	}
+}
+
+func (repository *PublicRatingRepositoryMock) CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) (*entity.RatingSubHelpfulCol, error) {
+	ratingSubHelpfulCol := entity.RatingSubHelpfulCol{}
+	objectId, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84826")
+	ratingSubHelpfulCol.ID = objectId
+	return &ratingSubHelpfulCol, nil
+}
+
+func (repository *PublicRatingRepositoryMock) UpdateCounterRatingSubmission(id primitive.ObjectID, currentCounter int) error {
+	return nil
 }

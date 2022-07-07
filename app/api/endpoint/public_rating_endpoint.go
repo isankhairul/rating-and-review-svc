@@ -12,11 +12,13 @@ import (
 
 type PublicRatingEndpoint struct {
 	GetRatingBySourceTypeAndActor endpoint.Endpoint
+	CreateRatingSubHelpful        endpoint.Endpoint
 }
 
 func MakePublicRatingEndpoints(s service.PublicRatingService) PublicRatingEndpoint {
 	return PublicRatingEndpoint{
 		GetRatingBySourceTypeAndActor: makeGetRatingBySourceTypeAndActor(s),
+		CreateRatingSubHelpful:        makeCreateRatingSubHelpful(s),
 	}
 }
 
@@ -28,5 +30,16 @@ func makeGetRatingBySourceTypeAndActor(s service.PublicRatingService) endpoint.E
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 		}
 		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
+	}
+}
+
+func makeCreateRatingSubHelpful(s service.PublicRatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.CreateRatingSubHelpfulRequest)
+		msg := s.CreateRatingSubHelpful(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 	}
 }

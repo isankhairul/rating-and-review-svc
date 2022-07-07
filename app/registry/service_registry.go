@@ -21,6 +21,7 @@ func RegisterRatingService(db *mongo.Database, logger log.Logger) service.Rating
 func RegisterPublicRatingService(db *mongo.Database, logger log.Logger) service.PublicRatingService {
 	return service.NewPublicRatingService(
 		logger,
+		rp.NewRatingRepository(db),
 		rp.NewPublicRatingRepository(db),
 	)
 }

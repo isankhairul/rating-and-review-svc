@@ -1,6 +1,7 @@
 package test
 
 import (
+	"errors"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/repository/repository_mock"
@@ -17,7 +18,7 @@ import (
 )
 
 var publicRatingRepository = &repository_mock.PublicRatingRepositoryMock{Mock: mock.Mock{}}
-var publicRactingService = service.NewPublicRatingService(logger, publicRatingRepository)
+var publicRactingService = service.NewPublicRatingService(logger, ratingRepository, publicRatingRepository)
 
 func init() {
 	{
@@ -75,4 +76,124 @@ func TestGetRatingBySourceTypeAndSourceUID_ErrNoDataRating(t *testing.T) {
 
 	_, msg := publicRactingService.GetRatingBySourceTypeAndActor(req)
 	assert.Equal(t, message.ErrNoData, msg)
+}
+
+func TestCreateRatingSubHelpfulSuccess(t *testing.T) {
+	objectId, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84826")
+	objectRatingSubHelpfulId, _ := primitive.ObjectIDFromHex("62c6438c08d23eb8fe9834e8")
+	userId := "2210"
+	comment := "Comment Test"
+
+	input := request.CreateRatingSubHelpfulRequest{
+		RatingSubmissionID: "629dce7bf1f26275e0d84826",
+		UserID:             "2210",
+		UserIDLegacy:       "2310",
+		IPAddress:          "138.199.24.50",
+		UserAgent:          "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+	}
+
+	ratingSubmission := entity.RatingSubmisson{
+		ID: objectId,
+		RatingID: "62c4f30f6d90d90d6594fab9	",
+		UserID:        &userId,
+		UserIDLegacy:  &userId,
+		Comment:       &comment,
+		Value:         "85",
+		IPAddress:     "138.199.20.50",
+		UserAgent:     "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+		SourceTransID: "",
+		LikeCounter:   3,
+	}
+
+	ratingSubHelpful := entity.RatingSubHelpfulCol{
+		ID:                 objectRatingSubHelpfulId,
+		RatingSubmissionID: "62c53baf039c7a6554accb0d",
+		UserID:             "2210",
+		UserIDLegacy:       "2310",
+		IPAddress:          "138.199.20.50",
+		UserAgent:          "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+	}
+
+	ratingRepository.Mock.On("GetRatingSubmissionById", objectId).Return(ratingSubmission, nil).Once()
+	publicRatingRepository.Mock.On("CreateRatingSubHelpful", input).Return(ratingSubHelpful, nil).Once()
+	publicRatingRepository.Mock.On("UpdateCounterRatingSubmission", objectId, ratingSubmission.LikeCounter).Return(nil).Once()
+
+	msg := publicRactingService.CreateRatingSubHelpful(input)
+	assert.Equal(t, message.SuccessMsg, msg)
+}
+
+func TestCreateRatingSubHelpfulRatingSubmissionNil(t *testing.T) {
+	objectRatingSubmissionId, _ := primitive.ObjectIDFromHex("62c53baf039c7a6554accb0d")
+	userId := "2210"
+	comment := "Comment Test"
+
+	input := request.CreateRatingSubHelpfulRequest{
+		RatingSubmissionID: "62c53baf039c7a6554accb0d",
+		UserID:             "2210",
+		UserIDLegacy:       "2310",
+		IPAddress:          "138.199.24.50",
+		UserAgent:          "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+	}
+
+	ratingSubmission := entity.RatingSubmisson{
+		ID: objectRatingSubmissionId,
+		RatingID: "62c4f30f6d90d90d6594fab9	",
+		UserID:        &userId,
+		UserIDLegacy:  &userId,
+		Comment:       &comment,
+		Value:         "85",
+		IPAddress:     "138.199.20.50",
+		UserAgent:     "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+		SourceTransID: "",
+		LikeCounter:   3,
+	}
+
+	ratingRepository.Mock.On("GetRatingSubmissionById", objectRatingSubmissionId).Return(ratingSubmission, nil).Once()
+
+	msg := publicRactingService.CreateRatingSubHelpful(input)
+	assert.Equal(t, message.ErrRatingTypeNotExist, msg)
+}
+
+func TestCreateRatingSubHelpfulUpdateCounterFailed(t *testing.T) {
+	objectId, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84826")
+	objectRatingSubHelpfulId, _ := primitive.ObjectIDFromHex("62c6438c08d23eb8fe9834e8")
+	userId := "2210"
+	comment := "Comment Test"
+
+	input := request.CreateRatingSubHelpfulRequest{
+		RatingSubmissionID: "629dce7bf1f26275e0d84826",
+		UserID:             "2210",
+		UserIDLegacy:       "2310",
+		IPAddress:          "138.199.24.50",
+		UserAgent:          "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+	}
+
+	ratingSubmission := entity.RatingSubmisson{
+		ID: objectId,
+		RatingID: "62c4f30f6d90d90d6594fab9	",
+		UserID:        &userId,
+		UserIDLegacy:  &userId,
+		Comment:       &comment,
+		Value:         "85",
+		IPAddress:     "138.199.20.50",
+		UserAgent:     "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+		SourceTransID: "",
+		LikeCounter:   3,
+	}
+
+	ratingSubHelpful := entity.RatingSubHelpfulCol{
+		ID:                 objectRatingSubHelpfulId,
+		RatingSubmissionID: "62c53baf039c7a6554accb0d",
+		UserID:             "2210",
+		UserIDLegacy:       "2310",
+		IPAddress:          "138.199.20.50",
+		UserAgent:          "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+	}
+
+	ratingRepository.Mock.On("GetRatingSubmissionById", objectId).Return(ratingSubmission, nil).Once()
+	publicRatingRepository.Mock.On("CreateRatingSubHelpful", input).Return(ratingSubHelpful, nil).Once()
+	publicRatingRepository.Mock.On("UpdateCounterRatingSubmission", objectId, ratingSubmission.LikeCounter).Return(errors.New("error")).Once()
+
+	msg := publicRactingService.CreateRatingSubHelpful(input)
+	assert.Equal(t, message.SuccessMsg, msg)
 }

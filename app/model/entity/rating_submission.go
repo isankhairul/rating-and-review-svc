@@ -1,8 +1,9 @@
 package entity
 
 import (
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type RatingSubmisson struct {
@@ -15,6 +16,7 @@ type RatingSubmisson struct {
 	IPAddress     string             `json:"ip_address" bson:"ip_address,omitempty"`
 	UserAgent     string             `json:"user_agent" bson:"user_agent,omitempty"`
 	SourceTransID string             `json:"source_trans_id" bson:"source_trans_id,omitempty"`
+	LikeCounter   int                `json:"like_counter" bson:"like_counter,omitempty"`
 	CreatedAt     time.Time          `json:"-" bson:"created_at,omitempty"`
 	UpdatedAt     time.Time          `json:"-" bson:"updated_at,omitempty"`
 }
