@@ -29,6 +29,17 @@ func init() {
 	}
 }
 
+var (
+	userId            = "2210"
+	comment           = "Comment Test"
+	ipaddress         = "138.199.20.50"
+	useragent         = "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}"
+	ratingid          = "62c4f30f6d90d90d6594fab9"
+	ratingSubId       = "629dce7bf1f26275e0d84826"
+	ratingSubHelpId   = "62c6438c08d23eb8fe9834e8"
+	ratingSubIdFailed = "62c53baf039c7a6554accb0d"
+)
+
 func TestGetRatingBySourceTypeAndSourceUID(t *testing.T) {
 	req := request.GetRatingBySourceTypeAndActorRequest{
 		SourceType: "doctor",
@@ -66,7 +77,7 @@ func TestGetRatingBySourceTypeAndSourceUID(t *testing.T) {
 	assert.Equal(t, message.SuccessMsg, msg)
 }
 
-func TestGetRatingBySourceTypeAndSourceUID_ErrNoDataRating(t *testing.T) {
+func TestGetRatingBySourceTypeAndSourceUIDErrNoDataRating(t *testing.T) {
 	req := request.GetRatingBySourceTypeAndActorRequest{
 		SourceType: "doctor",
 		SourceUID:  "894",
@@ -79,39 +90,37 @@ func TestGetRatingBySourceTypeAndSourceUID_ErrNoDataRating(t *testing.T) {
 }
 
 func TestCreateRatingSubHelpfulSuccess(t *testing.T) {
-	objectId, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84826")
-	objectRatingSubHelpfulId, _ := primitive.ObjectIDFromHex("62c6438c08d23eb8fe9834e8")
-	userId := "2210"
-	comment := "Comment Test"
+	objectId, _ := primitive.ObjectIDFromHex(ratingSubId)
+	objectRatingSubHelpfulId, _ := primitive.ObjectIDFromHex(ratingSubHelpId)
 
 	input := request.CreateRatingSubHelpfulRequest{
-		RatingSubmissionID: "629dce7bf1f26275e0d84826",
-		UserID:             "2210",
-		UserIDLegacy:       "2310",
-		IPAddress:          "138.199.24.50",
-		UserAgent:          "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+		RatingSubmissionID: ratingSubId,
+		UserID:             userId,
+		UserIDLegacy:       userId,
+		IPAddress:          ipaddress,
+		UserAgent:          useragent,
 	}
 
 	ratingSubmission := entity.RatingSubmisson{
-		ID: objectId,
-		RatingID: "62c4f30f6d90d90d6594fab9	",
+		ID:            objectId,
+		RatingID:      ratingId,
 		UserID:        &userId,
 		UserIDLegacy:  &userId,
 		Comment:       &comment,
 		Value:         "85",
-		IPAddress:     "138.199.20.50",
-		UserAgent:     "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+		IPAddress:     ipaddress,
+		UserAgent:     useragent,
 		SourceTransID: "",
 		LikeCounter:   3,
 	}
 
 	ratingSubHelpful := entity.RatingSubHelpfulCol{
 		ID:                 objectRatingSubHelpfulId,
-		RatingSubmissionID: "62c53baf039c7a6554accb0d",
-		UserID:             "2210",
-		UserIDLegacy:       "2310",
-		IPAddress:          "138.199.20.50",
-		UserAgent:          "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+		RatingSubmissionID: ratingSubId,
+		UserID:             userId,
+		UserIDLegacy:       userId,
+		IPAddress:          ipaddress,
+		UserAgent:          useragent,
 	}
 
 	ratingRepository.Mock.On("GetRatingSubmissionById", objectId).Return(ratingSubmission, nil).Once()
@@ -123,27 +132,25 @@ func TestCreateRatingSubHelpfulSuccess(t *testing.T) {
 }
 
 func TestCreateRatingSubHelpfulRatingSubmissionNil(t *testing.T) {
-	objectRatingSubmissionId, _ := primitive.ObjectIDFromHex("62c53baf039c7a6554accb0d")
-	userId := "2210"
-	comment := "Comment Test"
+	objectRatingSubmissionId, _ := primitive.ObjectIDFromHex(ratingSubIdFailed)
 
 	input := request.CreateRatingSubHelpfulRequest{
-		RatingSubmissionID: "62c53baf039c7a6554accb0d",
-		UserID:             "2210",
-		UserIDLegacy:       "2310",
-		IPAddress:          "138.199.24.50",
-		UserAgent:          "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+		RatingSubmissionID: ratingSubIdFailed,
+		UserID:             userId,
+		UserIDLegacy:       userId,
+		IPAddress:          ipaddress,
+		UserAgent:          useragent,
 	}
 
 	ratingSubmission := entity.RatingSubmisson{
-		ID: objectRatingSubmissionId,
-		RatingID: "62c4f30f6d90d90d6594fab9	",
+		ID:            objectRatingSubmissionId,
+		RatingID:      ratingId,
 		UserID:        &userId,
 		UserIDLegacy:  &userId,
 		Comment:       &comment,
 		Value:         "85",
-		IPAddress:     "138.199.20.50",
-		UserAgent:     "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+		IPAddress:     ipaddress,
+		UserAgent:     useragent,
 		SourceTransID: "",
 		LikeCounter:   3,
 	}
@@ -155,39 +162,37 @@ func TestCreateRatingSubHelpfulRatingSubmissionNil(t *testing.T) {
 }
 
 func TestCreateRatingSubHelpfulUpdateCounterFailed(t *testing.T) {
-	objectId, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84826")
-	objectRatingSubHelpfulId, _ := primitive.ObjectIDFromHex("62c6438c08d23eb8fe9834e8")
-	userId := "2210"
-	comment := "Comment Test"
+	objectId, _ := primitive.ObjectIDFromHex(ratingSubId)
+	objectRatingSubHelpfulId, _ := primitive.ObjectIDFromHex(ratingSubHelpId)
 
 	input := request.CreateRatingSubHelpfulRequest{
-		RatingSubmissionID: "629dce7bf1f26275e0d84826",
-		UserID:             "2210",
-		UserIDLegacy:       "2310",
-		IPAddress:          "138.199.24.50",
-		UserAgent:          "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+		RatingSubmissionID: ratingSubId,
+		UserID:             userId,
+		UserIDLegacy:       userId,
+		IPAddress:          ipaddress,
+		UserAgent:          useragent,
 	}
 
 	ratingSubmission := entity.RatingSubmisson{
-		ID: objectId,
-		RatingID: "62c4f30f6d90d90d6594fab9	",
+		ID:            objectId,
+		RatingID:      ratingid,
 		UserID:        &userId,
 		UserIDLegacy:  &userId,
 		Comment:       &comment,
 		Value:         "85",
-		IPAddress:     "138.199.20.50",
-		UserAgent:     "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+		IPAddress:     ipaddress,
+		UserAgent:     useragent,
 		SourceTransID: "",
 		LikeCounter:   3,
 	}
 
 	ratingSubHelpful := entity.RatingSubHelpfulCol{
 		ID:                 objectRatingSubHelpfulId,
-		RatingSubmissionID: "62c53baf039c7a6554accb0d",
-		UserID:             "2210",
-		UserIDLegacy:       "2310",
-		IPAddress:          "138.199.20.50",
-		UserAgent:          "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}",
+		RatingSubmissionID: ratingSubId,
+		UserID:             userId,
+		UserIDLegacy:       userId,
+		IPAddress:          ipaddress,
+		UserAgent:          useragent,
 	}
 
 	ratingRepository.Mock.On("GetRatingSubmissionById", objectId).Return(ratingSubmission, nil).Once()
