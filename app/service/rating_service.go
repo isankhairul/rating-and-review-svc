@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-kit/log"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
@@ -12,11 +11,13 @@ import (
 	"go-klikdokter/app/repository"
 	"go-klikdokter/helper/message"
 	"go-klikdokter/pkg/util"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/go-kit/log"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type RatingService interface {
@@ -398,6 +399,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 				IPAddress:     input.IPAddress,
 				UserAgent:     input.UserAgent,
 				SourceTransID: input.SourceTransID,
+				UserPlatform:  input.UserPlatform,
 			})
 		} else {
 			saveReq = append(saveReq, request.SaveRatingSubmission{
@@ -409,6 +411,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 				IPAddress:     input.IPAddress,
 				UserAgent:     input.UserAgent,
 				SourceTransID: input.SourceTransID,
+				UserPlatform:  input.UserPlatform,
 			})
 		}
 	}

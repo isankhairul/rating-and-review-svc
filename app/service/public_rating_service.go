@@ -1,11 +1,15 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
+	"go-klikdokter/app/model/base"
+	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/model/response"
 	"go-klikdokter/app/repository"
 	"go-klikdokter/helper/message"
+	"strconv"
 
 	"github.com/go-kit/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,6 +19,7 @@ import (
 type PublicRatingService interface {
 	GetRatingBySourceTypeAndActor(input request.GetRatingBySourceTypeAndActorRequest) (*response.RatingBySourceTypeAndActorResponse, message.Message)
 	CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) message.Message
+	GetListRatingSummaryBySourceType(input request.GetPublicListRatingSummaryRequest) ([]response.PublicRatingSummaryResponse, *base.Pagination, message.Message)
 }
 
 type publicRatingServiceImpl struct {
@@ -116,4 +121,96 @@ func (s *publicRatingServiceImpl) CreateRatingSubHelpful(input request.CreateRat
 		return message.ErrSaveData
 	}
 	return message.SuccessMsg
+}
+
+// swagger:route GET /api/v1/public/ratings-summary/{source_type} PublicRating GetPublicListRatingSummaryRequest
+// Get Rating Summary By Source Type
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *publicRatingServiceImpl) GetListRatingSummaryBySourceType(input request.GetPublicListRatingSummaryRequest) ([]response.PublicRatingSummaryResponse, *base.Pagination, message.Message) {
+	results := []response.PublicRatingSummaryResponse{}
+	input.MakeDefaultValueIfEmpty()
+	var dir int
+	if input.Dir == "asc" {
+		dir = 1
+	} else {
+		dir = -1
+	}
+	filter := request.FilterRatingSummary{}
+	filter.SourceType = input.SourceType
+	if input.Filter != "" {
+		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
+		if errMarshal != nil {
+			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+		}
+	}
+
+	ratings, pagination, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filter)
+	if err != nil {
+		return nil, nil, message.FailedMsg
+	}
+	if len(ratings) <= 0 {
+		return results, pagination, message.SuccessMsg
+	}
+
+	for _, args := range ratings {
+		ratingSubs, err := s.publicRatingRepo.GetRatingSubsByRatingId(args.ID.Hex())
+		if err != nil {
+			return nil, nil, message.FailedMsg
+		}
+		if len(ratingSubs) <= 0 {
+			ratingSummary := response.RatingSubmissionSummary{
+				SourceUID:  args.SourceUid,
+				TotalValue: 0,
+			}
+			data := response.PublicRatingSummaryResponse{
+				ID:            args.ID,
+				Name:          args.Name,
+				Description:   args.Description,
+				SourceUid:     args.SourceUid,
+				SourceType:    args.SourceType,
+				RatingType:    args.RatingType,
+				RatingTypeId:  args.RatingTypeId,
+				RatingSummary: ratingSummary,
+			}
+			results = append(results, data)
+		} else {
+			ratingSummary, err := calculateRatingValue(args.SourceUid, ratingSubs)
+			if err != nil {
+				return []response.PublicRatingSummaryResponse{}, nil, message.ErrFailedToCalculate
+			}
+			data := response.PublicRatingSummaryResponse{
+				ID:            args.ID,
+				Name:          args.Name,
+				Description:   args.Description,
+				SourceUid:     args.SourceUid,
+				SourceType:    args.SourceType,
+				RatingType:    args.RatingType,
+				RatingTypeId:  args.RatingTypeId,
+				RatingSummary: ratingSummary,
+			}
+			results = append(results, data)
+		}
+	}
+	return results, pagination, message.SuccessMsg
+}
+
+func calculateRatingValue(sourceUID string, ratingSubs []entity.RatingSubmisson) (response.RatingSubmissionSummary, error) {
+	result := response.RatingSubmissionSummary{}
+	totalValue := 0
+	for _, args := range ratingSubs {
+		intVal, err := strconv.Atoi(args.Value)
+		if err != nil {
+			return result, err
+		}
+		totalValue = totalValue + intVal
+	}
+	finalValue := totalValue / len(ratingSubs)
+	result.SourceUID = sourceUID
+	result.TotalValue = finalValue
+
+	return result, nil
 }

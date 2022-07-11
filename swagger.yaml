@@ -68,6 +68,9 @@ definitions:
       user_id_legacy:
         type: string
         x-go-name: UserIDLegacy
+      user_platform:
+        type: string
+        x-go-name: UserPlatform
     type: object
     x-go-package: go-klikdokter/app/model/request
   CreateRatingTypeNumRequest:
@@ -624,6 +627,50 @@ paths:
         schema:
           $ref: '#/definitions/CreateRatingSubHelpfulRequest'
         x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - PublicRating
+  /api/v1/public/ratings-summary/{source_type}:
+    get:
+      description: Get Rating Summary By Source Type
+      operationId: GetPublicListRatingSummaryRequest
+      parameters:
+      - description: SourceType
+        in: path
+        name: source_type
+        required: true
+        type: string
+        x-go-name: SourceType
+      - in: query
+        name: filter
+        type: string
+        x-go-name: Filter
+      - format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - in: query
+        name: sort
+        type: string
+        x-go-name: Sort
+      - in: query
+        name: dir
+        type: string
+        x-go-name: Dir
       responses:
         "200":
           description: SuccessResponse
