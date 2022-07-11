@@ -14,7 +14,7 @@ type GetPublicListRatingSummaryRequest struct {
 }
 
 type FilterRatingSummary struct {
-	SourceUid  []string `json:"source_uid"`
+	SourceUid  string   `json:"source_uid"`
 	SourceType string   `json:"source_type"`
 	RatingType []string `json:"rating_type"`
 }

@@ -61,15 +61,17 @@ func (repository *PublicRatingRepositoryMock) UpdateCounterRatingSubmission(id p
 }
 
 func (repository *PublicRatingRepositoryMock) GetPublicRatingsByParams(limit, page, dir int, sort string, filter request.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error) {
-	arguments := repository.Mock.Called(limit, page, sort, filter)
 	if sort == "failed" {
 		return nil, nil, errors.New("Errors")
 	}
-
+	arguments := repository.Mock.Called(limit, page, sort, filter)
 	return arguments.Get(0).([]entity.RatingsCol), arguments.Get(1).(*base.Pagination), nil
 }
 
 func (repository *PublicRatingRepositoryMock) GetRatingSubsByRatingId(ratingId string) ([]entity.RatingSubmisson, error) {
+	if ratingId == "62c3e57b457ed515928c3690" {
+		return nil, errors.New("Errors")
+	}
 	arguments := repository.Mock.Called(ratingId)
 
 	return arguments.Get(0).([]entity.RatingSubmisson), nil
