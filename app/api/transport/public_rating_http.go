@@ -13,6 +13,7 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/schema"
 )
 
 func PublicRatingHttpHandler(s service.PublicRatingService, logger log.Logger) http.Handler {
@@ -38,6 +39,13 @@ func PublicRatingHttpHandler(s service.PublicRatingService, logger log.Logger) h
 		options...,
 	))
 
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "public/ratings-summary/{source_type}").Handler(httptransport.NewServer(
+		ep.GetListRatingSummaryBySourceType,
+		decodeGetRatingSummaryBySourceType,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
 	return pr
 }
 
@@ -58,4 +66,16 @@ func decodeCreateRatingSubHelpful(ctx context.Context, r *http.Request) (rqst in
 		return nil, err
 	}
 	return req, nil
+}
+
+func decodeGetRatingSummaryBySourceType(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var params request.GetPublicListRatingSummaryRequest
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+	if err = schema.NewDecoder().Decode(&params, r.Form); err != nil {
+		return nil, err
+	}
+	params.SourceType = mux.Vars(r)["source_type"]
+	return params, nil
 }

@@ -2,6 +2,7 @@ package test
 
 import (
 	"errors"
+	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/repository/repository_mock"
@@ -35,10 +36,27 @@ var (
 	ipaddress         = "138.199.20.50"
 	useragent         = "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}"
 	ratingid          = "62c4f30f6d90d90d6594fab9"
+	ratingType        = "performance-doctor"
 	ratingSubId       = "629dce7bf1f26275e0d84826"
 	ratingSubHelpId   = "62c6438c08d23eb8fe9834e8"
 	ratingSubIdFailed = "62c53baf039c7a6554accb0d"
+	idDummy1          = "62c4f2b96d90d90d6594fab7"
+	idDummy2          = "62c4f30f6d90d90d6594fab8"
 )
+
+var requestSummary = request.GetPublicListRatingSummaryRequest{
+	SourceType: "doctor",
+	Sort:       "",
+	Dir:        "desc",
+	Page:       1,
+	Limit:      50,
+}
+
+var filterSummary = request.FilterRatingSummary{
+	SourceType: requestSummary.SourceType,
+	SourceUid:  []string(nil),
+	RatingType: []string(nil),
+}
 
 func TestGetRatingBySourceTypeAndSourceUID(t *testing.T) {
 	req := request.GetRatingBySourceTypeAndActorRequest{
@@ -48,7 +66,6 @@ func TestGetRatingBySourceTypeAndSourceUID(t *testing.T) {
 
 	ratingId, _ := primitive.ObjectIDFromHex("629ec0736f3c2761ba2dc867")
 	ratingTypeId, _ := primitive.ObjectIDFromHex("62c4f03b6d90d90d6594fab5")
-	description := "Description"
 	statement01 := "Unsatisfied"
 	statement02 := "Satisfied"
 	resultRatings := []entity.RatingsCol{
@@ -201,4 +218,64 @@ func TestCreateRatingSubHelpfulUpdateCounterFailed(t *testing.T) {
 
 	msg := publicRactingService.CreateRatingSubHelpful(input)
 	assert.Equal(t, message.SuccessMsg, msg)
+}
+
+func TestGetRatingSummaryBySourceType(t *testing.T) {
+	idDummy1, _ := primitive.ObjectIDFromHex(idDummy1)
+	idDummy2, _ := primitive.ObjectIDFromHex(idDummy2)
+
+	ratingDatas := []entity.RatingsCol{
+		{
+			ID:           idDummy1,
+			Name:         "Rating 1 Doctor A",
+			Description:  &description,
+			SourceUid:    "3310",
+			SourceType:   requestSummary.SourceType,
+			RatingType:   ratingType,
+			RatingTypeId: ratingid,
+		},
+		{
+			ID:           idDummy2,
+			Name:         "Rating 1 Doctor B",
+			Description:  &description,
+			SourceUid:    "3311",
+			SourceType:   requestSummary.SourceType,
+			RatingType:   ratingType,
+			RatingTypeId: ratingid,
+		},
+	}
+
+	ratingSubDatas := []entity.RatingSubmisson{}
+	paginationResult := base.Pagination{
+		Records:      2,
+		Limit:        10,
+		Page:         1,
+		TotalRecords: 1,
+	}
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
+	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idDummy1.Hex()).Return(ratingSubDatas, nil).Once()
+	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idDummy2.Hex()).Return(ratingSubDatas, nil).Once()
+
+	result, pagination, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
+	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
+	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
+	assert.Equal(t, 2, len(result), "Count of list kd must be 2")
+	assert.Equal(t, int64(2), pagination.Records, "Total record must be 2")
+}
+
+func TestGetRatingSummaryBySourceTypeErrEmptyRating(t *testing.T) {
+	ratingDatas := []entity.RatingsCol{}
+	paginationResult := base.Pagination{
+		Records:      0,
+		Limit:        10,
+		Page:         1,
+		TotalRecords: 1,
+	}
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, errors.New("error")).Once()
+
+	result, pagination, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
+	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
+	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
+	assert.Equal(t, 0, len(result), "Count of list kd must be 0")
+	assert.Equal(t, int64(0), pagination.Records, "Total record must be 0")
 }

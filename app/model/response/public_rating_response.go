@@ -6,6 +6,22 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type PublicRatingSummaryResponse struct {
+	ID            primitive.ObjectID      `json:"id"`
+	Name          string                  `json:"name,omitempty"`
+	Description   *string                 `json:"description,omitempty"`
+	SourceUid     string                  `json:"source_uid,omitempty"`
+	SourceType    string                  `json:"source_type,omitempty"`
+	RatingType    string                  `json:"rating_type,omitempty"`
+	RatingTypeId  string                  `json:"rating_type_id,omitempty"`
+	RatingSummary RatingSubmissionSummary `json:"rating_summary,omitempty"`
+}
+
+type RatingSubmissionSummary struct {
+	SourceUID  string `json:"source_uid" bson:"source_uid"`
+	TotalValue int    `json:"total_value" bson:"total_value"`
+}
+
 // swagger:model RatingTypeLikertResponse
 type RatingBySourceTypeAndActorResponse struct {
 	SourceUID  string        `json:"source_uid"`

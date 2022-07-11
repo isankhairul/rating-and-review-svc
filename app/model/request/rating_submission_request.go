@@ -1,10 +1,11 @@
 package request
 
 import (
-	validation "github.com/itgelo/ozzo-validation/v4"
 	"go-klikdokter/helper/message"
 	"regexp"
 	"time"
+
+	validation "github.com/itgelo/ozzo-validation/v4"
 )
 
 var (
@@ -67,6 +68,7 @@ type CreateRatingSubmissionRequest struct {
 	IPAddress     string         `json:"ip_address" bson:"ip_address"`
 	UserAgent     string         `json:"user_agent" bson:"user_agent"`
 	SourceTransID string         `json:"source_trans_id" bson:"source_trans_id"`
+	UserPlatform  string         `json:"user_platform" bson:"user_platform"`
 }
 
 type SaveRatingSubmission struct {
@@ -78,6 +80,7 @@ type SaveRatingSubmission struct {
 	IPAddress     string  `json:"ip_address" bson:"ip_address"`
 	UserAgent     string  `json:"user_agent" bson:"user_agent"`
 	SourceTransID string  `json:"source_trans_id" bson:"source_trans_id"`
+	UserPlatform  string  `json:"user_platform" bson:"user_platform"`
 }
 
 type UpdateRatingSubmissionRequest struct {

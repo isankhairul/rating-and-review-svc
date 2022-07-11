@@ -76,6 +76,7 @@ var ErrCannotSameRatingId = Message{Code: ValidationFailCode, Message: "Cannot c
 var ErrExistingRatingTypeIdSourceUidAndSourceType = Message{Code: ValidationFailCode, Message: "Rating type id, source uid and source type have already existed"}
 var ErrRatingSubmissionNotFound = Message{Code: ValidationFailCode, Message: "Rating submission not found"}
 var ErrCanNotUpdateSourceTypeOrSoureUid = Message{Code: ValidationFailCode, Message: "Can not update source uid or source type if rating has rating submission"}
+var ErrFailedToCalculate = Message{Code: ValidationFailCode, Message: "Failed to calculate rating value"}
 
 // Code 39000 - 39999 Server error
 var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}

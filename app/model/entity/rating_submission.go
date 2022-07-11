@@ -17,6 +17,7 @@ type RatingSubmisson struct {
 	UserAgent     string             `json:"user_agent" bson:"user_agent,omitempty"`
 	SourceTransID string             `json:"source_trans_id" bson:"source_trans_id,omitempty"`
 	LikeCounter   int                `json:"like_counter" bson:"like_counter,omitempty"`
+	UserPlatform  string             `json:"user_platform" bson:"user_platform,omitempty"`
 	CreatedAt     time.Time          `json:"-" bson:"created_at,omitempty"`
 	UpdatedAt     time.Time          `json:"-" bson:"updated_at,omitempty"`
 }

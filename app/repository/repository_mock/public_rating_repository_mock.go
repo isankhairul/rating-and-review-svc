@@ -2,6 +2,7 @@ package repository_mock
 
 import (
 	"errors"
+	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
 
@@ -57,4 +58,19 @@ func (repository *PublicRatingRepositoryMock) CreateRatingSubHelpful(input reque
 
 func (repository *PublicRatingRepositoryMock) UpdateCounterRatingSubmission(id primitive.ObjectID, currentCounter int) error {
 	return nil
+}
+
+func (repository *PublicRatingRepositoryMock) GetPublicRatingsByParams(limit, page, dir int, sort string, filter request.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error) {
+	arguments := repository.Mock.Called(limit, page, sort, filter)
+	if sort == "failed" {
+		return nil, nil, errors.New("Errors")
+	}
+
+	return arguments.Get(0).([]entity.RatingsCol), arguments.Get(1).(*base.Pagination), nil
+}
+
+func (repository *PublicRatingRepositoryMock) GetRatingSubsByRatingId(ratingId string) ([]entity.RatingSubmisson, error) {
+	arguments := repository.Mock.Called(ratingId)
+
+	return arguments.Get(0).([]entity.RatingSubmisson), nil
 }
