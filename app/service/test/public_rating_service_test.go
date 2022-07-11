@@ -42,6 +42,7 @@ var (
 	ratingSubIdFailed = "62c53baf039c7a6554accb0d"
 	idDummy1          = "62c4f2b96d90d90d6594fab7"
 	idDummy2          = "62c4f30f6d90d90d6594fab8"
+	failedId          = "62c3e57b457ed515928c3690"
 )
 
 var requestSummary = request.GetPublicListRatingSummaryRequest{
@@ -54,7 +55,7 @@ var requestSummary = request.GetPublicListRatingSummaryRequest{
 
 var filterSummary = request.FilterRatingSummary{
 	SourceType: requestSummary.SourceType,
-	SourceUid:  []string(nil),
+	SourceUid:  "",
 	RatingType: []string(nil),
 }
 
@@ -278,4 +279,88 @@ func TestGetRatingSummaryBySourceTypeErrEmptyRating(t *testing.T) {
 	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
 	assert.Equal(t, 0, len(result), "Count of list kd must be 0")
 	assert.Equal(t, int64(0), pagination.Records, "Total record must be 0")
+}
+
+func TestGetRatingSummaryBySourceTypeFailedGetRating(t *testing.T) {
+	var request = request.GetPublicListRatingSummaryRequest{
+		SourceType: "doctor",
+		Sort:       "failed",
+		Dir:        "desc",
+		Page:       1,
+		Limit:      50,
+	}
+	ratingDatas := []entity.RatingsCol{}
+	paginationResult := base.Pagination{
+		Records:      0,
+		Limit:        10,
+		Page:         1,
+		TotalRecords: 1,
+	}
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "failed", filterSummary).Return(ratingDatas, &paginationResult, errors.New("error")).Once()
+
+	_, _, msg := publicRactingService.GetListRatingSummaryBySourceType(request)
+	assert.Equal(t, message.FailedMsg.Code, msg.Code, "Code must be 412002")
+	assert.Equal(t, message.FailedMsg.Message, msg.Message, "Message must be failed")
+}
+
+func TestGetRatingSummaryBySourceTypeErrGetRatingSubmission(t *testing.T) {
+	idDummy1, _ := primitive.ObjectIDFromHex(failedId)
+	ratingDatas := []entity.RatingsCol{
+		{
+			ID:           idDummy1,
+			Name:         "Rating 1 Doctor A",
+			Description:  &description,
+			SourceUid:    "3310",
+			SourceType:   requestSummary.SourceType,
+			RatingType:   ratingType,
+			RatingTypeId: ratingid,
+		},
+	}
+	paginationResult := base.Pagination{
+		Records:      1,
+		Limit:        10,
+		Page:         1,
+		TotalRecords: 1,
+	}
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, errors.New("error")).Once()
+	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", failedId).Return(nil, errors.New("error")).Once()
+
+	_, _, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
+	assert.Equal(t, message.FailedMsg.Code, msg.Code, "Code must be 412002")
+	assert.Equal(t, message.FailedMsg.Message, msg.Message, "Message must be failed")
+}
+
+func TestGetRatingSummaryBySourceTypeErrFailedCalculate(t *testing.T) {
+	ratingId, _ := primitive.ObjectIDFromHex(idDummy1)
+	ratingSub, _ := primitive.ObjectIDFromHex(idDummy2)
+	ratingDatas := []entity.RatingsCol{
+		{
+			ID:           ratingId,
+			Name:         "Rating 1 Doctor A",
+			Description:  &description,
+			SourceUid:    "3310",
+			SourceType:   requestSummary.SourceType,
+			RatingType:   ratingType,
+			RatingTypeId: ratingid,
+		},
+	}
+	ratingSubDatas := []entity.RatingSubmisson{
+		{
+			ID:       ratingSub,
+			RatingID: idDummy1,
+			Value:    "k",
+		},
+	}
+	paginationResult := base.Pagination{
+		Records:      1,
+		Limit:        10,
+		Page:         1,
+		TotalRecords: 1,
+	}
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, errors.New("error")).Once()
+	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idDummy1).Return(ratingSubDatas, nil).Once()
+
+	_, _, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
+	assert.Equal(t, message.ErrFailedToCalculate.Code, msg.Code, "Code must be 412002")
+	assert.Equal(t, message.ErrFailedToCalculate.Message, msg.Message, "Message must be Failed to calculate rating value")
 }

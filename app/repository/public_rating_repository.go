@@ -188,7 +188,7 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 	bsonRatingType := bson.D{}
 
 	if len(filter.SourceUid) > 0 {
-		bsonSourceUid = bson.D{{Key: "source_uid", Value: bson.D{{Key: "$in", Value: filter.SourceUid}}}}
+		bsonSourceUid = bson.D{{Key: "source_uid", Value: filter.SourceUid}}
 	}
 	if filter.SourceType != "" {
 		if filter.SourceType != "all" {
@@ -203,10 +203,7 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 		Value: bson.A{
 			bsonStatus,
 			bsonSourceType,
-			bson.D{{Key: "$or",
-				Value: bson.A{
-					bsonSourceUid,
-				}}},
+			bsonSourceUid,
 			bson.D{{Key: "$or",
 				Value: bson.A{
 					bsonRatingType,
