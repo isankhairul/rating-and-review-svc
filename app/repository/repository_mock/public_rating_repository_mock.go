@@ -76,3 +76,11 @@ func (repository *PublicRatingRepositoryMock) GetRatingSubsByRatingId(ratingId s
 
 	return arguments.Get(0).([]entity.RatingSubmisson), nil
 }
+
+func (repository *PublicRatingRepositoryMock) GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error) {
+	if sort == "failed" {
+		return nil, nil, errors.New("Errors")
+	}
+	arguments := repository.Mock.Called(limit, page, sort, filter)
+	return arguments.Get(0).([]entity.RatingSubmisson), arguments.Get(1).(*base.Pagination), nil
+}

@@ -46,6 +46,13 @@ func PublicRatingHttpHandler(s service.PublicRatingService, logger log.Logger) h
 		options...,
 	))
 
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "public/rating-submission/{source_type}/{source_uid}").Handler(httptransport.NewServer(
+		ep.GetListRatingSubmissionBySourceTypeAndUID,
+		decodeGetRatingSubmissionBySourceTypeAndUID,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
 	return pr
 }
 
@@ -77,5 +84,22 @@ func decodeGetRatingSummaryBySourceType(ctx context.Context, r *http.Request) (r
 		return nil, err
 	}
 	params.SourceType = mux.Vars(r)["source_type"]
+	return params, nil
+}
+
+func decodeGetRatingSubmissionBySourceTypeAndUID(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var params request.GetPublicListRatingSubmissionRequest
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+	if err = schema.NewDecoder().Decode(&params, r.Form); err != nil {
+		return nil, err
+	}
+	params.SourceType = mux.Vars(r)["source_type"]
+	params.SourceUID = mux.Vars(r)["source_uid"]
+	err = params.ValidateSourceType()
+	if err != nil {
+		return nil, err
+	}
 	return params, nil
 }

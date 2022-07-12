@@ -35,6 +35,7 @@ var (
 	comment           = "Comment Test"
 	ipaddress         = "138.199.20.50"
 	useragent         = "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}"
+	sourceTransId     = "2123"
 	ratingid          = "62c4f30f6d90d90d6594fab9"
 	ratingType        = "performance-doctor"
 	ratingSubId       = "629dce7bf1f26275e0d84826"
@@ -48,6 +49,15 @@ var (
 var requestSummary = request.GetPublicListRatingSummaryRequest{
 	SourceType: "doctor",
 	Sort:       "",
+	Dir:        "desc",
+	Page:       1,
+	Limit:      50,
+}
+
+var requestSubmission = request.GetPublicListRatingSubmissionRequest{
+	SourceType: "doctor",
+	SourceUID:  "895",
+	Sort:       "created_at",
 	Dir:        "desc",
 	Page:       1,
 	Limit:      50,
@@ -270,7 +280,7 @@ func TestGetRatingSummaryBySourceTypeErrEmptyRating(t *testing.T) {
 		Records:      0,
 		Limit:        10,
 		Page:         1,
-		TotalRecords: 1,
+		TotalRecords: 0,
 	}
 	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, errors.New("error")).Once()
 
@@ -363,4 +373,117 @@ func TestGetRatingSummaryBySourceTypeErrFailedCalculate(t *testing.T) {
 	_, _, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
 	assert.Equal(t, message.ErrFailedToCalculate.Code, msg.Code, "Code must be 412002")
 	assert.Equal(t, message.ErrFailedToCalculate.Message, msg.Message, "Message must be Failed to calculate rating value")
+}
+
+func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
+	idDummy1, _ := primitive.ObjectIDFromHex(idDummy1)
+	idDummy2, _ := primitive.ObjectIDFromHex(idDummy2)
+	filterSummary.SourceUid = requestSubmission.SourceUID
+
+	var filterSubmission = request.FilterRatingSubmission{
+		RatingID: []string{idDummy1.Hex(), idDummy2.Hex()},
+	}
+
+	ratingDatas := []entity.RatingsCol{
+		{
+			ID:           idDummy1,
+			Name:         "Rating 1 Doctor A",
+			Description:  &description,
+			SourceUid:    "3310",
+			SourceType:   requestSummary.SourceType,
+			RatingType:   ratingType,
+			RatingTypeId: ratingid,
+		},
+		{
+			ID:           idDummy2,
+			Name:         "Rating 1 Doctor B",
+			Description:  &description,
+			SourceUid:    "3311",
+			SourceType:   requestSummary.SourceType,
+			RatingType:   ratingType,
+			RatingTypeId: ratingid,
+		},
+	}
+	ratingSubDatas := []entity.RatingSubmisson{
+		{
+			ID:            idDummy1,
+			RatingID:      idDummy1.Hex(),
+			UserID:        &userId,
+			UserIDLegacy:  &userId,
+			Comment:       &comment,
+			SourceTransID: sourceTransId,
+			LikeCounter:   5,
+		},
+	}
+	paginationResult := base.Pagination{
+		Records:      1,
+		Limit:        10,
+		Page:         1,
+		TotalRecords: 1,
+	}
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
+	publicRatingRepository.Mock.On("GetPublicRatingSubmissions", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSubmission).Return(ratingSubDatas, &paginationResult, nil).Once()
+
+	result, pagination, msg := publicRactingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
+	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
+	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
+	assert.Equal(t, 1, len(result), "Count of list kd must be 1")
+	assert.Equal(t, int64(1), pagination.Records, "Total record must be 1")
+}
+
+func TestGetRatingSubmissionBySourceTypeAndUIDEmptyList(t *testing.T) {
+	idDummy1, _ := primitive.ObjectIDFromHex(idDummy1)
+	idDummy2, _ := primitive.ObjectIDFromHex(idDummy2)
+	filterSummary.SourceUid = requestSubmission.SourceUID
+
+	var filterSubmission = request.FilterRatingSubmission{
+		RatingID: []string{idDummy1.Hex(), idDummy2.Hex()},
+	}
+
+	ratingDatas := []entity.RatingsCol{
+		{
+			ID:           idDummy1,
+			Name:         "Rating 1 Doctor A",
+			Description:  &description,
+			SourceUid:    "3310",
+			SourceType:   requestSummary.SourceType,
+			RatingType:   ratingType,
+			RatingTypeId: ratingid,
+		},
+		{
+			ID:           idDummy2,
+			Name:         "Rating 1 Doctor B",
+			Description:  &description,
+			SourceUid:    "3311",
+			SourceType:   requestSummary.SourceType,
+			RatingType:   ratingType,
+			RatingTypeId: ratingid,
+		},
+	}
+	ratingSubDatas := []entity.RatingSubmisson{}
+	paginationResult := base.Pagination{
+		Records:      0,
+		Limit:        10,
+		Page:         1,
+		TotalRecords: 0,
+	}
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
+	publicRatingRepository.Mock.On("GetPublicRatingSubmissions", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSubmission).Return(ratingSubDatas, &paginationResult, nil).Once()
+
+	result, pagination, msg := publicRactingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
+	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
+	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
+	assert.Equal(t, 0, len(result), "Count of list kd must be 0")
+	assert.Equal(t, int64(0), pagination.Records, "Total record must be 0")
+}
+
+func TestGetRatingSubmissionBySourceTypeAndUIDErrGetRating(t *testing.T) {
+	requestSubmission.Sort = "failed"
+	filterSummary.SourceUid = requestSubmission.SourceUID
+
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "failed", filterSummary).Return(nil, nil, errors.New("error")).Once()
+
+	_, _, msg := publicRactingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
+	assert.Equal(t, message.FailedMsg.Code, msg.Code, "Code must be 412002")
+	assert.Equal(t, message.FailedMsg.Message, msg.Message, "Message must be failed")
 }
