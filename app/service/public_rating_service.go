@@ -20,6 +20,7 @@ type PublicRatingService interface {
 	GetRatingBySourceTypeAndActor(input request.GetRatingBySourceTypeAndActorRequest) (*response.RatingBySourceTypeAndActorResponse, message.Message)
 	CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) message.Message
 	GetListRatingSummaryBySourceType(input request.GetPublicListRatingSummaryRequest) ([]response.PublicRatingSummaryResponse, *base.Pagination, message.Message)
+	GetListRatingSubmissionBySourceTypeAndUID(input request.GetPublicListRatingSubmissionRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message)
 }
 
 type publicRatingServiceImpl struct {
@@ -213,4 +214,66 @@ func calculateRatingValue(sourceUID string, ratingSubs []entity.RatingSubmisson)
 	result.TotalValue = finalValue
 
 	return result, nil
+}
+
+// swagger:route GET /api/v1/public/rating-submission/{source_type}/{source_uid} PublicRating GetPublicListRatingSubmissionRequest
+// Get Rating Submission By Source Type and Source UID
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(input request.GetPublicListRatingSubmissionRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message) {
+	results := []response.PublicRatingSubmissionResponse{}
+	var dir int
+	if input.Dir == "asc" {
+		dir = 1
+	} else {
+		dir = -1
+	}
+	//Set default value
+	if input.Page <= 0 {
+		input.Page = 1
+	}
+	if input.Limit <= 0 {
+		input.Limit = 50
+	}
+	if input.Sort == "" {
+		input.Sort = "created at"
+	}
+
+	// Get Rating By SourceType and SourceUID
+	filterRating := request.FilterRatingSummary{
+		SourceType: input.SourceType,
+		SourceUid:  input.SourceUID,
+	}
+	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filterRating)
+	if err != nil {
+		return nil, nil, message.FailedMsg
+	}
+
+	// Get Rating Submission
+	filterRatingSubs := request.FilterRatingSubmission{}
+	for _, v := range ratings {
+		filterRatingSubs.RatingID = append(filterRatingSubs.RatingID, v.ID.Hex())
+	}
+	ratingSubs, pagination, err := s.publicRatingRepo.GetPublicRatingSubmissions(input.Limit, input.Page, dir, input.Sort, filterRatingSubs)
+	if err != nil {
+		return nil, nil, message.FailedMsg
+	}
+	if len(ratings) <= 0 {
+		return results, pagination, message.SuccessMsg
+	}
+
+	for _, v := range ratingSubs {
+		results = append(results, response.PublicRatingSubmissionResponse{
+			ID:            v.ID,
+			UserID:        v.UserID,
+			UserIDLegacy:  v.UserIDLegacy,
+			Comment:       v.Comment,
+			SourceTransID: v.SourceTransID,
+			LikeCounter:   v.LikeCounter,
+		})
+	}
+	return results, pagination, message.SuccessMsg
 }

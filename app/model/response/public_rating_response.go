@@ -22,7 +22,15 @@ type RatingSubmissionSummary struct {
 	TotalValue int    `json:"total_value" bson:"total_value"`
 }
 
-// swagger:model RatingTypeLikertResponse
+type PublicRatingSubmissionResponse struct {
+	ID            primitive.ObjectID `json:"id"`
+	UserID        *string            `json:"user_id,omitempty"`
+	UserIDLegacy  *string            `json:"user_id_legacy,omitempty"`
+	Comment       *string            `json:"comment,omitempty"`
+	SourceTransID string             `json:"source_trans_id,omitempty"`
+	LikeCounter   int                `json:"like_counter"`
+}
+
 type RatingBySourceTypeAndActorResponse struct {
 	SourceUID  string        `json:"source_uid"`
 	SourceType string        `json:"source_type"`

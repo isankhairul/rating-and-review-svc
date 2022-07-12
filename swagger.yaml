@@ -335,19 +335,60 @@ definitions:
     x-go-package: go-klikdokter/app/model/entity
   RatingTypeLikertResponse:
     properties:
-      ratings:
-        items:
-          type: object
-        type: array
-        x-go-name: Ratings
-      source_type:
+      created_at:
+        format: date-time
         type: string
-        x-go-name: SourceType
-      source_uid:
+        x-go-name: CreatedAt
+      description:
         type: string
-        x-go-name: SourceUID
+        x-go-name: Description
+      id:
+        $ref: '#/definitions/ObjectID'
+      num_statements:
+        format: int64
+        type: integer
+        x-go-name: NumStatements
+      statement_01:
+        type: string
+        x-go-name: Statement01
+      statement_02:
+        type: string
+        x-go-name: Statement02
+      statement_03:
+        type: string
+        x-go-name: Statement03
+      statement_04:
+        type: string
+        x-go-name: Statement04
+      statement_05:
+        type: string
+        x-go-name: Statement05
+      statement_06:
+        type: string
+        x-go-name: Statement06
+      statement_07:
+        type: string
+        x-go-name: Statement07
+      statement_08:
+        type: string
+        x-go-name: Statement08
+      statement_09:
+        type: string
+        x-go-name: Statement09
+      statement_10:
+        type: string
+        x-go-name: Statement10
+      status:
+        type: boolean
+        x-go-name: Status
+      type:
+        type: string
+        x-go-name: Type
+      updated_at:
+        format: date-time
+        type: string
+        x-go-name: UpdatedAt
     type: object
-    x-go-name: RatingBySourceTypeAndActorResponse
     x-go-package: go-klikdokter/app/model/response
   RatingTypesLikertCol:
     properties:
@@ -648,6 +689,52 @@ paths:
         schema:
           $ref: '#/definitions/CreateRatingSubHelpfulRequest'
         x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - PublicRating
+  /api/v1/public/rating-submission/{source_type}/{source_uid}:
+    get:
+      description: Get Rating Submission By Source Type and Source UID
+      operationId: GetPublicListRatingSubmissionRequest
+      parameters:
+      - description: SourceType
+        in: path
+        name: source_type
+        required: true
+        type: string
+        x-go-name: SourceType
+      - description: SourceUID
+        in: path
+        name: source_uid
+        required: true
+        type: string
+        x-go-name: SourceUID
+      - format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - in: query
+        name: sort
+        type: string
+        x-go-name: Sort
+      - in: query
+        name: dir
+        type: string
+        x-go-name: Dir
       responses:
         "200":
           description: SuccessResponse

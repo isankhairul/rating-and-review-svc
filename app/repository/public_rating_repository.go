@@ -28,6 +28,7 @@ type PublicRatingRepository interface {
 	UpdateCounterRatingSubmission(id primitive.ObjectID, currentCounter int) error
 	GetPublicRatingsByParams(limit, page, dir int, sort string, filter request.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error)
 	GetRatingSubsByRatingId(ratingId string) ([]entity.RatingSubmisson, error)
+	GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error)
 }
 
 func NewPublicRatingRepository(db *mongo.Database) PublicRatingRepository {
@@ -265,4 +266,47 @@ func (r *publicRatingRepo) GetRatingSubsByRatingId(ratingId string) ([]entity.Ra
 		}
 	}
 	return results, nil
+}
+
+func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error) {
+	var results []entity.RatingSubmisson
+	var allResults []bson.D
+	var pagination base.Pagination
+
+	bsonRatingID := bson.D{{Key: "rating_id", Value: bson.D{{Key: "$in", Value: filter.RatingID}}}}
+
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	cursor, err := r.db.Collection("ratingSubCol").
+		Find(ctx, bsonRatingID,
+			newMongoPaginate(limit, page).getPaginatedOpts().
+				SetSort(bson.D{{Key: sort, Value: dir}}))
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return results, nil, nil
+		}
+		return nil, nil, err
+	}
+	if err = cursor.All(ctx, &results); err != nil {
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	crsr, err := r.db.Collection("ratingSubCol").Find(ctx, bsonRatingID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if err = crsr.All(ctx, &allResults); err != nil {
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	totalRecords := int64(len(allResults))
+	pagination.Limit = limit
+	pagination.Page = page
+	pagination.TotalRecords = totalRecords
+	pagination.TotalPage = int(math.Ceil(float64(totalRecords) / float64(pagination.GetLimit())))
+	pagination.Records = int64(len(results))
+
+	return results, &pagination, nil
 }
