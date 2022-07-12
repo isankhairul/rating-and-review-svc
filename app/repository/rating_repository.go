@@ -63,6 +63,12 @@ type RatingRepository interface {
 	DeleteRatingTypeLikert(id primitive.ObjectID) error
 	GetRatingTypeLikerts(filter request.FilterRatingTypeLikert, page int, limit int64, sort string, dir interface{}) ([]entity.RatingTypesLikertCol, *base.Pagination, error)
 	Paginate(value interface{}, pagination *base.Pagination, db *gorm.DB, currRecord int64) func(db *gorm.DB) *gorm.DB
+
+	CreateRatingFormula(input request.SaveRatingFormula) (*entity.RatingFormulaCol, error)
+	UpdateRatingFormula(id primitive.ObjectID, input request.SaveRatingFormula) error
+	GetRatingFormulaById(id primitive.ObjectID) (*entity.RatingFormulaCol, error)
+	DeleteRatingFormula(id primitive.ObjectID) error
+	GetRatingFormulas(filter request.RatingFormulaFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingFormulaCol, *base.Pagination, error)
 }
 
 func NewRatingRepository(db *mongo.Database) RatingRepository {
@@ -884,6 +890,152 @@ func (r *ratingRepo) GetRatingTypeLikerts(filter request.FilterRatingTypeLikert,
 		return nil, nil, err
 	}
 	//
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	pagination := getPagination(r, page, limit, results, collectionName, filter1)
+	return results, pagination, nil
+}
+
+func (r *ratingRepo) CreateRatingFormula(input request.SaveRatingFormula) (*entity.RatingFormulaCol, error) {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
+	var ratingFormula entity.RatingFormulaCol
+
+	errTransaction := r.db.Client().UseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		err := sessionContext.StartTransaction()
+		if err != nil {
+			return err
+		}
+		result, err := r.db.Collection("ratingFormulaCol").InsertOne(ctx, bson.M{
+			"source_type":    input.SourceType,
+			"formula":        input.Formula,
+			"rating_type_id": input.RatingTypeId,
+			"rating_type":    input.RatingType,
+			"status":         input.Status,
+			"created_at":     time.Now().In(util.Loc),
+			"updated_at":     time.Now().In(util.Loc),
+		})
+
+		if err != nil {
+			sessionContext.AbortTransaction(sessionContext)
+			return err
+		}
+		if err = sessionContext.CommitTransaction(sessionContext); err != nil {
+			return err
+		}
+		ratingFormula.ID = result.InsertedID.(primitive.ObjectID)
+		return nil
+	})
+	if errTransaction != nil {
+		return nil, errTransaction
+	}
+	return &ratingFormula, nil
+}
+
+func (r *ratingRepo) UpdateRatingFormula(id primitive.ObjectID, input request.SaveRatingFormula) error {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
+	var timeUpdate time.Time
+	timeUpdate = time.Now().In(util.Loc)
+	ratingFormula := entity.RatingFormulaCol{
+		SourceType:   input.SourceType,
+		Formula:      input.Formula,
+		RatingTypeId: input.RatingTypeId,
+		RatingType:   input.RatingType,
+		Status:       input.Status,
+		UpdatedAt:    timeUpdate,
+	}
+	filter := bson.D{{Key: "_id", Value: id}}
+	data := bson.D{{Key: "$set", Value: ratingFormula}}
+	// transaction
+	errTransaction := r.db.Client().UseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		err := sessionContext.StartTransaction()
+		if err != nil {
+			return err
+		}
+		err1 := r.db.Collection("ratingFormulaCol").FindOneAndUpdate(context.Background(), filter, data, &options.FindOneAndUpdateOptions{})
+		if err1 != nil {
+			sessionContext.AbortTransaction(sessionContext)
+			return err1.Err()
+		}
+		if err = sessionContext.CommitTransaction(sessionContext); err != nil {
+			return err
+		}
+		return nil
+	})
+	if errTransaction != nil {
+		return errTransaction
+	}
+	return nil
+}
+
+func (r *ratingRepo) GetRatingFormulaById(id primitive.ObjectID) (*entity.RatingFormulaCol, error) {
+	var ratingFormula entity.RatingFormulaCol
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := r.db.Collection("ratingFormulaCol").FindOne(ctx, bson.M{"_id": id}).Decode(&ratingFormula)
+	if err != nil {
+
+		return nil, err
+	}
+	return &ratingFormula, nil
+}
+
+func (r *ratingRepo) DeleteRatingFormula(id primitive.ObjectID) error {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "status", Value: false}}}}
+	_, err := r.db.Collection("ratingFormulaCol").UpdateOne(ctx, bson.M{"_id": id}, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *ratingRepo) GetRatingFormulas(filter request.RatingFormulaFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingFormulaCol, *base.Pagination, error) {
+	var results []entity.RatingFormulaCol
+	var typeIds []primitive.ObjectID
+	for _, ele := range filter.TypeId {
+		objectId, _ := primitive.ObjectIDFromHex(ele)
+		typeIds = append(typeIds, objectId)
+	}
+	bsonSourceType := bson.D{}
+	bsonRatingTypeIds := bson.D{}
+	bsonStatus := bson.D{{Key: "status", Value: true}}
+
+	if len(typeIds) > 0 {
+		bsonRatingTypeIds = bson.D{{Key: "_id", Value: bson.D{{"$in", typeIds}}}}
+	}
+	if len(filter.SourceType) > 0 {
+		bsonSourceType = bson.D{{Key: "min_score", Value: bson.D{{Key: "$in", Value: filter.SourceType}}}}
+	}
+
+	filter1 := bson.D{{Key: "$and",
+		Value: bson.A{
+			bsonStatus,
+			bson.D{{Key: "$or",
+				Value: bson.A{
+					bsonSourceType,
+				}}},
+			bson.D{{Key: "$or",
+				Value: bson.A{
+					bsonRatingTypeIds,
+				}}},
+		},
+	},
+	}
+
+	collectionName := "ratingFormulaCol"
+	skip := int64(page)*limit - limit
+	cursor, err := r.db.Collection(collectionName).
+		Find(context.Background(), filter1,
+			&options.FindOptions{
+				Sort:  bson.D{bson.E{Key: sort, Value: dir}},
+				Limit: &limit,
+				Skip:  &skip,
+			})
+	if err != nil {
+		return nil, nil, err
+	}
 	if err = cursor.All(context.TODO(), &results); err != nil {
 		if err != nil {
 			return nil, nil, err

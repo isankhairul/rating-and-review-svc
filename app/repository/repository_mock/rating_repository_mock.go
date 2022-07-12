@@ -2,10 +2,11 @@ package repository_mock
 
 import (
 	"errors"
-	"github.com/stretchr/testify/mock"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
+
+	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
@@ -485,4 +486,54 @@ func (_m *RatingRepositoryMock) UpdateRating(id primitive.ObjectID, input reques
 	}
 
 	return r0, r1
+}
+
+func (repository *RatingRepositoryMock) CreateRatingFormula(input request.SaveRatingFormula) (*entity.RatingFormulaCol, error) {
+	ratingFormulaCol := entity.RatingFormulaCol{}
+	objectId, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84826")
+	ratingFormulaCol.ID = objectId
+
+	return &ratingFormulaCol, nil
+}
+
+func (repository *RatingRepositoryMock) UpdateRatingFormula(id primitive.ObjectID, input request.SaveRatingFormula) error {
+	objectId, _ := primitive.ObjectIDFromHex("629ec07e6f3c2761ba2dc868")
+	if id == objectId {
+		return errors.New("Error")
+	}
+	return nil
+}
+
+func (repository *RatingRepositoryMock) GetRatingFormulaById(id primitive.ObjectID) (*entity.RatingFormulaCol, error) {
+	arguments := repository.Mock.Called(id)
+	ratingFormula, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84826")
+	if ratingFormula == id {
+		return nil, errors.New("Error")
+	}
+	if arguments.Get(0) == nil {
+		return nil, mongo.ErrNoDocuments
+	} else {
+		likertFormula := arguments.Get(0).(entity.RatingFormulaCol)
+		return &likertFormula, nil
+	}
+}
+
+func (repository *RatingRepositoryMock) DeleteRatingFormula(id primitive.ObjectID) error {
+	objectId, _ := primitive.ObjectIDFromHex("629ec0836f3c2761ba2dc899")
+	if id == objectId {
+		return errors.New("error")
+	}
+	return nil
+}
+
+func (repository *RatingRepositoryMock) GetRatingFormulas(filter request.RatingFormulaFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingFormulaCol, *base.Pagination, error) {
+	arguments := repository.Mock.Called(filter, page, limit, sort, dir)
+	ratingFormula := entity.RatingFormulaCol{}
+	if arguments.Get(0) == ratingFormula {
+		return nil, nil, gorm.ErrRecordNotFound
+	}
+	if sort == "failed" {
+		return nil, nil, errors.New("Errors")
+	}
+	return arguments.Get(0).([]entity.RatingFormulaCol), arguments.Get(1).(*base.Pagination), nil
 }

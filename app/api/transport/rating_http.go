@@ -3,13 +3,14 @@ package transport
 import (
 	"context"
 	"encoding/json"
-	"github.com/gorilla/schema"
 	"go-klikdokter/app/api/endpoint"
 	"go-klikdokter/app/model/base/encoder"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/service"
 	"go-klikdokter/helper/_struct"
 	"net/http"
+
+	"github.com/gorilla/schema"
 
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
@@ -169,6 +170,41 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + _struct.PrefixRating).Handler(httptransport.NewServer(
 		ep.GetRatings,
 		decodeGetRatings,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "rating-formula/").Handler(httptransport.NewServer(
+		ep.CreateRatingFormula,
+		decodeCreateRatingFormula,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-formula").Handler(httptransport.NewServer(
+		ep.GetRatingFormulas,
+		decodeGetRatingFormulas,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-formula/{id}").Handler(httptransport.NewServer(
+		ep.GetRatingFormulaById,
+		decodeGetRatingFormulaById,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "rating-formula/{id}").Handler(httptransport.NewServer(
+		ep.UpdateRatingFormulaById,
+		decodeUpdateRatingFormulaById,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "rating-formula/{id}").Handler(httptransport.NewServer(
+		ep.DeleteRatingFormulaById,
+		decodeDeleteRatingFormulaById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
@@ -365,5 +401,51 @@ func decodeGetRatingSummary(ctx context.Context, r *http.Request) (rqst interfac
 		return nil, err
 	}
 	req.SourceType = mux.Vars(r)["source_type"]
+	return req, nil
+}
+
+func decodeCreateRatingFormula(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.SaveRatingFormula
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func decodeGetRatingFormulas(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var params request.GetRatingFormulasRequest
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+	if err = schema.NewDecoder().Decode(&params, r.Form); err != nil {
+		return nil, err
+	}
+	return params, nil
+}
+
+func decodeGetRatingFormulaById(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.GetRatingFormulaRequest
+	req.Id = mux.Vars(r)["id"]
+	return req, nil
+}
+
+func decodeDeleteRatingFormulaById(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.GetRatingFormulaRequest
+	req.Id = mux.Vars(r)["id"]
+	return req, nil
+}
+
+func decodeUpdateRatingFormulaById(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.SaveRatingFormula
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+	req.Id = mux.Vars(r)["id"]
 	return req, nil
 }
