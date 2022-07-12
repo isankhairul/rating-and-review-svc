@@ -49,6 +49,13 @@ type RatingService interface {
 	DeleteRating(id string) message.Message
 	GetListRatings(input request.GetListRatingsRequest) ([]entity.RatingsCol, *base.Pagination, message.Message)
 	GetListRatingSummary(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryResponse, message.Message)
+
+	// Rating Formula
+	CreateRatingFormula(input request.SaveRatingFormula) (*entity.RatingFormulaCol, message.Message)
+	GetRatingFormulaById(input request.GetRatingFormulaRequest) (*entity.RatingFormulaCol, message.Message)
+	UpdateRatingFormula(input request.SaveRatingFormula) message.Message
+	DeleteRatingFormulaById(input request.GetRatingFormulaRequest) message.Message
+	GetRatingFormulas(input request.GetRatingFormulasRequest) ([]entity.RatingFormulaCol, *base.Pagination, message.Message)
 }
 
 type ratingServiceImpl struct {
@@ -1362,4 +1369,144 @@ func getScore(score []float64) (float64, float64) {
 	min = score[0]
 	max = score[1]
 	return min, max
+}
+
+// swagger:route POST /api/v1/rating-formula/ RatingFormula createRatingFormula
+// Create Rating Formula
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) CreateRatingFormula(input request.SaveRatingFormula) (*entity.RatingFormulaCol, message.Message) {
+	check := true
+	if input.Status == nil {
+		input.Status = &check
+	}
+	result, err := s.ratingRepo.CreateRatingFormula(input)
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return nil, message.ErrDuplicateType
+		}
+		return nil, message.FailedMsg
+	}
+	return result, message.SuccessMsg
+}
+
+// swagger:route GET /api/v1/rating-formula/{id} RatingFormula getRatingFormulaById
+// Get Rating Formula by ID
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) GetRatingFormulaById(input request.GetRatingFormulaRequest) (*entity.RatingFormulaCol, message.Message) {
+	objectId, err := primitive.ObjectIDFromHex(input.Id)
+	if err != nil {
+		return nil, message.ErrNoData
+	}
+	result, err := s.ratingRepo.GetRatingFormulaById(objectId)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, message.ErrNoData
+		}
+		return nil, message.FailedMsg
+	}
+	return result, message.SuccessMsg
+}
+
+// swagger:route PUT /api/v1/rating-formula/{id} RatingFormula updateRatingFormula
+// Update Rating Formula
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) UpdateRatingFormula(input request.SaveRatingFormula) message.Message {
+	objectId, err := primitive.ObjectIDFromHex(input.Id)
+	if err != nil {
+		return message.ErrNoData
+	}
+	err = s.ratingRepo.UpdateRatingFormula(objectId, input)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return message.ErrNoData
+		}
+		if mongo.IsDuplicateKeyError(err) {
+			return message.ErrDuplicateType
+		}
+		return message.FailedMsg
+	}
+	return message.SuccessMsg
+}
+
+// swagger:route Delete /api/v1/rating-formula/{id} RatingFormula deleteRatingFormula
+// Delete Rating Formula
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) DeleteRatingFormulaById(input request.GetRatingFormulaRequest) message.Message {
+	objectId, err := primitive.ObjectIDFromHex(input.Id)
+	if err != nil {
+		return message.ErrNoData
+	}
+	err = s.ratingRepo.DeleteRatingFormula(objectId)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return message.ErrNoData
+		}
+		return message.FailedMsg
+	}
+	return message.SuccessMsg
+}
+
+// swagger:route GET /api/v1/rating-formula RatingFormula getRatingFormulas
+// Get Rating Formula Listing
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) GetRatingFormulas(input request.GetRatingFormulasRequest) ([]entity.RatingFormulaCol, *base.Pagination, message.Message) {
+	var dir interface{}
+	sort := "updated_at"
+	if input.Sort != "" {
+		sort = input.Sort
+	}
+	if input.Dir == "asc" {
+		dir = 1
+	} else {
+		dir = -1
+	}
+	//Set default value
+	if input.Page <= 0 {
+		input.Page = 1
+	}
+	if input.Limit <= 0 {
+		input.Limit = 50
+	}
+
+	filter := request.RatingFormulaFilter{}
+	if input.Filter != "" {
+		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
+		if errMarshal != nil {
+			return nil, nil, message.ErrUnmarshalRequest
+		}
+	}
+	ratingFormulas, pagination, err := s.ratingRepo.GetRatingFormulas(filter, input.Page, input.Limit, sort, dir)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil, message.ErrNoData
+		}
+		return nil, nil, message.FailedMsg
+	}
+	results := make([]entity.RatingFormulaCol, 0)
+	if len(ratingFormulas) == 0 {
+		return results, pagination, message.SuccessMsg
+	}
+	results = ratingFormulas
+
+	return results, pagination, message.SuccessMsg
 }

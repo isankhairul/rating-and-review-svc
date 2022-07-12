@@ -36,6 +36,12 @@ type RatingEndpoint struct {
 	DeleteRating         endpoint.Endpoint
 	GetRatings           endpoint.Endpoint
 	GetListRatingSummary endpoint.Endpoint
+
+	CreateRatingFormula     endpoint.Endpoint
+	UpdateRatingFormulaById endpoint.Endpoint
+	GetRatingFormulaById    endpoint.Endpoint
+	DeleteRatingFormulaById endpoint.Endpoint
+	GetRatingFormulas       endpoint.Endpoint
 }
 
 func MakeRatingEndpoints(s service.RatingService) RatingEndpoint {
@@ -64,6 +70,12 @@ func MakeRatingEndpoints(s service.RatingService) RatingEndpoint {
 		DeleteRating:         makeDeleteRatingById(s),
 		GetRatings:           makeGetListRatings(s),
 		GetListRatingSummary: makGetListRatingSummary(s),
+
+		CreateRatingFormula:     makeCreateRatingFormula(s),
+		UpdateRatingFormulaById: makeUpdateRatingFormulaById(s),
+		GetRatingFormulaById:    makeGetRatingFormulaById(s),
+		DeleteRatingFormulaById: makeDeleteRatingFormulaById(s),
+		GetRatingFormulas:       makeRatingFormulas(s),
 	}
 }
 
@@ -301,5 +313,60 @@ func makGetListRatingSummary(s service.RatingService) endpoint.Endpoint {
 		}
 
 		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
+	}
+}
+
+func makeCreateRatingFormula(s service.RatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.SaveRatingFormula)
+		result, msg := s.CreateRatingFormula(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
+	}
+}
+
+func makeUpdateRatingFormulaById(s service.RatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.SaveRatingFormula)
+		msg := s.UpdateRatingFormula(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+	}
+}
+
+func makeGetRatingFormulaById(s service.RatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.GetRatingFormulaRequest)
+		result, msg := s.GetRatingFormulaById(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
+	}
+}
+
+func makeDeleteRatingFormulaById(s service.RatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.GetRatingFormulaRequest)
+		msg := s.DeleteRatingFormulaById(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+	}
+}
+
+func makeRatingFormulas(s service.RatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.GetRatingFormulasRequest)
+		result, pagination, msg := s.GetRatingFormulas(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, result, pagination), nil
 	}
 }
