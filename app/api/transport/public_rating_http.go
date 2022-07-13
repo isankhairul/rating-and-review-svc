@@ -53,6 +53,13 @@ func PublicRatingHttpHandler(s service.PublicRatingService, logger log.Logger) h
 		options...,
 	))
 
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "public/rating-submissions/").Handler(httptransport.NewServer(
+		ep.CreateRatingSubmission,
+		decodeCreatePublicRatingSubmission,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
 	return pr
 }
 
@@ -102,4 +109,16 @@ func decodeGetRatingSubmissionBySourceTypeAndUID(ctx context.Context, r *http.Re
 		return nil, err
 	}
 	return params, nil
+}
+
+func decodeCreatePublicRatingSubmission(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.CreateRatingSubmissionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	err = req.Validate()
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
 }

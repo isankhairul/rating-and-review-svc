@@ -746,6 +746,27 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - PublicRating
+  /api/v1/public/rating-submissions/:
+    post:
+      description: Create Rating Submission Public
+      operationId: ReqPublicRatingSubmissionBody
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/CreateRatingSubmissionRequest'
+        x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - PublicRating
   /api/v1/public/ratings-summary/{source_type}:
     get:
       description: Get Rating Summary By Source Type

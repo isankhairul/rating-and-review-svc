@@ -31,6 +31,13 @@ type PublicRatingSubmissionResponse struct {
 	LikeCounter   int                `json:"like_counter"`
 }
 
+type PublicCreateRatingSubmissionResponse struct {
+	ID                primitive.ObjectID `json:"id"`
+	RatingID          string             `json:"rating_id,omitempty"`
+	RatingDescription string             `json:"rating_decription,omitempty"`
+	Value             string             `json:"value,omitempty"`
+}
+
 type RatingBySourceTypeAndActorResponse struct {
 	SourceUID  string        `json:"source_uid"`
 	SourceType string        `json:"source_type"`

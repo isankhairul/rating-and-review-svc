@@ -15,6 +15,7 @@ type PublicRatingEndpoint struct {
 	CreateRatingSubHelpful                    endpoint.Endpoint
 	GetListRatingSummaryBySourceType          endpoint.Endpoint
 	GetListRatingSubmissionBySourceTypeAndUID endpoint.Endpoint
+	CreateRatingSubmission                    endpoint.Endpoint
 }
 
 func MakePublicRatingEndpoints(s service.PublicRatingService) PublicRatingEndpoint {
@@ -23,6 +24,7 @@ func MakePublicRatingEndpoints(s service.PublicRatingService) PublicRatingEndpoi
 		CreateRatingSubHelpful:                    makeCreateRatingSubHelpful(s),
 		GetListRatingSummaryBySourceType:          makeGetListRatingSummaryBySourceType(s),
 		GetListRatingSubmissionBySourceTypeAndUID: makeGetListRatingSubmissionBySourceTypeAndUID(s),
+		CreateRatingSubmission:                    makeCreatePublicRatingSubmission(s),
 	}
 }
 
@@ -67,5 +69,16 @@ func makeGetListRatingSubmissionBySourceTypeAndUID(s service.PublicRatingService
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil
 		}
 		return base.SetHttpResponse(msg.Code, msg.Message, result, pagination), nil
+	}
+}
+
+func makeCreatePublicRatingSubmission(s service.PublicRatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.CreateRatingSubmissionRequest)
+		result, msg := s.CreatePublicRatingSubmission(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
 	}
 }
