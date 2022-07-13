@@ -3,13 +3,16 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/model/response"
 	"go-klikdokter/app/repository"
 	"go-klikdokter/helper/message"
+	"go-klikdokter/pkg/util"
 	"strconv"
+	"strings"
 
 	"github.com/go-kit/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,6 +24,7 @@ type PublicRatingService interface {
 	CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) message.Message
 	GetListRatingSummaryBySourceType(input request.GetPublicListRatingSummaryRequest) ([]response.PublicRatingSummaryResponse, *base.Pagination, message.Message)
 	GetListRatingSubmissionBySourceTypeAndUID(input request.GetPublicListRatingSubmissionRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message)
+	CreatePublicRatingSubmission(input request.CreateRatingSubmissionRequest) ([]response.PublicCreateRatingSubmissionResponse, message.Message)
 }
 
 type publicRatingServiceImpl struct {
@@ -276,4 +280,179 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 		})
 	}
 	return results, pagination, message.SuccessMsg
+}
+
+// swagger:route POST /api/v1/public/rating-submissions/ PublicRating ReqPublicRatingSubmissionBody
+// Create Rating Submission Public
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *publicRatingServiceImpl) CreatePublicRatingSubmission(input request.CreateRatingSubmissionRequest) ([]response.PublicCreateRatingSubmissionResponse, message.Message) {
+	var saveReq = make([]request.SaveRatingSubmission, 0)
+	var empty = ""
+	var falseVar = false
+	var trueVar = true
+	result := []response.PublicCreateRatingSubmissionResponse{}
+
+	// One of the following user_id and user_id_legacy must be filled
+	if input.UserID == nil || *input.UserID == "" {
+		input.UserID = &empty
+	}
+	if input.UserIDLegacy == nil || *input.UserIDLegacy == "" {
+		input.UserIDLegacy = &empty
+	}
+	if input.UserID == &empty && input.UserIDLegacy == &empty {
+		return result, message.UserUIDRequired
+	}
+
+	for _, argRatings := range input.Ratings {
+		// Find rating_type_id by rating_id
+		objectRatingId, err := primitive.ObjectIDFromHex(argRatings.ID)
+		if err != nil {
+			return result, message.ErrRatingNotFound
+		}
+		rating, err := s.ratingRepo.FindRatingByRatingID(objectRatingId)
+		if err != nil {
+			return result, message.ErrRatingNotFound
+		}
+		if rating == nil || rating.Status == &falseVar {
+			return result, message.ErrRatingNotFound
+		}
+
+		// Validate numeric type value
+		objectRatingTypeId, err := primitive.ObjectIDFromHex(rating.RatingTypeId)
+		if err != nil {
+			return result, message.ErrRatingNumericTypeNotFound
+		}
+		var validateMsg message.Message
+
+		ratingNumericType, err := s.ratingRepo.FindRatingNumericTypeByRatingTypeID(objectRatingTypeId)
+		if err != nil || ratingNumericType.Status == &falseVar {
+			validateMsg = message.ErrRatingNumericTypeNotFound
+		} else {
+			value, er := strconv.ParseFloat(*argRatings.Value, 64)
+			if er != nil {
+				return result, message.ErrValueFormatForNumericType
+			}
+			validateMsg = util.ValidateTypeNumeric(ratingNumericType, value)
+		}
+		if validateMsg.Code == message.ValidationFailCode {
+			return result, validateMsg
+		}
+
+		// Validate numeric type value
+		if validateMsg == message.ErrRatingNumericTypeNotFound {
+			ratingTypeLikert, err := s.ratingRepo.GetRatingTypeLikertByIdAndStatus(objectRatingTypeId)
+			if err != nil {
+				return result, message.ErrLikertTypeNotFound
+			}
+			if ratingTypeLikert == nil {
+				return result, message.ErrLikertTypeNotFound
+			}
+			strValue := strings.Split(*argRatings.Value, ",")
+			if validateErr, validList := util.ValidateLikertType(ratingTypeLikert, strValue); validateErr != nil {
+				return result, message.Message{
+					Code:    message.ValidationFailCode,
+					Message: "value must be integer and include in " + fmt.Sprintf("%v", validList),
+				}
+			}
+		}
+
+		// A submission with a combination of either (rating_id and user_id) OR (rating_id and user_id_legacy) is allowed once
+		if input.UserID != &empty && input.UserIDLegacy != &empty {
+			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID, input.SourceTransID)
+			val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er)
+			if val {
+				return result, message.UserRated
+			}
+			if !val {
+				ratingSubmission, er = s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID, input.SourceTransID)
+				valL := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er)
+				if valL {
+					return result, message.UserRated
+
+				}
+			}
+		}
+
+		if input.UserID == &empty {
+			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID, input.SourceTransID)
+			if val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val == trueVar {
+				return result, message.UserRated
+			}
+		}
+		if input.UserIDLegacy == &empty {
+			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID, input.SourceTransID)
+			if val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val == trueVar {
+				return result, message.UserRated
+			}
+		}
+
+		//The maximum length of user_agent allowed is 200 characters. Crop at 197 characters with triple dots (...) at the end.
+		if len(strings.TrimSpace(input.UserAgent)) > 200 {
+			return result, message.UserAgentTooLong
+		}
+		if isExisted := isIdExisted(saveReq, argRatings.ID); isExisted == falseVar {
+			return result, message.ErrCannotSameRatingId
+		}
+
+		if ratingNumericType == nil {
+			saveReq = append(saveReq, request.SaveRatingSubmission{
+				RatingID:      argRatings.ID,
+				Value:         argRatings.Value,
+				UserID:        input.UserID,
+				UserIDLegacy:  input.UserIDLegacy,
+				Comment:       "",
+				IPAddress:     input.IPAddress,
+				UserAgent:     input.UserAgent,
+				SourceTransID: input.SourceTransID,
+				UserPlatform:  input.UserPlatform,
+			})
+		} else {
+			saveReq = append(saveReq, request.SaveRatingSubmission{
+				RatingID:      argRatings.ID,
+				Value:         argRatings.Value,
+				UserID:        input.UserID,
+				UserIDLegacy:  input.UserIDLegacy,
+				Comment:       input.Comment,
+				IPAddress:     input.IPAddress,
+				UserAgent:     input.UserAgent,
+				SourceTransID: input.SourceTransID,
+				UserPlatform:  input.UserPlatform,
+			})
+		}
+	}
+	if len(saveReq) <= 0 {
+		return result, message.ErrTypeNotFound
+	}
+	ratingSubs, err := s.publicRatingRepo.CreatePublicRatingSubmission(saveReq)
+	if err != nil {
+		return result, message.ErrSaveData
+	}
+
+	for _, arg := range ratingSubs {
+		data := response.PublicCreateRatingSubmissionResponse{}
+		ratingSub, err := s.ratingRepo.GetRatingSubmissionById(arg.ID)
+		if err != nil {
+			return result, message.FailedMsg
+		}
+		ratingID, err := primitive.ObjectIDFromHex(ratingSub.RatingID)
+		if err != nil {
+			return result, message.FailedMsg
+		}
+		rating, err := s.ratingRepo.GetRatingById(ratingID)
+		if err != nil {
+			return result, message.FailedMsg
+		}
+
+		data.ID = ratingSub.ID
+		data.RatingID = ratingSub.RatingID
+		data.RatingDescription = *rating.Description
+		data.Value = ratingSub.Value
+
+		result = append(result, data)
+	}
+	return result, message.SuccessMsg
 }

@@ -29,7 +29,7 @@ type RatingSubmissionFilter struct {
 	EndDate   string    `json:"end_date"`
 }
 
-// swagger:parameters ReqRatingSubmissionBody
+// swagger:parameters ReqRatingSubmissionBody ReqPublicRatingSubmissionBody
 type ReqRatingSubmissionBody struct {
 	//  in: body
 	Body CreateRatingSubmissionRequest `json:"body"`

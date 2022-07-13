@@ -84,3 +84,13 @@ func (repository *PublicRatingRepositoryMock) GetPublicRatingSubmissions(limit, 
 	arguments := repository.Mock.Called(limit, page, sort, filter)
 	return arguments.Get(0).([]entity.RatingSubmisson), arguments.Get(1).(*base.Pagination), nil
 }
+
+func (repository *PublicRatingRepositoryMock) CreatePublicRatingSubmission(input []request.SaveRatingSubmission) ([]entity.RatingSubmisson, error) {
+	for _, arg := range input {
+		if *arg.UserID != "629dce7bf1f26275e0d84826" {
+			return nil, errors.New("can not be created")
+		}
+	}
+	arguments := repository.Mock.Called(input)
+	return arguments.Get(0).([]entity.RatingSubmisson), nil
+}
