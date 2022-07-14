@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/vjeantet/govaluate"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -51,13 +52,16 @@ func NewPublicRatingService(
 //  401: SuccessResponse
 //  200: SuccessResponse
 func (s *publicRatingServiceImpl) GetRatingBySourceTypeAndActor(input request.GetRatingBySourceTypeAndActorRequest) (*response.RatingBySourceTypeAndActorResponse, message.Message) {
+	logger := log.With(s.logger, "PublicAPI", "GetRatingBySourceTypeAndActor")
 	result := response.RatingBySourceTypeAndActorResponse{}
 	// Get Ratings By Type and Actor UID
 	ratings, err := s.publicRatingRepo.GetRatingsBySourceTypeAndActor(input.SourceType, input.SourceUID)
 	if err != nil {
+		_ = level.Error(logger).Log("error", err.Error())
 		return nil, message.FailedMsg
 	}
 	if len(ratings) == 0 {
+		_ = level.Error(logger).Log("error no rating data")
 		return nil, message.ErrNoData
 	}
 
@@ -68,11 +72,13 @@ func (s *publicRatingServiceImpl) GetRatingBySourceTypeAndActor(input request.Ge
 		// check rating type exist
 		ratingTypeId, err := primitive.ObjectIDFromHex(v.RatingTypeId)
 		if err != nil {
+			_ = level.Error(logger).Log("error", err.Error())
 			return nil, message.ErrRatingTypeNotExist
 		}
 
 		likert, err := s.publicRatingRepo.GetRatingTypeLikertById(ratingTypeId)
 		if err != nil {
+			_ = level.Error(logger).Log("error", err.Error())
 			return nil, message.FailedMsg
 		}
 		if likert != nil {
@@ -81,7 +87,12 @@ func (s *publicRatingServiceImpl) GetRatingBySourceTypeAndActor(input request.Ge
 		} else {
 			numeric, err := s.publicRatingRepo.GetRatingTypeNumById(ratingTypeId)
 			if err != nil {
+				_ = level.Error(logger).Log("error", err.Error())
 				return nil, message.FailedMsg
+			}
+			if numeric == nil {
+				_ = level.Error(logger).Log("error no rating type is match")
+				return nil, message.ErrRatingTypeNotExist
 			}
 			numericResp := response.MapRatingNumericToRatingNumericResp(*numeric)
 			result.Ratings = append(result.Ratings, numericResp)
@@ -98,6 +109,7 @@ func (s *publicRatingServiceImpl) GetRatingBySourceTypeAndActor(input request.Ge
 //  401: SuccessResponse
 //  200: SuccessResponse
 func (s *publicRatingServiceImpl) CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) message.Message {
+	logger := log.With(s.logger, "PublicAPI", "CreateRatingSubHelpful")
 	// check rating type exist
 	ratingSubmissionId, err := primitive.ObjectIDFromHex(input.RatingSubmissionID)
 	if err != nil {
@@ -107,8 +119,11 @@ func (s *publicRatingServiceImpl) CreateRatingSubHelpful(input request.CreateRat
 	ratingSubmission, err1 := s.ratingRepo.GetRatingSubmissionById(ratingSubmissionId)
 	if err1 != nil {
 		if !errors.Is(err1, mongo.ErrNoDocuments) {
+			_ = level.Error(logger).Log("error", err1.Error())
 			return message.FailedMsg
 		}
+		_ = level.Error(logger).Log("error", err1.Error())
+		return message.FailedMsg
 	}
 	if ratingSubmission == nil {
 		return message.ErrRatingTypeNotExist
@@ -117,14 +132,17 @@ func (s *publicRatingServiceImpl) CreateRatingSubHelpful(input request.CreateRat
 	_, err2 := s.publicRatingRepo.CreateRatingSubHelpful(input)
 	if err2 != nil {
 		if mongo.IsDuplicateKeyError(err) {
+			_ = level.Error(logger).Log("error", err2.Error())
 			return message.ErrDuplicateRatingName
 		}
+		_ = level.Error(logger).Log("error", err2.Error())
 		return message.FailedMsg
 	}
 
 	// update like_counter rating submission
 	err3 := s.publicRatingRepo.UpdateCounterRatingSubmission(ratingSubmissionId, ratingSubmission.LikeCounter)
 	if err3 != nil {
+		_ = level.Error(logger).Log("error", err3.Error())
 		return message.ErrSaveData
 	}
 	return message.SuccessMsg
@@ -138,6 +156,7 @@ func (s *publicRatingServiceImpl) CreateRatingSubHelpful(input request.CreateRat
 //  401: SuccessResponse
 //  200: SuccessResponse
 func (s *publicRatingServiceImpl) GetListRatingSummaryBySourceType(input request.GetPublicListRatingSummaryRequest) ([]response.PublicRatingSummaryResponse, *base.Pagination, message.Message) {
+	logger := log.With(s.logger, "PublicAPI", "GetListRatingSummaryBySourceType")
 	results := []response.PublicRatingSummaryResponse{}
 	input.MakeDefaultValueIfEmpty()
 	var dir int
@@ -157,6 +176,7 @@ func (s *publicRatingServiceImpl) GetListRatingSummaryBySourceType(input request
 
 	ratings, pagination, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filter)
 	if err != nil {
+		_ = level.Error(logger).Log("error", err.Error())
 		return nil, nil, message.FailedMsg
 	}
 	if len(ratings) <= 0 {
@@ -166,51 +186,37 @@ func (s *publicRatingServiceImpl) GetListRatingSummaryBySourceType(input request
 	for _, args := range ratings {
 		ratingSubs, err := s.publicRatingRepo.GetRatingSubsByRatingId(args.ID.Hex())
 		if err != nil {
+			_ = level.Error(logger).Log("error", err.Error())
 			return nil, nil, message.FailedMsg
 		}
-		if len(ratingSubs) <= 0 {
-			ratingSummary := response.RatingSubmissionSummary{
-				SourceUID:  args.SourceUid,
-				TotalValue: 0,
-			}
-			data := response.PublicRatingSummaryResponse{
-				ID:            args.ID,
-				Name:          args.Name,
-				Description:   args.Description,
-				SourceUid:     args.SourceUid,
-				SourceType:    args.SourceType,
-				RatingType:    args.RatingType,
-				RatingTypeId:  args.RatingTypeId,
-				RatingSummary: ratingSummary,
-			}
-			results = append(results, data)
-		} else {
-			formulaString := ""
-			// Get formula rating calculation
-			formulaRating, err := s.publicRatingRepo.GetRatingFormulaByRatingTypeIdAndSourceType(args.RatingTypeId, input.SourceType)
-			if err != nil {
-				return []response.PublicRatingSummaryResponse{}, nil, message.ErrFailedToGetFormula
-			}
-			if formulaRating != nil {
-				formulaString = formulaRating.Formula
-			}
 
-			ratingSummary, err := calculateRatingValue(args.SourceUid, formulaString, ratingSubs)
-			if err != nil {
-				return []response.PublicRatingSummaryResponse{}, nil, message.ErrFailedToCalculate
-			}
-			data := response.PublicRatingSummaryResponse{
-				ID:            args.ID,
-				Name:          args.Name,
-				Description:   args.Description,
-				SourceUid:     args.SourceUid,
-				SourceType:    args.SourceType,
-				RatingType:    args.RatingType,
-				RatingTypeId:  args.RatingTypeId,
-				RatingSummary: ratingSummary,
-			}
-			results = append(results, data)
+		formulaString := ""
+		formulaRating, err := s.publicRatingRepo.GetRatingFormulaByRatingTypeIdAndSourceType(args.RatingTypeId, input.SourceType)
+		if err != nil {
+			_ = level.Error(logger).Log("error", err.Error())
+			return []response.PublicRatingSummaryResponse{}, nil, message.ErrFailedToGetFormula
 		}
+		if formulaRating != nil {
+			formulaString = formulaRating.Formula
+		}
+
+		ratingSummary, err := calculateRatingValue(args.SourceUid, formulaString, ratingSubs)
+		if err != nil {
+			_ = level.Error(logger).Log("error", err.Error())
+			return []response.PublicRatingSummaryResponse{}, nil, message.ErrFailedToCalculate
+		}
+
+		data := response.PublicRatingSummaryResponse{
+			ID:            args.ID,
+			Name:          args.Name,
+			Description:   args.Description,
+			SourceUid:     args.SourceUid,
+			SourceType:    args.SourceType,
+			RatingType:    args.RatingType,
+			RatingTypeId:  args.RatingTypeId,
+			RatingSummary: ratingSummary,
+		}
+		results = append(results, data)
 	}
 	return results, pagination, message.SuccessMsg
 }
@@ -219,13 +225,16 @@ func calculateRatingValue(sourceUID, formula string, ratingSubs []entity.RatingS
 	result := response.RatingSubmissionSummary{}
 	totalRatingPoint := 0
 	totalUserCount := len(ratingSubs)
-	// Get total rating point
-	for _, args := range ratingSubs {
-		intVal, err := strconv.Atoi(args.Value)
-		if err != nil {
-			return result, err
+
+	if totalUserCount > 0 {
+		// Get total rating point
+		for _, args := range ratingSubs {
+			intVal, err := strconv.Atoi(args.Value)
+			if err != nil {
+				return result, err
+			}
+			totalRatingPoint = totalRatingPoint + intVal
 		}
-		totalRatingPoint = totalRatingPoint + intVal
 	}
 
 	if formula != "" {
@@ -259,6 +268,7 @@ func calculateRatingValue(sourceUID, formula string, ratingSubs []entity.RatingS
 //  401: SuccessResponse
 //  200: SuccessResponse
 func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(input request.GetPublicListRatingSubmissionRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message) {
+	logger := log.With(s.logger, "PublicAPI", "GetListRatingSubmissionBySourceTypeAndUID")
 	results := []response.PublicRatingSubmissionResponse{}
 	var dir int
 	if input.Dir == "asc" {
@@ -284,6 +294,7 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 	}
 	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filterRating)
 	if err != nil {
+		_ = level.Error(logger).Log("error", err.Error())
 		return nil, nil, message.FailedMsg
 	}
 
@@ -294,6 +305,7 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 	}
 	ratingSubs, pagination, err := s.publicRatingRepo.GetPublicRatingSubmissions(input.Limit, input.Page, dir, input.Sort, filterRatingSubs)
 	if err != nil {
+		_ = level.Error(logger).Log("error", err.Error())
 		return nil, nil, message.FailedMsg
 	}
 	if len(ratings) <= 0 {
@@ -321,6 +333,7 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 //  401: SuccessResponse
 //  200: SuccessResponse
 func (s *publicRatingServiceImpl) CreatePublicRatingSubmission(input request.CreateRatingSubmissionRequest) ([]response.PublicCreateRatingSubmissionResponse, message.Message) {
+	logger := log.With(s.logger, "PublicAPI", "CreatePublicRatingSubmission")
 	var saveReq = make([]request.SaveRatingSubmission, 0)
 	var empty = ""
 	var falseVar = false
@@ -342,10 +355,12 @@ func (s *publicRatingServiceImpl) CreatePublicRatingSubmission(input request.Cre
 		// Find rating_type_id by rating_id
 		objectRatingId, err := primitive.ObjectIDFromHex(argRatings.ID)
 		if err != nil {
+			_ = level.Error(logger).Log("error", err.Error())
 			return result, message.ErrRatingNotFound
 		}
 		rating, err := s.ratingRepo.FindRatingByRatingID(objectRatingId)
 		if err != nil {
+			_ = level.Error(logger).Log("error", err.Error())
 			return result, message.ErrRatingNotFound
 		}
 		if rating == nil || rating.Status == &falseVar {
@@ -355,16 +370,19 @@ func (s *publicRatingServiceImpl) CreatePublicRatingSubmission(input request.Cre
 		// Validate numeric type value
 		objectRatingTypeId, err := primitive.ObjectIDFromHex(rating.RatingTypeId)
 		if err != nil {
+			_ = level.Error(logger).Log("error", err.Error())
 			return result, message.ErrRatingNumericTypeNotFound
 		}
 		var validateMsg message.Message
 
 		ratingNumericType, err := s.ratingRepo.FindRatingNumericTypeByRatingTypeID(objectRatingTypeId)
 		if err != nil || ratingNumericType.Status == &falseVar {
+			_ = level.Error(logger).Log("error", err.Error())
 			validateMsg = message.ErrRatingNumericTypeNotFound
 		} else {
 			value, er := strconv.ParseFloat(*argRatings.Value, 64)
 			if er != nil {
+				_ = level.Error(logger).Log("error", err.Error())
 				return result, message.ErrValueFormatForNumericType
 			}
 			validateMsg = util.ValidateTypeNumeric(ratingNumericType, value)
@@ -377,6 +395,7 @@ func (s *publicRatingServiceImpl) CreatePublicRatingSubmission(input request.Cre
 		if validateMsg == message.ErrRatingNumericTypeNotFound {
 			ratingTypeLikert, err := s.ratingRepo.GetRatingTypeLikertByIdAndStatus(objectRatingTypeId)
 			if err != nil {
+				_ = level.Error(logger).Log("error", err.Error())
 				return result, message.ErrLikertTypeNotFound
 			}
 			if ratingTypeLikert == nil {
@@ -460,6 +479,7 @@ func (s *publicRatingServiceImpl) CreatePublicRatingSubmission(input request.Cre
 	}
 	ratingSubs, err := s.publicRatingRepo.CreatePublicRatingSubmission(saveReq)
 	if err != nil {
+		_ = level.Error(logger).Log("error", err.Error())
 		return result, message.ErrSaveData
 	}
 
@@ -467,14 +487,17 @@ func (s *publicRatingServiceImpl) CreatePublicRatingSubmission(input request.Cre
 		data := response.PublicCreateRatingSubmissionResponse{}
 		ratingSub, err := s.ratingRepo.GetRatingSubmissionById(arg.ID)
 		if err != nil {
+			_ = level.Error(logger).Log("error", err.Error())
 			return result, message.FailedMsg
 		}
 		ratingID, err := primitive.ObjectIDFromHex(ratingSub.RatingID)
 		if err != nil {
+			_ = level.Error(logger).Log("error", err.Error())
 			return result, message.FailedMsg
 		}
 		rating, err := s.ratingRepo.GetRatingById(ratingID)
 		if err != nil {
+			_ = level.Error(logger).Log("error", err.Error())
 			return result, message.FailedMsg
 		}
 

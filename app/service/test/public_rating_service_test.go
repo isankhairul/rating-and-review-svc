@@ -257,6 +257,7 @@ func TestGetRatingSummaryBySourceType(t *testing.T) {
 	}
 
 	ratingSubDatas := []entity.RatingSubmisson{}
+	ratingFormula := entity.RatingFormulaCol{}
 	paginationResult := base.Pagination{
 		Records:      2,
 		Limit:        10,
@@ -265,7 +266,9 @@ func TestGetRatingSummaryBySourceType(t *testing.T) {
 	}
 	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
 	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idDummy1.Hex()).Return(ratingSubDatas, nil).Once()
+	publicRatingRepository.Mock.On("GetRatingFormulaByRatingTypeIdAndSourceType", ratingid, requestSummary.SourceType).Return(&ratingFormula, nil).Once()
 	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idDummy2.Hex()).Return(ratingSubDatas, nil).Once()
+	publicRatingRepository.Mock.On("GetRatingFormulaByRatingTypeIdAndSourceType", ratingid, requestSummary.SourceType).Return(&ratingFormula, nil).Once()
 
 	result, pagination, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
 	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
