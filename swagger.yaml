@@ -679,7 +679,7 @@ info:
   title: 'KD Boilerplate Go kit:'
   version: "1.0"
 paths:
-  /api/v1/public/helpful_rating_submission/:
+  /api/v1/public/helpful-rating-submission/:
     post:
       description: Create Helpful Rating Submission
       operationId: ReqRatingSubHelpfulBody
@@ -778,7 +778,8 @@ paths:
         required: true
         type: string
         x-go-name: SourceType
-      - in: query
+      - description: 'Filter available {"source_uid": [], "rating_type": []}'
+        in: query
         name: filter
         type: string
         x-go-name: Filter

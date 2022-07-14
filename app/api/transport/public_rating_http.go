@@ -32,7 +32,7 @@ func PublicRatingHttpHandler(s service.PublicRatingService, logger log.Logger) h
 		options...,
 	))
 
-	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "public/helpful_rating_submission/").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "public/helpful-rating-submission/").Handler(httptransport.NewServer(
 		ep.CreateRatingSubHelpful,
 		decodeCreateRatingSubHelpful,
 		encoder.EncodeResponseHTTP,

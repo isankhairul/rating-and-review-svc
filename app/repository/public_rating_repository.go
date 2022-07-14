@@ -191,7 +191,7 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 	bsonRatingType := bson.D{}
 
 	if len(filter.SourceUid) > 0 {
-		bsonSourceUid = bson.D{{Key: "source_uid", Value: filter.SourceUid}}
+		bsonSourceUid = bson.D{{Key: "source_uid", Value: bson.D{{Key: "$in", Value: filter.SourceUid}}}}
 	}
 	if filter.SourceType != "" {
 		if filter.SourceType != "all" {
