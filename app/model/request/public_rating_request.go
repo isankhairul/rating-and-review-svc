@@ -11,16 +11,17 @@ type GetPublicListRatingSummaryRequest struct {
 	// in: path
 	// required: true
 	SourceType string `json:"source_type"`
-	Filter     string `json:"filter" schema:"filter" binding:"omitempty"`
-	Limit      int    `json:"limit" schema:"limit" binding:"omitempty,numeric,min=1,max=100"`
-	Page       int    `json:"page" schema:"page" binding:"omitempty,numeric,min=1"`
-	Sort       string `json:"sort" schema:"sort" binding:"omitempty"`
-	Dir        string `json:"dir" schema:"dir" binding:"omitempty"`
+	// Filter available {"source_uid": [], "rating_type": []}
+	Filter string `json:"filter" schema:"filter" binding:"omitempty"`
+	Limit  int    `json:"limit" schema:"limit" binding:"omitempty,numeric,min=1,max=100"`
+	Page   int    `json:"page" schema:"page" binding:"omitempty,numeric,min=1"`
+	Sort   string `json:"sort" schema:"sort" binding:"omitempty"`
+	Dir    string `json:"dir" schema:"dir" binding:"omitempty"`
 }
 
 type FilterRatingSummary struct {
-	SourceUid  string   `json:"source_uid"`
 	SourceType string   `json:"source_type"`
+	SourceUid  []string `json:"source_uid"`
 	RatingType []string `json:"rating_type"`
 }
 

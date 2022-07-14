@@ -65,7 +65,7 @@ var requestSubmission = request.GetPublicListRatingSubmissionRequest{
 
 var filterSummary = request.FilterRatingSummary{
 	SourceType: requestSummary.SourceType,
-	SourceUid:  "",
+	SourceUid:  []string(nil),
 	RatingType: []string(nil),
 }
 
@@ -186,7 +186,7 @@ func TestCreateRatingSubHelpfulRatingSubmissionNil(t *testing.T) {
 	ratingRepository.Mock.On("GetRatingSubmissionById", objectRatingSubmissionId).Return(ratingSubmission, nil).Once()
 
 	msg := publicRactingService.CreateRatingSubHelpful(input)
-	assert.Equal(t, message.ErrRatingTypeNotExist, msg)
+	assert.Equal(t, message.FailedMsg, msg)
 }
 
 func TestCreateRatingSubHelpfulUpdateCounterFailed(t *testing.T) {
@@ -383,7 +383,7 @@ func TestGetRatingSummaryBySourceTypeErrFailedCalculate(t *testing.T) {
 func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
 	idDummy1, _ := primitive.ObjectIDFromHex(idDummy1)
 	idDummy2, _ := primitive.ObjectIDFromHex(idDummy2)
-	filterSummary.SourceUid = requestSubmission.SourceUID
+	filterSummary.SourceUid = []string{requestSubmission.SourceUID}
 
 	var filterSubmission = request.FilterRatingSubmission{
 		RatingID: []string{idDummy1.Hex(), idDummy2.Hex()},
@@ -439,7 +439,7 @@ func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
 func TestGetRatingSubmissionBySourceTypeAndUIDEmptyList(t *testing.T) {
 	idDummy1, _ := primitive.ObjectIDFromHex(idDummy1)
 	idDummy2, _ := primitive.ObjectIDFromHex(idDummy2)
-	filterSummary.SourceUid = requestSubmission.SourceUID
+	filterSummary.SourceUid = []string{requestSubmission.SourceUID}
 
 	var filterSubmission = request.FilterRatingSubmission{
 		RatingID: []string{idDummy1.Hex(), idDummy2.Hex()},
@@ -484,7 +484,7 @@ func TestGetRatingSubmissionBySourceTypeAndUIDEmptyList(t *testing.T) {
 
 func TestGetRatingSubmissionBySourceTypeAndUIDErrGetRating(t *testing.T) {
 	requestSubmission.Sort = "failed"
-	filterSummary.SourceUid = requestSubmission.SourceUID
+	filterSummary.SourceUid = []string{requestSubmission.SourceUID}
 
 	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "failed", filterSummary).Return(nil, nil, errors.New("error")).Once()
 
