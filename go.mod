@@ -16,6 +16,7 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
+	github.com/vjeantet/govaluate v1.3.0 // indirect
 	go.mongodb.org/mongo-driver v1.7.3
 	gorm.io/driver/mysql v1.2.0
 	gorm.io/driver/postgres v1.2.2

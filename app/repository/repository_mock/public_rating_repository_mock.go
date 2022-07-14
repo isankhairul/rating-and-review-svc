@@ -94,3 +94,12 @@ func (repository *PublicRatingRepositoryMock) CreatePublicRatingSubmission(input
 	arguments := repository.Mock.Called(input)
 	return arguments.Get(0).([]entity.RatingSubmisson), nil
 }
+
+func (repository *PublicRatingRepositoryMock) GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId, sourceType string) (*entity.RatingFormulaCol, error) {
+	if ratingTypeId == "62c3e57b457ed515928c3690" {
+		return nil, errors.New("Errors")
+	}
+	arguments := repository.Mock.Called(ratingTypeId, sourceType)
+
+	return arguments.Get(0).(*entity.RatingFormulaCol), nil
+}

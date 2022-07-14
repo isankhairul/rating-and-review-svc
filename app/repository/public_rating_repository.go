@@ -30,6 +30,7 @@ type PublicRatingRepository interface {
 	GetRatingSubsByRatingId(ratingId string) ([]entity.RatingSubmisson, error)
 	GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error)
 	CreatePublicRatingSubmission(input []request.SaveRatingSubmission) ([]entity.RatingSubmisson, error)
+	GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId, sourceType string) (*entity.RatingFormulaCol, error)
 }
 
 func NewPublicRatingRepository(db *mongo.Database) PublicRatingRepository {
@@ -364,4 +365,30 @@ func (r *publicRatingRepo) CreatePublicRatingSubmission(input []request.SaveRati
 		return nil, errTransaction
 	}
 	return ratingSubmission, nil
+}
+
+func (r *publicRatingRepo) GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId, sourceType string) (*entity.RatingFormulaCol, error) {
+	var ratingFormula entity.RatingFormulaCol
+
+	bsonRatingTypeId := bson.D{{Key: "rating_type_id", Value: ratingTypeId}}
+	bsonSourceType := bson.D{{Key: "source_type", Value: sourceType}}
+	bsonStatus := bson.D{{Key: "status", Value: true}}
+
+	bsonFilter := bson.D{{Key: "$and",
+		Value: bson.A{
+			bsonRatingTypeId,
+			bsonSourceType,
+			bsonStatus,
+		}},
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := r.db.Collection("ratingFormulaCol").FindOne(ctx, bsonFilter).Decode(&ratingFormula)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &ratingFormula, nil
 }
