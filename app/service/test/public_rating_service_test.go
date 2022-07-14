@@ -341,6 +341,7 @@ func TestGetRatingSummaryBySourceTypeErrGetRatingSubmission(t *testing.T) {
 }
 
 func TestGetRatingSummaryBySourceTypeErrFailedCalculate(t *testing.T) {
+	failID := "62c3e57b457ed515928c3690"
 	ratingId, _ := primitive.ObjectIDFromHex(idDummy1)
 	ratingSub, _ := primitive.ObjectIDFromHex(idDummy2)
 	ratingDatas := []entity.RatingsCol{
@@ -351,7 +352,7 @@ func TestGetRatingSummaryBySourceTypeErrFailedCalculate(t *testing.T) {
 			SourceUid:    "3310",
 			SourceType:   requestSummary.SourceType,
 			RatingType:   ratingType,
-			RatingTypeId: ratingid,
+			RatingTypeId: failID,
 		},
 	}
 	ratingSubDatas := []entity.RatingSubmisson{
@@ -369,10 +370,11 @@ func TestGetRatingSummaryBySourceTypeErrFailedCalculate(t *testing.T) {
 	}
 	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, errors.New("error")).Once()
 	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idDummy1).Return(ratingSubDatas, nil).Once()
+	publicRatingRepository.Mock.On("GetRatingFormulaByRatingTypeIdAndSourceType", failID, requestSummary.SourceType).Return(nil, nil).Once()
 
 	_, _, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
-	assert.Equal(t, message.ErrFailedToCalculate.Code, msg.Code, "Code must be 412002")
-	assert.Equal(t, message.ErrFailedToCalculate.Message, msg.Message, "Message must be Failed to calculate rating value")
+	assert.Equal(t, message.ErrFailedToGetFormula.Code, msg.Code, "Code must be 412002")
+	assert.Equal(t, message.ErrFailedToGetFormula.Message, msg.Message, "Message must be Failed to get formula rating")
 }
 
 func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {

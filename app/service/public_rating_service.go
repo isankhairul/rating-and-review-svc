@@ -11,10 +11,12 @@ import (
 	"go-klikdokter/app/repository"
 	"go-klikdokter/helper/message"
 	"go-klikdokter/pkg/util"
+	"math"
 	"strconv"
 	"strings"
 
 	"github.com/go-kit/log"
+	"github.com/vjeantet/govaluate"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -183,7 +185,17 @@ func (s *publicRatingServiceImpl) GetListRatingSummaryBySourceType(input request
 			}
 			results = append(results, data)
 		} else {
-			ratingSummary, err := calculateRatingValue(args.SourceUid, ratingSubs)
+			formulaString := ""
+			// Get formula rating calculation
+			formulaRating, err := s.publicRatingRepo.GetRatingFormulaByRatingTypeIdAndSourceType(args.RatingTypeId, input.SourceType)
+			if err != nil {
+				return []response.PublicRatingSummaryResponse{}, nil, message.ErrFailedToGetFormula
+			}
+			if formulaRating != nil {
+				formulaString = formulaRating.Formula
+			}
+
+			ratingSummary, err := calculateRatingValue(args.SourceUid, formulaString, ratingSubs)
 			if err != nil {
 				return []response.PublicRatingSummaryResponse{}, nil, message.ErrFailedToCalculate
 			}
@@ -203,20 +215,39 @@ func (s *publicRatingServiceImpl) GetListRatingSummaryBySourceType(input request
 	return results, pagination, message.SuccessMsg
 }
 
-func calculateRatingValue(sourceUID string, ratingSubs []entity.RatingSubmisson) (response.RatingSubmissionSummary, error) {
+func calculateRatingValue(sourceUID, formula string, ratingSubs []entity.RatingSubmisson) (response.RatingSubmissionSummary, error) {
 	result := response.RatingSubmissionSummary{}
-	totalValue := 0
+	totalRatingPoint := 0
+	totalUserCount := len(ratingSubs)
+	// Get total rating point
 	for _, args := range ratingSubs {
 		intVal, err := strconv.Atoi(args.Value)
 		if err != nil {
 			return result, err
 		}
-		totalValue = totalValue + intVal
+		totalRatingPoint = totalRatingPoint + intVal
 	}
-	finalValue := totalValue / len(ratingSubs)
-	result.SourceUID = sourceUID
-	result.TotalValue = finalValue
 
+	if formula != "" {
+		expression, err := govaluate.NewEvaluableExpression(formula)
+		if err != nil {
+			return result, err
+		}
+
+		parameters := make(map[string]interface{}, 8)
+		parameters["total_rating_point"] = totalRatingPoint
+		parameters["total_user_count"] = totalUserCount
+
+		finalCalc, err := expression.Evaluate(parameters)
+		if err != nil {
+			return result, err
+		}
+
+		result.TotalValue = int(math.Floor(finalCalc.(float64) + 0.4))
+	} else {
+		result.TotalValue = totalRatingPoint
+	}
+	result.SourceUID = sourceUID
 	return result, nil
 }
 
