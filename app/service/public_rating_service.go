@@ -168,42 +168,110 @@ func (s *publicRatingServiceImpl) GetListRatingSummaryBySourceType(input request
 	}
 
 	for _, args := range ratings {
-		ratingSubs, err := s.publicRatingRepo.GetRatingSubsByRatingId(args.ID.Hex())
+		ratingTypeId, err := primitive.ObjectIDFromHex(args.RatingTypeId)
 		if err != nil {
 			return nil, nil, message.FailedMsg
 		}
-
-		formulaString := ""
-		formulaRating, err := s.publicRatingRepo.GetRatingFormulaByRatingTypeIdAndSourceType(args.RatingTypeId, input.SourceType)
+		ratingTypeLikert, err := s.ratingRepo.GetRatingTypeLikertByIdAndStatus(ratingTypeId)
 		if err != nil {
-			return []response.PublicRatingSummaryResponse{}, nil, message.ErrFailedToGetFormula
-		}
-		if formulaRating != nil {
-			formulaString = formulaRating.Formula
-		}
-
-		ratingSummary, err := calculateRatingValue(args.SourceUid, formulaString, ratingSubs)
-		if err != nil {
-			return []response.PublicRatingSummaryResponse{}, nil, message.ErrFailedToCalculate
+			if err != mongo.ErrNoDocuments {
+				return nil, nil, message.FailedMsg
+			}
 		}
 
-		data := response.PublicRatingSummaryResponse{
-			ID:            args.ID,
-			Name:          args.Name,
-			Description:   args.Description,
-			SourceUid:     args.SourceUid,
-			SourceType:    args.SourceType,
-			RatingType:    args.RatingType,
-			RatingTypeId:  args.RatingTypeId,
-			RatingSummary: ratingSummary,
+		if ratingTypeLikert == nil {
+			data, err := s.summaryRatingNumeric(args, input.SourceType)
+			if err != nil {
+				return nil, nil, message.ErrFailedSummaryRatingNumeric
+			}
+			results = append(results, *data)
+		} else {
+			data, err := s.summaryRatingLikert(args, *ratingTypeLikert)
+			if err != nil {
+				return nil, nil, message.ErrFailedSummaryRatingNumeric
+			}
+			results = append(results, *data)
 		}
-		results = append(results, data)
 	}
 	return results, pagination, message.SuccessMsg
 }
 
-func calculateRatingValue(sourceUID, formula string, ratingSubs []entity.RatingSubmisson) (response.RatingSubmissionSummary, error) {
-	result := response.RatingSubmissionSummary{}
+func (s *publicRatingServiceImpl) summaryRatingLikert(rating entity.RatingsCol, ratingLikert entity.RatingTypesLikertCol) (*response.PublicRatingSummaryResponse, error) {
+	likertSummary := response.RatingSummaryLikert{}
+	var myMap map[string]string
+	datas, _ := json.Marshal(ratingLikert)
+	json.Unmarshal(datas, &myMap)
+
+	likertSummary.SourceUID = rating.SourceUid
+	for i := 1; i <= ratingLikert.NumStatements; i++ {
+		var statement string
+		if i < 10 {
+			statement = fmt.Sprint("statement_0", i)
+		} else {
+			statement = fmt.Sprint("statement_", i)
+		}
+		data := myMap[statement]
+		if data != "" {
+			totalCount, err := s.publicRatingRepo.CountRatingSubsByRatingIdAndValue(rating.ID.Hex(), strconv.Itoa(i))
+			if err != nil {
+				return nil, err
+			}
+			likertObjCount := make(map[string]interface{})
+			likertObjCount["value"] = data
+			likertObjCount["total_reviewer"] = totalCount
+			likertSummary.ValueList = append(likertSummary.ValueList, likertObjCount)
+		} else {
+			return nil, errors.New("invalid statement value")
+		}
+	}
+
+	result := response.PublicRatingSummaryResponse{
+		ID:            rating.ID,
+		Name:          rating.Name,
+		Description:   rating.Description,
+		SourceUid:     rating.SourceUid,
+		SourceType:    rating.SourceType,
+		RatingType:    rating.RatingType,
+		RatingTypeId:  rating.RatingTypeId,
+		RatingSummary: likertSummary,
+	}
+	return &result, nil
+}
+
+func (s *publicRatingServiceImpl) summaryRatingNumeric(rating entity.RatingsCol, sourceType string) (*response.PublicRatingSummaryResponse, error) {
+	ratingSubs, err := s.publicRatingRepo.GetRatingSubsByRatingId(rating.ID.Hex())
+	if err != nil {
+		return nil, err
+	}
+
+	formulaRating, err := s.publicRatingRepo.GetRatingFormulaByRatingTypeIdAndSourceType(rating.RatingTypeId, sourceType)
+	if err != nil {
+		return nil, err
+	}
+	if formulaRating.Formula != "" {
+		ratingSummary, err := calculateRatingValue(rating.SourceUid, formulaRating.Formula, ratingSubs)
+		if err != nil {
+			return nil, err
+		}
+
+		data := response.PublicRatingSummaryResponse{
+			ID:            rating.ID,
+			Name:          rating.Name,
+			Description:   rating.Description,
+			SourceUid:     rating.SourceUid,
+			SourceType:    rating.SourceType,
+			RatingType:    rating.RatingType,
+			RatingTypeId:  rating.RatingTypeId,
+			RatingSummary: ratingSummary,
+		}
+		return &data, nil
+	} else {
+		return nil, errors.New("formula string is empty")
+	}
+}
+
+func calculateRatingValue(sourceUID, formula string, ratingSubs []entity.RatingSubmisson) (response.RatingSummaryNumeric, error) {
+	result := response.RatingSummaryNumeric{}
 	totalRatingPoint := 0
 	totalUserCount := len(ratingSubs)
 
@@ -223,7 +291,6 @@ func calculateRatingValue(sourceUID, formula string, ratingSubs []entity.RatingS
 		if err != nil {
 			return result, err
 		}
-
 		parameters := make(map[string]interface{}, 8)
 		parameters["total_rating_point"] = totalRatingPoint
 		parameters["total_user_count"] = totalUserCount
@@ -238,6 +305,7 @@ func calculateRatingValue(sourceUID, formula string, ratingSubs []entity.RatingS
 		result.TotalValue = totalRatingPoint
 	}
 	result.SourceUID = sourceUID
+	result.TotalReviewer = totalUserCount
 	return result, nil
 }
 

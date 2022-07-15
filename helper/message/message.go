@@ -78,6 +78,7 @@ var ErrRatingSubmissionNotFound = Message{Code: ValidationFailCode, Message: "Ra
 var ErrCanNotUpdateSourceTypeOrSoureUid = Message{Code: ValidationFailCode, Message: "Can not update source uid or source type if rating has rating submission"}
 var ErrFailedToCalculate = Message{Code: ValidationFailCode, Message: "Failed to calculate rating value"}
 var ErrFailedToGetFormula = Message{Code: ValidationFailCode, Message: "Failed to get formula rating"}
+var ErrFailedSummaryRatingNumeric = Message{Code: ValidationFailCode, Message: "Failed to summary rating numeric"}
 
 // Code 39000 - 39999 Server error
 var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}
