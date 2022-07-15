@@ -28,6 +28,7 @@ type PublicRatingRepository interface {
 	UpdateCounterRatingSubmission(id primitive.ObjectID, currentCounter int) error
 	GetPublicRatingsByParams(limit, page, dir int, sort string, filter request.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error)
 	GetRatingSubsByRatingId(ratingId string) ([]entity.RatingSubmisson, error)
+	CountRatingSubsByRatingIdAndValue(ratingId, value string) (int64, error)
 	GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error)
 	CreatePublicRatingSubmission(input []request.SaveRatingSubmission) ([]entity.RatingSubmisson, error)
 	GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId, sourceType string) (*entity.RatingFormulaCol, error)
@@ -254,7 +255,6 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 
 func (r *publicRatingRepo) GetRatingSubsByRatingId(ratingId string) ([]entity.RatingSubmisson, error) {
 	var results []entity.RatingSubmisson
-
 	cursor, err := r.db.Collection("ratingSubCol").Find(context.Background(), bson.M{"rating_id": ratingId})
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -268,6 +268,22 @@ func (r *publicRatingRepo) GetRatingSubsByRatingId(ratingId string) ([]entity.Ra
 		}
 	}
 	return results, nil
+}
+
+func (r *publicRatingRepo) CountRatingSubsByRatingIdAndValue(ratingId, value string) (int64, error) {
+	bsonRatingId := bson.D{{Key: "rating_id", Value: ratingId}}
+	bsonValue := bson.D{{Key: "value", Value: value}}
+	bsonFilter := bson.D{{Key: "$and",
+		Value: bson.A{
+			bsonRatingId,
+			bsonValue,
+		}},
+	}
+	counter, err := r.db.Collection("ratingSubCol").CountDocuments(context.Background(), bsonFilter, &options.CountOptions{})
+	if err != nil {
+		return 0, err
+	}
+	return counter, nil
 }
 
 func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error) {

@@ -7,19 +7,25 @@ import (
 )
 
 type PublicRatingSummaryResponse struct {
-	ID            primitive.ObjectID      `json:"id"`
-	Name          string                  `json:"name,omitempty"`
-	Description   *string                 `json:"description,omitempty"`
-	SourceUid     string                  `json:"source_uid,omitempty"`
-	SourceType    string                  `json:"source_type,omitempty"`
-	RatingType    string                  `json:"rating_type,omitempty"`
-	RatingTypeId  string                  `json:"rating_type_id,omitempty"`
-	RatingSummary RatingSubmissionSummary `json:"rating_summary,omitempty"`
+	ID            primitive.ObjectID `json:"id"`
+	Name          string             `json:"name,omitempty"`
+	Description   *string            `json:"description,omitempty"`
+	SourceUid     string             `json:"source_uid,omitempty"`
+	SourceType    string             `json:"source_type,omitempty"`
+	RatingType    string             `json:"rating_type,omitempty"`
+	RatingTypeId  string             `json:"rating_type_id,omitempty"`
+	RatingSummary interface{}        `json:"rating_summary,omitempty"`
 }
 
-type RatingSubmissionSummary struct {
-	SourceUID  string `json:"source_uid" bson:"source_uid"`
-	TotalValue int    `json:"total_value" bson:"total_value"`
+type RatingSummaryNumeric struct {
+	SourceUID     string `json:"source_uid"`
+	TotalValue    int    `json:"total_value"`
+	TotalReviewer int    `json:"total_reviewer"`
+}
+
+type RatingSummaryLikert struct {
+	SourceUID string        `json:"source_uid"`
+	ValueList []interface{} `json:"value_list"`
 }
 
 type PublicRatingSubmissionResponse struct {

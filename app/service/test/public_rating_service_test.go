@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var publicRatingRepository = &repository_mock.PublicRatingRepositoryMock{Mock: mock.Mock{}}
@@ -232,12 +233,12 @@ func TestCreateRatingSubHelpfulUpdateCounterFailed(t *testing.T) {
 }
 
 func TestGetRatingSummaryBySourceType(t *testing.T) {
-	idDummy1, _ := primitive.ObjectIDFromHex(idDummy1)
-	idDummy2, _ := primitive.ObjectIDFromHex(idDummy2)
+	idObj, _ := primitive.ObjectIDFromHex(idDummy1)
+	ratingTypeObj, _ := primitive.ObjectIDFromHex(ratingid)
 
 	ratingDatas := []entity.RatingsCol{
 		{
-			ID:           idDummy1,
+			ID:           idObj,
 			Name:         "Rating 1 Doctor A",
 			Description:  &description,
 			SourceUid:    "3310",
@@ -245,36 +246,44 @@ func TestGetRatingSummaryBySourceType(t *testing.T) {
 			RatingType:   ratingType,
 			RatingTypeId: ratingid,
 		},
+	}
+	ratingSubDatas := []entity.RatingSubmisson{
 		{
-			ID:           idDummy2,
-			Name:         "Rating 1 Doctor B",
-			Description:  &description,
-			SourceUid:    "3311",
-			SourceType:   requestSummary.SourceType,
-			RatingType:   ratingType,
-			RatingTypeId: ratingid,
+			ID:            idObj,
+			RatingID:      idDummy1,
+			UserID:        &userId,
+			UserIDLegacy:  &userId,
+			Comment:       &comment,
+			Value:         "90",
+			IPAddress:     ipaddress,
+			UserAgent:     useragent,
+			SourceTransID: "",
+			LikeCounter:   5,
 		},
 	}
-
-	ratingSubDatas := []entity.RatingSubmisson{}
-	ratingFormula := entity.RatingFormulaCol{}
+	ratingFormula := entity.RatingFormulaCol{
+		ID:           idObj,
+		SourceType:   "doctor",
+		Formula:      "(9000 + total_rating_point) / (100 + total_user_count)",
+		RatingTypeId: ratingid,
+		RatingType:   ratingType,
+	}
 	paginationResult := base.Pagination{
-		Records:      2,
+		Records:      1,
 		Limit:        10,
 		Page:         1,
 		TotalRecords: 1,
 	}
 	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
-	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idDummy1.Hex()).Return(ratingSubDatas, nil).Once()
-	publicRatingRepository.Mock.On("GetRatingFormulaByRatingTypeIdAndSourceType", ratingid, requestSummary.SourceType).Return(&ratingFormula, nil).Once()
-	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idDummy2.Hex()).Return(ratingSubDatas, nil).Once()
+	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", ratingTypeObj).Return(nil, mongo.ErrNoDocuments).Once()
+	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idObj.Hex()).Return(ratingSubDatas, nil).Once()
 	publicRatingRepository.Mock.On("GetRatingFormulaByRatingTypeIdAndSourceType", ratingid, requestSummary.SourceType).Return(&ratingFormula, nil).Once()
 
 	result, pagination, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
 	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
 	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
-	assert.Equal(t, 2, len(result), "Count of list kd must be 2")
-	assert.Equal(t, int64(2), pagination.Records, "Total record must be 2")
+	assert.Equal(t, 1, len(result), "Count of list kd must be 1")
+	assert.Equal(t, int64(1), pagination.Records, "Total record must be 1")
 }
 
 func TestGetRatingSummaryBySourceTypeErrEmptyRating(t *testing.T) {
@@ -318,6 +327,7 @@ func TestGetRatingSummaryBySourceTypeFailedGetRating(t *testing.T) {
 
 func TestGetRatingSummaryBySourceTypeErrGetRatingSubmission(t *testing.T) {
 	idDummy1, _ := primitive.ObjectIDFromHex(failedId)
+	ratingTypeObj, _ := primitive.ObjectIDFromHex(ratingid)
 	ratingDatas := []entity.RatingsCol{
 		{
 			ID:           idDummy1,
@@ -335,21 +345,23 @@ func TestGetRatingSummaryBySourceTypeErrGetRatingSubmission(t *testing.T) {
 		Page:         1,
 		TotalRecords: 1,
 	}
-	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, errors.New("error")).Once()
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
+	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", ratingTypeObj).Return(nil, mongo.ErrNoDocuments).Once()
 	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", failedId).Return(nil, errors.New("error")).Once()
 
 	_, _, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
-	assert.Equal(t, message.FailedMsg.Code, msg.Code, "Code must be 412002")
-	assert.Equal(t, message.FailedMsg.Message, msg.Message, "Message must be failed")
+	assert.Equal(t, message.ErrFailedSummaryRatingNumeric.Code, msg.Code, "Code must be 412002")
+	assert.Equal(t, message.ErrFailedSummaryRatingNumeric.Message, msg.Message, "Message must be Failed to summary rating numeric")
 }
 
 func TestGetRatingSummaryBySourceTypeErrFailedCalculate(t *testing.T) {
 	failID := "62c3e57b457ed515928c3690"
-	ratingId, _ := primitive.ObjectIDFromHex(idDummy1)
-	ratingSub, _ := primitive.ObjectIDFromHex(idDummy2)
+	idObj, _ := primitive.ObjectIDFromHex(idDummy1)
+	ratingTypeObj, _ := primitive.ObjectIDFromHex(failID)
+
 	ratingDatas := []entity.RatingsCol{
 		{
-			ID:           ratingId,
+			ID:           idObj,
 			Name:         "Rating 1 Doctor A",
 			Description:  &description,
 			SourceUid:    "3310",
@@ -360,7 +372,7 @@ func TestGetRatingSummaryBySourceTypeErrFailedCalculate(t *testing.T) {
 	}
 	ratingSubDatas := []entity.RatingSubmisson{
 		{
-			ID:       ratingSub,
+			ID:       idObj,
 			RatingID: idDummy1,
 			Value:    "k",
 		},
@@ -372,12 +384,13 @@ func TestGetRatingSummaryBySourceTypeErrFailedCalculate(t *testing.T) {
 		TotalRecords: 1,
 	}
 	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, errors.New("error")).Once()
-	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idDummy1).Return(ratingSubDatas, nil).Once()
+	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", ratingTypeObj).Return(nil, mongo.ErrNoDocuments).Once()
+	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idObj.Hex()).Return(ratingSubDatas, nil).Once()
 	publicRatingRepository.Mock.On("GetRatingFormulaByRatingTypeIdAndSourceType", failID, requestSummary.SourceType).Return(nil, nil).Once()
 
 	_, _, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
-	assert.Equal(t, message.ErrFailedToGetFormula.Code, msg.Code, "Code must be 412002")
-	assert.Equal(t, message.ErrFailedToGetFormula.Message, msg.Message, "Message must be Failed to get formula rating")
+	assert.Equal(t, message.ErrFailedSummaryRatingNumeric.Code, msg.Code, "Code must be 412002")
+	assert.Equal(t, message.ErrFailedSummaryRatingNumeric.Message, msg.Message, "Message must be Failed to summary rating numeric")
 }
 
 func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
