@@ -260,6 +260,7 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 			{"rating_id", args.RatingID},
 			{"user_id", args.UserID},
 			{"user_id_legacy", args.UserIDLegacy},
+			{"display_name", args.DisplayName},
 			{"comment", args.Comment},
 			{"value", args.Value},
 			{"ip_address", args.IPAddress},

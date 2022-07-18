@@ -48,6 +48,9 @@ definitions:
       comment:
         type: string
         x-go-name: Comment
+      display_name:
+        type: string
+        x-go-name: DisplayName
       ip_address:
         type: string
         x-go-name: IPAddress

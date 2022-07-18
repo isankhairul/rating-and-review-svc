@@ -339,6 +339,7 @@ func (r *publicRatingRepo) CreatePublicRatingSubmission(input []request.SaveRati
 			{Key: "rating_id", Value: args.RatingID},
 			{Key: "user_id", Value: args.UserID},
 			{Key: "user_id_legacy", Value: args.UserIDLegacy},
+			{Key: "display_name", Value: args.DisplayName},
 			{Key: "comment", Value: args.Comment},
 			{Key: "value", Value: args.Value},
 			{Key: "ip_address", Value: args.IPAddress},
