@@ -111,3 +111,10 @@ func (repository *PublicRatingRepositoryMock) GetRatingFormulaByRatingTypeIdAndS
 
 	return arguments.Get(0).(*entity.RatingFormulaCol), nil
 }
+
+func (repository *PublicRatingRepositoryMock) UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) error {
+	if input.DisplayName != "Error" {
+		return errors.New("can not be updated")
+	}
+	return nil
+}

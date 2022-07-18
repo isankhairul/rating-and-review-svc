@@ -665,6 +665,13 @@ definitions:
     type: object
     x-go-name: responseHttp
     x-go-package: go-klikdokter/app/model/base
+  UpdateRatingSubDisplayNameRequest:
+    properties:
+      display_name:
+        type: string
+        x-go-name: DisplayName
+    type: object
+    x-go-package: go-klikdokter/app/model/request
   UpdateRatingSubmissionRequest:
     properties:
       comment:
@@ -738,6 +745,32 @@ paths:
         name: dir
         type: string
         x-go-name: Dir
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - PublicRating
+  /api/v1/public/rating-submission/user-id-legacy/{user_id_legacy}:
+    put:
+      description: Update Rating Submission Display Name By Id Legacy
+      operationId: ReqUpdateRatingSubDisplayNameBody
+      parameters:
+      - in: path
+        name: user_id_legacy
+        required: true
+        type: string
+        x-go-name: UserIdLegacy
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/UpdateRatingSubDisplayNameRequest'
+        x-go-name: Body
       responses:
         "200":
           description: SuccessResponse

@@ -2,6 +2,7 @@ package response
 
 import (
 	"go-klikdokter/app/model/entity"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -32,9 +33,11 @@ type PublicRatingSubmissionResponse struct {
 	ID            primitive.ObjectID `json:"id"`
 	UserID        *string            `json:"user_id,omitempty"`
 	UserIDLegacy  *string            `json:"user_id_legacy,omitempty"`
+	Avatar        string             `json:"avatar,omitempty"`
 	Comment       *string            `json:"comment,omitempty"`
 	SourceTransID string             `json:"source_trans_id,omitempty"`
 	LikeCounter   int                `json:"like_counter"`
+	CreatedAt     time.Time          `json:"created_at"`
 }
 
 type PublicCreateRatingSubmissionResponse struct {
@@ -51,36 +54,39 @@ type RatingBySourceTypeAndActorResponse struct {
 }
 
 type PublicRatingNumericResponse struct {
-	Type              string             `json:"type"`
-	RatingId          primitive.ObjectID `json:"rating_id"`
-	RatingType        string             `json:"rating_type"`
-	RatingDescription string             `json:"rating_description,omitempty"`
-	RatingMinScore    int                `json:"rating_min_score"`
-	RatingMaxScore    int                `json:"rating_max_score"`
+	Type              string `json:"type"`
+	RatingId          string `json:"rating_id"`
+	RatingTypeId      string `json:"rating_type_id"`
+	RatingType        string `json:"rating_type"`
+	RatingDescription string `json:"rating_description,omitempty"`
+	RatingMinScore    int    `json:"rating_min_score"`
+	RatingMaxScore    int    `json:"rating_max_score"`
 }
 
 type PublicRatingLikertResponse struct {
-	Type                string             `json:"type"`
-	RatingId            primitive.ObjectID `json:"rating_id"`
-	RatingType          string             `json:"rating_type"`
-	RatingDescription   string             `json:"rating_description"`
-	RatingNumStatements int                `json:"rating_num_statements"`
-	RatingStatement01   *string            `json:"rating_statement_01,omitempty"`
-	RatingStatement02   *string            `json:"rating_statement_02,omitempty"`
-	RatingStatement03   *string            `json:"rating_statement_03,omitempty"`
-	RatingStatement04   *string            `json:"rating_statement_04,omitempty"`
-	RatingStatement05   *string            `json:"rating_statement_05,omitempty"`
-	RatingStatement06   *string            `json:"rating_statement_06,omitempty"`
-	RatingStatement07   *string            `json:"rating_statement_07,omitempty"`
-	RatingStatement08   *string            `json:"rating_statement_08,omitempty"`
-	RatingStatement09   *string            `json:"rating_statement_09,omitempty"`
-	RatingStatement10   *string            `json:"rating_statement_10,omitempty"`
+	Type                string  `json:"type"`
+	RatingId            string  `json:"rating_id"`
+	RatingTypeId        string  `json:"rating_type_id"`
+	RatingType          string  `json:"rating_type"`
+	RatingDescription   string  `json:"rating_description"`
+	RatingNumStatements int     `json:"rating_num_statements"`
+	RatingStatement01   *string `json:"rating_statement_01,omitempty"`
+	RatingStatement02   *string `json:"rating_statement_02,omitempty"`
+	RatingStatement03   *string `json:"rating_statement_03,omitempty"`
+	RatingStatement04   *string `json:"rating_statement_04,omitempty"`
+	RatingStatement05   *string `json:"rating_statement_05,omitempty"`
+	RatingStatement06   *string `json:"rating_statement_06,omitempty"`
+	RatingStatement07   *string `json:"rating_statement_07,omitempty"`
+	RatingStatement08   *string `json:"rating_statement_08,omitempty"`
+	RatingStatement09   *string `json:"rating_statement_09,omitempty"`
+	RatingStatement10   *string `json:"rating_statement_10,omitempty"`
 }
 
-func MapRatingNumericToRatingNumericResp(data entity.RatingTypesNumCol) *PublicRatingNumericResponse {
+func MapRatingNumericToRatingNumericResp(data entity.RatingTypesNumCol, ratingId string) *PublicRatingNumericResponse {
 	return &PublicRatingNumericResponse{
 		Type:              "numeric",
-		RatingId:          data.ID,
+		RatingId:          ratingId,
+		RatingTypeId:      data.ID.Hex(),
 		RatingType:        data.Type,
 		RatingDescription: *data.Description,
 		RatingMinScore:    *data.MinScore,
@@ -88,10 +94,11 @@ func MapRatingNumericToRatingNumericResp(data entity.RatingTypesNumCol) *PublicR
 	}
 }
 
-func MapRatingLikertToRatingNumericResp(data entity.RatingTypesLikertCol) *PublicRatingLikertResponse {
+func MapRatingLikertToRatingNumericResp(data entity.RatingTypesLikertCol, ratingId string) *PublicRatingLikertResponse {
 	result := PublicRatingLikertResponse{}
 	result.Type = "likert"
-	result.RatingId = data.ID
+	result.RatingId = ratingId
+	result.RatingTypeId = data.ID.Hex()
 	result.RatingType = data.Type
 	result.RatingDescription = *data.Description
 	result.RatingNumStatements = data.NumStatements

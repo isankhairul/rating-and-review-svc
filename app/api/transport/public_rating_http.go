@@ -60,6 +60,13 @@ func PublicRatingHttpHandler(s service.PublicRatingService, logger log.Logger) h
 		options...,
 	))
 
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "public/rating-submission/user-id-legacy/{user_id_legacy}").Handler(httptransport.NewServer(
+		ep.UpdateRatingSubDisplayNameByIdLegacy,
+		decodeUpdatePublicRatingSubDisplayName,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
 	return pr
 }
 
@@ -120,5 +127,14 @@ func decodeCreatePublicRatingSubmission(ctx context.Context, r *http.Request) (r
 	if err != nil {
 		return nil, err
 	}
+	return req, nil
+}
+
+func decodeUpdatePublicRatingSubDisplayName(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.UpdateRatingSubDisplayNameRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	req.UserIdLegacy = mux.Vars(r)["user_id_legacy"]
 	return req, nil
 }

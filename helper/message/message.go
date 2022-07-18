@@ -79,6 +79,7 @@ var ErrCanNotUpdateSourceTypeOrSoureUid = Message{Code: ValidationFailCode, Mess
 var ErrFailedToCalculate = Message{Code: ValidationFailCode, Message: "Failed to calculate rating value"}
 var ErrFailedToGetFormula = Message{Code: ValidationFailCode, Message: "Failed to get formula rating"}
 var ErrFailedSummaryRatingNumeric = Message{Code: ValidationFailCode, Message: "Failed to summary rating numeric"}
+var ErrDisplayNameRequired = Message{Code: ValidationFailCode, Message: "Display Name is required"}
 
 // Code 39000 - 39999 Server error
 var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}
