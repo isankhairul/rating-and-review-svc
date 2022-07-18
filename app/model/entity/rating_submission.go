@@ -11,6 +11,7 @@ type RatingSubmisson struct {
 	RatingID      string             `json:"rating_id" bson:"rating_id,omitempty"`
 	UserID        *string            `json:"user_id" bson:"user_id,omitempty"`
 	UserIDLegacy  *string            `json:"user_id_legacy" bson:"user_id_legacy,omitempty"`
+	DisplayName   *string            `json:"display_name" bson:"display_name,omitempty"`
 	Comment       *string            `json:"comment" bson:"comment,omitempty"`
 	Value         string             `json:"value" bson:"value,omitempty"`
 	IPAddress     string             `json:"ip_address" bson:"ip_address,omitempty"`

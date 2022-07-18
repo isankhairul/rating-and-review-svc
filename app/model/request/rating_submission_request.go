@@ -64,6 +64,7 @@ type CreateRatingSubmissionRequest struct {
 	Ratings       []RatingByType `json:"ratings" bson:"ratings"`
 	UserID        *string        `json:"user_id" bson:"user_id"`
 	UserIDLegacy  *string        `json:"user_id_legacy" bson:"user_id_legacy"`
+	DisplayName   *string        `json:"display_name" bson:"display_name"`
 	Comment       string         `json:"comment" bson:"comment"`
 	IPAddress     string         `json:"ip_address" bson:"ip_address"`
 	UserAgent     string         `json:"user_agent" bson:"user_agent"`
@@ -75,6 +76,7 @@ type SaveRatingSubmission struct {
 	RatingID      string  `json:"rating_id" bson:"rating_id"`
 	UserID        *string `json:"user_id" bson:"user_id"`
 	UserIDLegacy  *string `json:"user_id_legacy" bson:"user_id_legacy"`
+	DisplayName   *string `json:"display_name" bson:"display_name"`
 	Comment       string  `json:"comment" bson:"comment"`
 	Value         *string `json:"value" bson:"value"`
 	IPAddress     string  `json:"ip_address" bson:"ip_address"`
