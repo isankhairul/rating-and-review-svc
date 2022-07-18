@@ -27,6 +27,7 @@ type PublicRatingService interface {
 	GetListRatingSummaryBySourceType(input request.GetPublicListRatingSummaryRequest) ([]response.PublicRatingSummaryResponse, *base.Pagination, message.Message)
 	GetListRatingSubmissionBySourceTypeAndUID(input request.GetPublicListRatingSubmissionRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message)
 	CreatePublicRatingSubmission(input request.CreateRatingSubmissionRequest) ([]response.PublicCreateRatingSubmissionResponse, message.Message)
+	UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) message.Message
 }
 
 type publicRatingServiceImpl struct {
@@ -76,7 +77,7 @@ func (s *publicRatingServiceImpl) GetRatingBySourceTypeAndActor(input request.Ge
 			return nil, message.FailedMsg
 		}
 		if likert != nil {
-			likertResp := response.MapRatingLikertToRatingNumericResp(*likert)
+			likertResp := response.MapRatingLikertToRatingNumericResp(*likert, v.ID.Hex())
 			result.Ratings = append(result.Ratings, likertResp)
 		} else {
 			numeric, err := s.publicRatingRepo.GetRatingTypeNumById(ratingTypeId)
@@ -86,7 +87,7 @@ func (s *publicRatingServiceImpl) GetRatingBySourceTypeAndActor(input request.Ge
 			if numeric == nil {
 				return nil, message.ErrRatingTypeNotExist
 			}
-			numericResp := response.MapRatingNumericToRatingNumericResp(*numeric)
+			numericResp := response.MapRatingNumericToRatingNumericResp(*numeric, v.ID.Hex())
 			result.Ratings = append(result.Ratings, numericResp)
 		}
 	}
@@ -363,9 +364,11 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 			ID:            v.ID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
+			Avatar:        "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg",
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,
 			LikeCounter:   v.LikeCounter,
+			CreatedAt:     v.CreatedAt,
 		})
 	}
 	return results, pagination, message.SuccessMsg
@@ -546,4 +549,24 @@ func (s *publicRatingServiceImpl) CreatePublicRatingSubmission(input request.Cre
 		result = append(result, data)
 	}
 	return result, message.SuccessMsg
+}
+
+// swagger:route PUT /api/v1/public/rating-submission/user-id-legacy/{user_id_legacy} PublicRating ReqUpdateRatingSubDisplayNameBody
+// Update Rating Submission Display Name By Id Legacy
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *publicRatingServiceImpl) UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) message.Message {
+	if input.DisplayName == "" {
+		return message.ErrDisplayNameRequired
+	}
+
+	err := s.publicRatingRepo.UpdateRatingSubDisplayNameByIdLegacy(input)
+	if err != nil {
+		return message.ErrSaveData
+	}
+
+	return message.SuccessMsg
 }

@@ -16,6 +16,7 @@ type PublicRatingEndpoint struct {
 	GetListRatingSummaryBySourceType          endpoint.Endpoint
 	GetListRatingSubmissionBySourceTypeAndUID endpoint.Endpoint
 	CreateRatingSubmission                    endpoint.Endpoint
+	UpdateRatingSubDisplayNameByIdLegacy      endpoint.Endpoint
 }
 
 func MakePublicRatingEndpoints(s service.PublicRatingService) PublicRatingEndpoint {
@@ -25,6 +26,7 @@ func MakePublicRatingEndpoints(s service.PublicRatingService) PublicRatingEndpoi
 		GetListRatingSummaryBySourceType:          makeGetListRatingSummaryBySourceType(s),
 		GetListRatingSubmissionBySourceTypeAndUID: makeGetListRatingSubmissionBySourceTypeAndUID(s),
 		CreateRatingSubmission:                    makeCreatePublicRatingSubmission(s),
+		UpdateRatingSubDisplayNameByIdLegacy:      makeUpdatePublicRatingSubDisplayNameByIdLegacy(s),
 	}
 }
 
@@ -80,5 +82,16 @@ func makeCreatePublicRatingSubmission(s service.PublicRatingService) endpoint.En
 			return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
 		}
 		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
+	}
+}
+
+func makeUpdatePublicRatingSubDisplayNameByIdLegacy(s service.PublicRatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.UpdateRatingSubDisplayNameRequest)
+		msg := s.UpdateRatingSubDisplayNameByIdLegacy(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 	}
 }

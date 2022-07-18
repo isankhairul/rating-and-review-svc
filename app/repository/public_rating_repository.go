@@ -32,6 +32,7 @@ type PublicRatingRepository interface {
 	GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error)
 	CreatePublicRatingSubmission(input []request.SaveRatingSubmission) ([]entity.RatingSubmisson, error)
 	GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId, sourceType string) (*entity.RatingFormulaCol, error)
+	UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) error
 }
 
 func NewPublicRatingRepository(db *mongo.Database) PublicRatingRepository {
@@ -408,4 +409,16 @@ func (r *publicRatingRepo) GetRatingFormulaByRatingTypeIdAndSourceType(ratingTyp
 		return nil, err
 	}
 	return &ratingFormula, nil
+}
+
+func (r *publicRatingRepo) UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) error {
+	filter := bson.D{{Key: "user_id_legacy", Value: input.UserIdLegacy}}
+	update := bson.M{"$set": bson.M{"display_name": input.DisplayName}}
+
+	_, err := r.db.Collection("ratingSubCol").UpdateMany(context.Background(), filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
