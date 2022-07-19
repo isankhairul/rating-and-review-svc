@@ -15,6 +15,7 @@ type PublicRatingEndpoint struct {
 	CreateRatingSubHelpful                    endpoint.Endpoint
 	GetListRatingSummaryBySourceType          endpoint.Endpoint
 	GetListRatingSubmissionBySourceTypeAndUID endpoint.Endpoint
+	GetListRatingSubmissionWithUserIdLegacy   endpoint.Endpoint
 	CreateRatingSubmission                    endpoint.Endpoint
 	UpdateRatingSubDisplayNameByIdLegacy      endpoint.Endpoint
 }
@@ -25,6 +26,7 @@ func MakePublicRatingEndpoints(s service.PublicRatingService) PublicRatingEndpoi
 		CreateRatingSubHelpful:                    makeCreateRatingSubHelpful(s),
 		GetListRatingSummaryBySourceType:          makeGetListRatingSummaryBySourceType(s),
 		GetListRatingSubmissionBySourceTypeAndUID: makeGetListRatingSubmissionBySourceTypeAndUID(s),
+		GetListRatingSubmissionWithUserIdLegacy:   makeGetListRatingSubmissionWithUserIdLegacy(s),
 		CreateRatingSubmission:                    makeCreatePublicRatingSubmission(s),
 		UpdateRatingSubDisplayNameByIdLegacy:      makeUpdatePublicRatingSubDisplayNameByIdLegacy(s),
 	}
@@ -67,6 +69,17 @@ func makeGetListRatingSubmissionBySourceTypeAndUID(s service.PublicRatingService
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetPublicListRatingSubmissionRequest)
 		result, pagination, msg := s.GetListRatingSubmissionBySourceTypeAndUID(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, result, pagination), nil
+	}
+}
+
+func makeGetListRatingSubmissionWithUserIdLegacy(s service.PublicRatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.GetPublicListRatingSubmissionByUserIdRequest)
+		result, pagination, msg := s.GetListRatingSubmissionWithUserIdLegacy(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil
 		}

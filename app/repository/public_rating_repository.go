@@ -25,7 +25,9 @@ type PublicRatingRepository interface {
 	GetRatingTypeLikertById(id primitive.ObjectID) (*entity.RatingTypesLikertCol, error)
 	GetRatingTypeNumById(id primitive.ObjectID) (*entity.RatingTypesNumCol, error)
 	CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) (*entity.RatingSubHelpfulCol, error)
-	UpdateCounterRatingSubmission(id primitive.ObjectID, currentCounter int) error
+	UpdateStatusRatingSubHelpful(id primitive.ObjectID, currentStatus bool) error
+	GetRatingSubHelpfulByRatingSubAndActor(ratingSubId, userIdLegacy string) (*entity.RatingSubHelpfulCol, error)
+	UpdateCounterRatingSubmission(id primitive.ObjectID, currentCounter int64) error
 	GetPublicRatingsByParams(limit, page, dir int, sort string, filter request.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error)
 	GetRatingSubsByRatingId(ratingId string) ([]entity.RatingSubmisson, error)
 	CountRatingSubsByRatingIdAndValue(ratingId, value string) (int64, error)
@@ -112,6 +114,7 @@ func (r *publicRatingRepo) CreateRatingSubHelpful(input request.CreateRatingSubH
 			"user_id_legacy":       input.UserIDLegacy,
 			"ip_address":           input.IPAddress,
 			"user_agent":           input.UserAgent,
+			"status":               true,
 			"created_at":           time.Now().In(util.Loc),
 			"updated_at":           time.Now().In(util.Loc),
 		})
@@ -132,21 +135,53 @@ func (r *publicRatingRepo) CreateRatingSubHelpful(input request.CreateRatingSubH
 	return &ratingSubHelpful, nil
 }
 
-func (r *publicRatingRepo) UpdateCounterRatingSubmission(id primitive.ObjectID, currentCounter int) error {
+func (r *publicRatingRepo) UpdateStatusRatingSubHelpful(id primitive.ObjectID, currentStatus bool) error {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "status", Value: !currentStatus}}}}
+	_, err := r.db.Collection(entity.RatingSubHelpfulCol{}.CollectionName()).UpdateOne(ctx, bson.M{"_id": id}, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *publicRatingRepo) GetRatingSubHelpfulByRatingSubAndActor(ratingSubId, userIdLegacy string) (*entity.RatingSubHelpfulCol, error) {
+	var ratingSubHelpful entity.RatingSubHelpfulCol
+	bsonRatingSubId := bson.D{{Key: "rating_submission_id", Value: ratingSubId}}
+	bsonUserIdLegacy := bson.D{{Key: "user_id_legacy", Value: userIdLegacy}}
+
+	filter := bson.D{{Key: "$and",
+		Value: bson.A{
+			bsonRatingSubId,
+			bsonUserIdLegacy,
+		},
+	}}
+
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := r.db.Collection(entity.RatingSubHelpfulCol{}.CollectionName()).FindOne(ctx, filter).Decode(&ratingSubHelpful)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &ratingSubHelpful, nil
+}
+
+func (r *publicRatingRepo) UpdateCounterRatingSubmission(id primitive.ObjectID, currentCounter int64) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
 	timeUpdate := time.Now().In(util.Loc)
-	counter := int64(currentCounter) + 1
 
 	helpfulCounter, err := countRatingSubHelpful(r, id.Hex())
 	if err != nil {
 		return err
 	}
-	if counter != helpfulCounter {
-		return nil
+	if currentCounter != helpfulCounter {
+		currentCounter = helpfulCounter
 	}
 
 	ratingSubmiss := entity.RatingSubmisson{
-		LikeCounter: int(counter),
+		LikeCounter: int(currentCounter),
 		UpdatedAt:   timeUpdate,
 	}
 	filter := bson.D{{Key: "_id", Value: id}}
@@ -175,8 +210,14 @@ func (r *publicRatingRepo) UpdateCounterRatingSubmission(id primitive.ObjectID, 
 }
 
 func countRatingSubHelpful(r *publicRatingRepo, ratingSubId string) (int64, error) {
-	filterHelpful := bson.D{{Key: "rating_submission_id", Value: ratingSubId}}
-	counter, err := r.db.Collection("ratingSubHelpfulCol").CountDocuments(context.Background(), filterHelpful, &options.CountOptions{})
+	bsonRatingSubId := bson.D{{Key: "rating_submission_id", Value: ratingSubId}}
+	filter := bson.D{{Key: "$and",
+		Value: bson.A{
+			bsonRatingSubId,
+			bsonStatus,
+		},
+	}}
+	counter, err := r.db.Collection("ratingSubHelpfulCol").CountDocuments(context.Background(), filter, &options.CountOptions{})
 	if err != nil {
 		return 0, err
 	}

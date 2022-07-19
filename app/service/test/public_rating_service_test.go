@@ -121,6 +121,7 @@ func TestGetRatingBySourceTypeAndSourceUIDErrNoDataRating(t *testing.T) {
 func TestCreateRatingSubHelpfulSuccess(t *testing.T) {
 	objectId, _ := primitive.ObjectIDFromHex(ratingSubId)
 	objectRatingSubHelpfulId, _ := primitive.ObjectIDFromHex(ratingSubHelpId)
+	counter := int64(4)
 
 	input := request.CreateRatingSubHelpfulRequest{
 		RatingSubmissionID: ratingSubId,
@@ -153,8 +154,9 @@ func TestCreateRatingSubHelpfulSuccess(t *testing.T) {
 	}
 
 	ratingRepository.Mock.On("GetRatingSubmissionById", objectId).Return(ratingSubmission, nil).Once()
+	publicRatingRepository.Mock.On("GetRatingSubHelpfulByRatingSubAndActor", input.RatingSubmissionID, input.UserIDLegacy).Return(nil, nil).Once()
 	publicRatingRepository.Mock.On("CreateRatingSubHelpful", input).Return(ratingSubHelpful, nil).Once()
-	publicRatingRepository.Mock.On("UpdateCounterRatingSubmission", objectId, ratingSubmission.LikeCounter).Return(nil).Once()
+	publicRatingRepository.Mock.On("UpdateCounterRatingSubmission", objectId, counter).Return(nil).Once()
 
 	msg := publicRactingService.CreateRatingSubHelpful(input)
 	assert.Equal(t, message.SuccessMsg, msg)
@@ -225,6 +227,7 @@ func TestCreateRatingSubHelpfulUpdateCounterFailed(t *testing.T) {
 	}
 
 	ratingRepository.Mock.On("GetRatingSubmissionById", objectId).Return(ratingSubmission, nil).Once()
+	publicRatingRepository.Mock.On("GetRatingSubHelpfulByRatingSubAndActor", input.RatingSubmissionID, input.UserIDLegacy).Return(nil, nil).Once()
 	publicRatingRepository.Mock.On("CreateRatingSubHelpful", input).Return(ratingSubHelpful, nil).Once()
 	publicRatingRepository.Mock.On("UpdateCounterRatingSubmission", objectId, ratingSubmission.LikeCounter).Return(errors.New("error")).Once()
 

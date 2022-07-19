@@ -33,10 +33,12 @@ type PublicRatingSubmissionResponse struct {
 	ID            primitive.ObjectID `json:"id"`
 	UserID        *string            `json:"user_id,omitempty"`
 	UserIDLegacy  *string            `json:"user_id_legacy,omitempty"`
+	DisplayName   string             `json:"display_name,omitempty"`
 	Avatar        string             `json:"avatar,omitempty"`
 	Comment       *string            `json:"comment,omitempty"`
 	SourceTransID string             `json:"source_trans_id,omitempty"`
 	LikeCounter   int                `json:"like_counter"`
+	LikeByMe      bool               `json:"like_by_me"`
 	CreatedAt     time.Time          `json:"created_at"`
 }
 

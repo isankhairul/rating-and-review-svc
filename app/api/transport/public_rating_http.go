@@ -53,6 +53,13 @@ func PublicRatingHttpHandler(s service.PublicRatingService, logger log.Logger) h
 		options...,
 	))
 
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "public/rating-submission/{source_type}/{source_uid}/{user_id_legacy}").Handler(httptransport.NewServer(
+		ep.GetListRatingSubmissionWithUserIdLegacy,
+		decodeGetRatingSubmissionWithUserIdLegacy,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
 	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "public/rating-submissions/").Handler(httptransport.NewServer(
 		ep.CreateRatingSubmission,
 		decodeCreatePublicRatingSubmission,
@@ -111,6 +118,24 @@ func decodeGetRatingSubmissionBySourceTypeAndUID(ctx context.Context, r *http.Re
 	}
 	params.SourceType = mux.Vars(r)["source_type"]
 	params.SourceUID = mux.Vars(r)["source_uid"]
+	err = params.ValidateSourceType()
+	if err != nil {
+		return nil, err
+	}
+	return params, nil
+}
+
+func decodeGetRatingSubmissionWithUserIdLegacy(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var params request.GetPublicListRatingSubmissionByUserIdRequest
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+	if err = schema.NewDecoder().Decode(&params, r.Form); err != nil {
+		return nil, err
+	}
+	params.SourceType = mux.Vars(r)["source_type"]
+	params.SourceUID = mux.Vars(r)["source_uid"]
+	params.UserIdLegacy = mux.Vars(r)["user_id_legacy"]
 	err = params.ValidateSourceType()
 	if err != nil {
 		return nil, err

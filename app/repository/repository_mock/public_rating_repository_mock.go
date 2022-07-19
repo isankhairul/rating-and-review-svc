@@ -56,7 +56,21 @@ func (repository *PublicRatingRepositoryMock) CreateRatingSubHelpful(input reque
 	return &ratingSubHelpfulCol, nil
 }
 
-func (repository *PublicRatingRepositoryMock) UpdateCounterRatingSubmission(id primitive.ObjectID, currentCounter int) error {
+func (repository *PublicRatingRepositoryMock) UpdateStatusRatingSubHelpful(id primitive.ObjectID, currentStatus bool) error {
+	return nil
+}
+
+func (repository *PublicRatingRepositoryMock) GetRatingSubHelpfulByRatingSubAndActor(ratingSubId, userIdLegacy string) (*entity.RatingSubHelpfulCol, error) {
+	arguments := repository.Mock.Called(ratingSubId, userIdLegacy)
+	if arguments.Get(0) == nil {
+		return nil, nil
+	} else {
+		ratingSubHelp := arguments.Get(0).(entity.RatingSubHelpfulCol)
+		return &ratingSubHelp, nil
+	}
+}
+
+func (repository *PublicRatingRepositoryMock) UpdateCounterRatingSubmission(id primitive.ObjectID, currentCounter int64) error {
 	return nil
 }
 
