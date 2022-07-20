@@ -325,6 +325,9 @@ definitions:
       rating_submission_id:
         type: string
         x-go-name: RatingSubmissionID
+      status:
+        type: boolean
+        x-go-name: Status
       user_agent:
         type: string
         x-go-name: UserAgent
@@ -727,6 +730,58 @@ paths:
         required: true
         type: string
         x-go-name: SourceUID
+      - format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - in: query
+        name: sort
+        type: string
+        x-go-name: Sort
+      - in: query
+        name: dir
+        type: string
+        x-go-name: Dir
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - PublicRating
+  /api/v1/public/rating-submission/{source_type}/{source_uid}/{user_id_legacy}:
+    get:
+      description: Get Rating Submission with User Id Legacy
+      operationId: GetPublicListRatingSubmissionByUserIdRequest
+      parameters:
+      - description: SourceType
+        in: path
+        name: source_type
+        required: true
+        type: string
+        x-go-name: SourceType
+      - description: SourceUID
+        in: path
+        name: source_uid
+        required: true
+        type: string
+        x-go-name: SourceUID
+      - description: UserIdLegacy
+        in: path
+        name: user_id_legacy
+        required: true
+        type: string
+        x-go-name: UserIdLegacy
       - format: int64
         in: query
         name: limit

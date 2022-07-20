@@ -14,6 +14,7 @@ type RatingSubHelpfulCol struct {
 	UserIDLegacy       string             `json:"user_id_legacy" bson:"user_id_legacy,omitempty"`
 	IPAddress          string             `json:"ip_address" bson:"ip_address,omitempty"`
 	UserAgent          string             `json:"user_agent" bson:"user_agent,omitempty"`
+	Status             bool               `json:"status" bson:"status,omitempty"`
 	CreatedAt          time.Time          `json:"-" bson:"created_at,omitempty"`
 	UpdatedAt          time.Time          `json:"-" bson:"updated_at,omitempty"`
 }

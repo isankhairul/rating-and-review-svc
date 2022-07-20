@@ -26,6 +26,7 @@ type PublicRatingService interface {
 	CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) message.Message
 	GetListRatingSummaryBySourceType(input request.GetPublicListRatingSummaryRequest) ([]response.PublicRatingSummaryResponse, *base.Pagination, message.Message)
 	GetListRatingSubmissionBySourceTypeAndUID(input request.GetPublicListRatingSubmissionRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message)
+	GetListRatingSubmissionWithUserIdLegacy(input request.GetPublicListRatingSubmissionByUserIdRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message)
 	CreatePublicRatingSubmission(input request.CreateRatingSubmissionRequest) ([]response.PublicCreateRatingSubmissionResponse, message.Message)
 	UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) message.Message
 }
@@ -102,7 +103,8 @@ func (s *publicRatingServiceImpl) GetRatingBySourceTypeAndActor(input request.Ge
 //  401: SuccessResponse
 //  200: SuccessResponse
 func (s *publicRatingServiceImpl) CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) message.Message {
-	// check rating type exist
+	counter := 0
+	// check rating submission is exist
 	ratingSubmissionId, err := primitive.ObjectIDFromHex(input.RatingSubmissionID)
 	if err != nil {
 		return message.RatingSubmissionNotFound
@@ -116,19 +118,41 @@ func (s *publicRatingServiceImpl) CreateRatingSubHelpful(input request.CreateRat
 		return message.FailedMsg
 	}
 	if ratingSubmission == nil {
-		return message.ErrRatingTypeNotExist
+		return message.ErrRatingSubmissionNotFound
 	}
+	counter = ratingSubmission.LikeCounter
 
-	_, err2 := s.publicRatingRepo.CreateRatingSubHelpful(input)
-	if err2 != nil {
-		if mongo.IsDuplicateKeyError(err) {
-			return message.ErrDuplicateRatingName
-		}
+	// Check rating sub helpful exist or not
+	ratingSubHelpful, err := s.publicRatingRepo.GetRatingSubHelpfulByRatingSubAndActor(input.RatingSubmissionID, input.UserIDLegacy)
+	if err != nil {
 		return message.FailedMsg
 	}
+	if ratingSubHelpful == nil {
+		counter = counter + 1
+		// Create new one of rating sub helpful
+		_, errCr := s.publicRatingRepo.CreateRatingSubHelpful(input)
+		if errCr != nil {
+			if mongo.IsDuplicateKeyError(err) {
+				return message.ErrDuplicateRatingName
+			}
+			return message.FailedMsg
+		}
 
-	// update like_counter rating submission
-	err3 := s.publicRatingRepo.UpdateCounterRatingSubmission(ratingSubmissionId, ratingSubmission.LikeCounter)
+	} else {
+		if !ratingSubHelpful.Status {
+			counter = counter + 1
+		} else {
+			counter = counter - 1
+		}
+		// Update status of rating sub helpful
+		errUpd := s.publicRatingRepo.UpdateStatusRatingSubHelpful(ratingSubHelpful.ID, ratingSubHelpful.Status)
+		if errUpd != nil {
+			return message.FailedMsg
+		}
+	}
+
+	// Update like_counter rating submission
+	err3 := s.publicRatingRepo.UpdateCounterRatingSubmission(ratingSubmissionId, int64(counter))
 	if err3 != nil {
 		return message.ErrSaveData
 	}
@@ -364,11 +388,89 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 			ID:            v.ID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
+			DisplayName:   *v.DisplayName,
 			Avatar:        "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg",
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,
 			LikeCounter:   v.LikeCounter,
 			CreatedAt:     v.CreatedAt,
+			LikeByMe:      false,
+		})
+	}
+	return results, pagination, message.SuccessMsg
+}
+
+// swagger:route GET /api/v1/public/rating-submission/{source_type}/{source_uid}/{user_id_legacy} PublicRating GetPublicListRatingSubmissionByUserIdRequest
+// Get Rating Submission with User Id Legacy
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *publicRatingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input request.GetPublicListRatingSubmissionByUserIdRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message) {
+	results := []response.PublicRatingSubmissionResponse{}
+	var dir int
+	if input.Dir == "asc" {
+		dir = 1
+	} else {
+		dir = -1
+	}
+	//Set default value
+	if input.Page <= 0 {
+		input.Page = 1
+	}
+	if input.Limit <= 0 {
+		input.Limit = 50
+	}
+	if input.Sort == "" {
+		input.Sort = "created at"
+	}
+
+	// Get Rating By SourceType and SourceUID
+	filterRating := request.FilterRatingSummary{
+		SourceType: input.SourceType,
+		SourceUid:  []string{input.SourceUID},
+	}
+	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filterRating)
+	if err != nil {
+		return nil, nil, message.FailedMsg
+	}
+
+	// Get Rating Submission
+	filterRatingSubs := request.FilterRatingSubmission{}
+	for _, v := range ratings {
+		filterRatingSubs.RatingID = append(filterRatingSubs.RatingID, v.ID.Hex())
+	}
+	ratingSubs, pagination, err := s.publicRatingRepo.GetPublicRatingSubmissions(input.Limit, input.Page, dir, input.Sort, filterRatingSubs)
+	if err != nil {
+		return nil, nil, message.FailedMsg
+	}
+	if len(ratings) <= 0 {
+		return results, pagination, message.SuccessMsg
+	}
+
+	for _, v := range ratingSubs {
+		likeByme := false
+		// Get like by me value
+		ratingSubHelpful, err := s.publicRatingRepo.GetRatingSubHelpfulByRatingSubAndActor(v.ID.Hex(), input.UserIdLegacy)
+		if err != nil {
+			return nil, nil, message.FailedMsg
+		}
+		if ratingSubHelpful != nil {
+			likeByme = ratingSubHelpful.Status
+		}
+
+		results = append(results, response.PublicRatingSubmissionResponse{
+			ID:            v.ID,
+			UserID:        v.UserID,
+			UserIDLegacy:  v.UserIDLegacy,
+			DisplayName:   *v.DisplayName,
+			Avatar:        "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg",
+			Comment:       v.Comment,
+			SourceTransID: v.SourceTransID,
+			LikeCounter:   v.LikeCounter,
+			CreatedAt:     v.CreatedAt,
+			LikeByMe:      likeByme,
 		})
 	}
 	return results, pagination, message.SuccessMsg
