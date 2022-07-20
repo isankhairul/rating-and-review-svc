@@ -14,6 +14,7 @@ func RegisterRatingService(db *mongo.Database, logger log.Logger) service.Rating
 	return service.NewRatingService(
 		logger,
 		rp.NewRatingRepository(db),
+		rp.NewPublicRatingRepository(db),
 		util.NewMedicalFacilitySvc(util.ResponseHttp{}),
 	)
 }

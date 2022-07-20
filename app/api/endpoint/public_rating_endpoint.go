@@ -11,46 +11,14 @@ import (
 )
 
 type PublicRatingEndpoint struct {
-	GetRatingBySourceTypeAndActor             endpoint.Endpoint
-	CreateRatingSubHelpful                    endpoint.Endpoint
-	GetListRatingSummaryBySourceType          endpoint.Endpoint
 	GetListRatingSubmissionBySourceTypeAndUID endpoint.Endpoint
-	GetListRatingSubmissionWithUserIdLegacy   endpoint.Endpoint
-	CreateRatingSubmission                    endpoint.Endpoint
-	UpdateRatingSubDisplayNameByIdLegacy      endpoint.Endpoint
+	GetListRatingSummaryBySourceType          endpoint.Endpoint
 }
 
 func MakePublicRatingEndpoints(s service.PublicRatingService) PublicRatingEndpoint {
 	return PublicRatingEndpoint{
-		GetRatingBySourceTypeAndActor:             makeGetRatingBySourceTypeAndActor(s),
-		CreateRatingSubHelpful:                    makeCreateRatingSubHelpful(s),
 		GetListRatingSummaryBySourceType:          makeGetListRatingSummaryBySourceType(s),
 		GetListRatingSubmissionBySourceTypeAndUID: makeGetListRatingSubmissionBySourceTypeAndUID(s),
-		GetListRatingSubmissionWithUserIdLegacy:   makeGetListRatingSubmissionWithUserIdLegacy(s),
-		CreateRatingSubmission:                    makeCreatePublicRatingSubmission(s),
-		UpdateRatingSubDisplayNameByIdLegacy:      makeUpdatePublicRatingSubDisplayNameByIdLegacy(s),
-	}
-}
-
-func makeGetRatingBySourceTypeAndActor(s service.PublicRatingService) endpoint.Endpoint {
-	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
-		req := rqst.(request.GetRatingBySourceTypeAndActorRequest)
-		result, msg := s.GetRatingBySourceTypeAndActor(req)
-		if msg.Code != 212000 {
-			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
-		}
-		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
-	}
-}
-
-func makeCreateRatingSubHelpful(s service.PublicRatingService) endpoint.Endpoint {
-	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
-		req := rqst.(request.CreateRatingSubHelpfulRequest)
-		msg := s.CreateRatingSubHelpful(req)
-		if msg.Code != 212000 {
-			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
-		}
-		return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 	}
 }
 
@@ -73,38 +41,5 @@ func makeGetListRatingSubmissionBySourceTypeAndUID(s service.PublicRatingService
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil
 		}
 		return base.SetHttpResponse(msg.Code, msg.Message, result, pagination), nil
-	}
-}
-
-func makeGetListRatingSubmissionWithUserIdLegacy(s service.PublicRatingService) endpoint.Endpoint {
-	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
-		req := rqst.(request.GetPublicListRatingSubmissionByUserIdRequest)
-		result, pagination, msg := s.GetListRatingSubmissionWithUserIdLegacy(req)
-		if msg.Code != 212000 {
-			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil
-		}
-		return base.SetHttpResponse(msg.Code, msg.Message, result, pagination), nil
-	}
-}
-
-func makeCreatePublicRatingSubmission(s service.PublicRatingService) endpoint.Endpoint {
-	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
-		req := rqst.(request.CreateRatingSubmissionRequest)
-		result, msg := s.CreatePublicRatingSubmission(req)
-		if msg.Code != 212000 {
-			return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
-		}
-		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
-	}
-}
-
-func makeUpdatePublicRatingSubDisplayNameByIdLegacy(s service.PublicRatingService) endpoint.Endpoint {
-	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
-		req := rqst.(request.UpdateRatingSubDisplayNameRequest)
-		msg := s.UpdateRatingSubDisplayNameByIdLegacy(req)
-		if msg.Code != 212000 {
-			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
-		}
-		return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 	}
 }

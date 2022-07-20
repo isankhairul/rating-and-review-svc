@@ -32,7 +32,6 @@ type PublicRatingRepository interface {
 	GetRatingSubsByRatingId(ratingId string) ([]entity.RatingSubmisson, error)
 	CountRatingSubsByRatingIdAndValue(ratingId, value string) (int64, error)
 	GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error)
-	CreatePublicRatingSubmission(input []request.SaveRatingSubmission) ([]entity.RatingSubmisson, error)
 	GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId, sourceType string) (*entity.RatingFormulaCol, error)
 	UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) error
 }
@@ -369,61 +368,6 @@ func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort
 	pagination.Records = int64(len(results))
 
 	return results, &pagination, nil
-}
-
-func (r *publicRatingRepo) CreatePublicRatingSubmission(input []request.SaveRatingSubmission) ([]entity.RatingSubmisson, error) {
-	ratingSubmissionColl := r.db.Collection("ratingSubCol")
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
-	var ratingSubmission []entity.RatingSubmisson
-	var docs []interface{}
-	for _, args := range input {
-		docs = append(docs, bson.D{
-			{Key: "rating_id", Value: args.RatingID},
-			{Key: "user_id", Value: args.UserID},
-			{Key: "user_id_legacy", Value: args.UserIDLegacy},
-			{Key: "display_name", Value: args.DisplayName},
-			{Key: "comment", Value: args.Comment},
-			{Key: "value", Value: args.Value},
-			{Key: "ip_address", Value: args.IPAddress},
-			{Key: "user_agent", Value: args.UserAgent},
-			{Key: "source_trans_id", Value: args.SourceTransID},
-			{Key: "user_platform", Value: args.UserPlatform},
-			{Key: "like_counter", Value: 0},
-			{Key: "created_at", Value: time.Now().In(util.Loc)},
-			{Key: "updated_at", Value: time.Now().In(util.Loc)},
-		})
-	}
-	if len(docs) < 1 {
-		return nil, mongo.ErrNilValue
-	}
-
-	// transaction
-	errTransaction := r.db.Client().UseSession(ctx, func(sessionContext mongo.SessionContext) error {
-		err := sessionContext.StartTransaction()
-		if err != nil {
-			return err
-		}
-		result, err := ratingSubmissionColl.InsertMany(ctx, docs)
-
-		if err != nil {
-			sessionContext.AbortTransaction(sessionContext)
-			return err
-		}
-		if err = sessionContext.CommitTransaction(sessionContext); err != nil {
-			return err
-		}
-		for _, args := range result.InsertedIDs {
-			data := entity.RatingSubmisson{
-				ID: args.(primitive.ObjectID),
-			}
-			ratingSubmission = append(ratingSubmission, data)
-		}
-		return nil
-	})
-	if errTransaction != nil {
-		return nil, errTransaction
-	}
-	return ratingSubmission, nil
 }
 
 func (r *publicRatingRepo) GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId, sourceType string) (*entity.RatingFormulaCol, error) {

@@ -3,10 +3,6 @@ package test
 import (
 	"encoding/json"
 	"errors"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
@@ -15,18 +11,23 @@ import (
 	"go-klikdokter/helper/message"
 	"go-klikdokter/pkg/util"
 	"go-klikdokter/pkg/util/mocks"
+	"os"
+	"testing"
+
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
-	"os"
-	"testing"
 )
 
 var logger log.Logger
 
 var ratingRepository = &repository_mock.RatingRepositoryMock{Mock: mock.Mock{}}
 var medicalFacility = &mocks.MedicalFacilitySvc{Mock: mock.Mock{}}
-var svc = service.NewRatingService(logger, ratingRepository, medicalFacility)
+var svc = service.NewRatingService(logger, ratingRepository, publicRatingRepository, medicalFacility)
 
 func init() {
 	{
@@ -568,63 +569,6 @@ func TestDeleteRatingSubmissionWrongId(t *testing.T) {
 	assert.Equal(t, message.ErrDataNotFound, msg)
 }
 
-func TestCreateRatingSubmissionSuccessLikertType(t *testing.T) {
-	valueRate := "1"
-	likertID := "629dce7bf1f26275e0d84820"
-	objectId, _ := primitive.ObjectIDFromHex(id)
-	objectLikertId, _ := primitive.ObjectIDFromHex(likertID)
-	input := request.CreateRatingSubmissionRequest{
-		Ratings: []request.RatingByType{
-			{
-				ID:    id,
-				Value: &valueRate,
-			},
-		},
-		UserID:        &id,
-		UserIDLegacy:  nil,
-		SourceTransID: id,
-	}
-
-	sub := entity.RatingSubmisson{
-		UserID:       &id,
-		UserIDLegacy: nil,
-		RatingID:     id,
-	}
-
-	rating := entity.RatingsCol{
-		ID:             objectId,
-		RatingTypeId:   likertID,
-		CommentAllowed: &Bool,
-		Status:         &Bool,
-	}
-
-	likert := entity.RatingTypesLikertCol{
-		ID:            objectLikertId,
-		Description:   &description,
-		NumStatements: 1,
-		Statement01:   &description,
-	}
-
-	saveReq := []request.SaveRatingSubmission{
-		{
-			UserID:       &id,
-			UserIDLegacy: &id,
-			RatingID:     id,
-		},
-	}
-
-	ratingRepository.Mock.On("FindRatingByRatingID", objectId).Return(rating, nil)
-	ratingRepository.Mock.On("FindRatingSubmissionByUserIDLegacyAndRatingID", &id, id, id).Return(sub, nil)
-	ratingRepository.Mock.On("FindRatingSubmissionByUserIDAndRatingID", &id, id, id).Return(nil, gorm.ErrRecordNotFound)
-	ratingRepository.Mock.On("FindRatingNumericTypeByRatingTypeID", objectLikertId).Return(nil, nil)
-	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
-	ratingRepository.Mock.On("CreateRatingSubmission", saveReq).Return(sub, nil)
-
-	msg := svc.CreateRatingSubmission(input)
-
-	assert.Equal(t, message.SuccessMsg, msg)
-}
-
 func TestCreateRatingSubmissionFailFindRating(t *testing.T) {
 	valueRate := "1"
 	likertID := "629dce7bf1f26275e0d84820"
@@ -668,7 +612,7 @@ func TestCreateRatingSubmissionFailFindRating(t *testing.T) {
 	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
 	ratingRepository.Mock.On("CreateRatingSubmission", saveReq).Return(sub, nil)
 
-	msg := svc.CreateRatingSubmission(input)
+	_, msg := svc.CreateRatingSubmission(input)
 
 	assert.Equal(t, message.ErrRatingNotFound, msg)
 }
@@ -727,7 +671,7 @@ func TestCreateRatingSubmissionFailAgentTooLong(t *testing.T) {
 	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
 	ratingRepository.Mock.On("CreateRatingSubmission", saveReq).Return(sub, nil)
 
-	msg := svc.CreateRatingSubmission(input)
+	_, msg := svc.CreateRatingSubmission(input)
 
 	assert.Equal(t, message.UserAgentTooLong, msg)
 }
@@ -783,7 +727,7 @@ func TestCreateRatingSubmissionFailLikertType(t *testing.T) {
 	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
 	ratingRepository.Mock.On("CreateRatingSubmission", saveReq).Return(sub, nil)
 
-	msg := svc.CreateRatingSubmission(input)
+	_, msg := svc.CreateRatingSubmission(input)
 
 	assert.Equal(t, message.Message{
 		Code:    message.ValidationFailCode,
@@ -842,7 +786,7 @@ func TestCreateRatingSubmissionFailUidNull(t *testing.T) {
 	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
 	ratingRepository.Mock.On("CreateRatingSubmission", saveReq).Return(sub, nil)
 
-	msg := svc.CreateRatingSubmission(input)
+	_, msg := svc.CreateRatingSubmission(input)
 
 	assert.Equal(t, message.UserUIDRequired, msg)
 }

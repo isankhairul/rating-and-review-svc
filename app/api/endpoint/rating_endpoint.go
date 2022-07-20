@@ -18,11 +18,13 @@ type RatingEndpoint struct {
 	DeleteRatingTypeNumById endpoint.Endpoint
 	GetRatingTypeNums       endpoint.Endpoint
 
-	CreateRatingSubmission  endpoint.Endpoint
-	UpdateRatingSubmission  endpoint.Endpoint
-	GetRatingSubmission     endpoint.Endpoint
-	GetListRatingSubmission endpoint.Endpoint
-	DeleteRatingSubmission  endpoint.Endpoint
+	CreateRatingSubmission                  endpoint.Endpoint
+	UpdateRatingSubmission                  endpoint.Endpoint
+	GetRatingSubmission                     endpoint.Endpoint
+	GetListRatingSubmission                 endpoint.Endpoint
+	DeleteRatingSubmission                  endpoint.Endpoint
+	GetListRatingSubmissionWithUserIdLegacy endpoint.Endpoint
+	UpdateRatingSubDisplayNameByIdLegacy    endpoint.Endpoint
 
 	CreateRatingTypeLikert     endpoint.Endpoint
 	GetRatingTypeLikertById    endpoint.Endpoint
@@ -30,18 +32,21 @@ type RatingEndpoint struct {
 	DeleteRatingTypeLikertById endpoint.Endpoint
 	GetRatingTypeLikerts       endpoint.Endpoint
 
-	CreateRating         endpoint.Endpoint
-	ShowRating           endpoint.Endpoint
-	UpdateRating         endpoint.Endpoint
-	DeleteRating         endpoint.Endpoint
-	GetRatings           endpoint.Endpoint
-	GetListRatingSummary endpoint.Endpoint
+	CreateRating                  endpoint.Endpoint
+	ShowRating                    endpoint.Endpoint
+	UpdateRating                  endpoint.Endpoint
+	DeleteRating                  endpoint.Endpoint
+	GetRatings                    endpoint.Endpoint
+	GetListRatingSummary          endpoint.Endpoint
+	GetRatingBySourceTypeAndActor endpoint.Endpoint
 
 	CreateRatingFormula     endpoint.Endpoint
 	UpdateRatingFormulaById endpoint.Endpoint
 	GetRatingFormulaById    endpoint.Endpoint
 	DeleteRatingFormulaById endpoint.Endpoint
 	GetRatingFormulas       endpoint.Endpoint
+
+	CreateRatingSubHelpful endpoint.Endpoint
 }
 
 func MakeRatingEndpoints(s service.RatingService) RatingEndpoint {
@@ -52,11 +57,13 @@ func MakeRatingEndpoints(s service.RatingService) RatingEndpoint {
 		DeleteRatingTypeNumById: makeDeleteRatingTypeNumById(s),
 		GetRatingTypeNums:       makeGetRatingTypeNums(s),
 
-		CreateRatingSubmission:  makeCreateRatingSubmission(s),
-		UpdateRatingSubmission:  makeUpdateRatingSubmission(s),
-		GetRatingSubmission:     makeGetRatingSubmission(s),
-		GetListRatingSubmission: makeGetListRatingSubmissions(s),
-		DeleteRatingSubmission:  makeDeleteRatingSubmission(s),
+		CreateRatingSubmission:                  makeCreateRatingSubmission(s),
+		UpdateRatingSubmission:                  makeUpdateRatingSubmission(s),
+		GetRatingSubmission:                     makeGetRatingSubmission(s),
+		GetListRatingSubmission:                 makeGetListRatingSubmissions(s),
+		DeleteRatingSubmission:                  makeDeleteRatingSubmission(s),
+		GetListRatingSubmissionWithUserIdLegacy: makeGetListRatingSubmissionWithUserIdLegacy(s),
+		UpdateRatingSubDisplayNameByIdLegacy:    makeUpdatePublicRatingSubDisplayNameByIdLegacy(s),
 
 		CreateRatingTypeLikert:     makeCreateRatingTypeLikert(s),
 		GetRatingTypeLikertById:    makeGetRatingTypeLikertById(s),
@@ -64,18 +71,21 @@ func MakeRatingEndpoints(s service.RatingService) RatingEndpoint {
 		DeleteRatingTypeLikertById: makeDeleteRatingTypeLikertById(s),
 		GetRatingTypeLikerts:       makeRatingTypeLikerts(s),
 
-		CreateRating:         makeCreateRating(s),
-		ShowRating:           makeShowRating(s),
-		UpdateRating:         makeUpdateRating(s),
-		DeleteRating:         makeDeleteRatingById(s),
-		GetRatings:           makeGetListRatings(s),
-		GetListRatingSummary: makGetListRatingSummary(s),
+		CreateRating:                  makeCreateRating(s),
+		ShowRating:                    makeShowRating(s),
+		UpdateRating:                  makeUpdateRating(s),
+		DeleteRating:                  makeDeleteRatingById(s),
+		GetRatings:                    makeGetListRatings(s),
+		GetListRatingSummary:          makGetListRatingSummary(s),
+		GetRatingBySourceTypeAndActor: makeGetRatingBySourceTypeAndActor(s),
 
 		CreateRatingFormula:     makeCreateRatingFormula(s),
 		UpdateRatingFormulaById: makeUpdateRatingFormulaById(s),
 		GetRatingFormulaById:    makeGetRatingFormulaById(s),
 		DeleteRatingFormulaById: makeDeleteRatingFormulaById(s),
 		GetRatingFormulas:       makeRatingFormulas(s),
+
+		CreateRatingSubHelpful: makeCreateRatingSubHelpful(s),
 	}
 }
 
@@ -142,11 +152,11 @@ func makeGetRatingTypeNums(s service.RatingService) endpoint.Endpoint {
 func makeCreateRatingSubmission(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.CreateRatingSubmissionRequest)
-		msg := s.CreateRatingSubmission(req)
+		result, msg := s.CreateRatingSubmission(req)
 		if msg.Code != 212000 {
-			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+			return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
 		}
-		return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
 	}
 }
 
@@ -169,6 +179,28 @@ func makeDeleteRatingSubmission(s service.RatingService) endpoint.Endpoint {
 		}
 
 		return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+	}
+}
+
+func makeGetListRatingSubmissionWithUserIdLegacy(s service.RatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.GetPublicListRatingSubmissionByUserIdRequest)
+		result, pagination, msg := s.GetListRatingSubmissionWithUserIdLegacy(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, result, pagination), nil
+	}
+}
+
+func makeUpdatePublicRatingSubDisplayNameByIdLegacy(s service.RatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.UpdateRatingSubDisplayNameRequest)
+		msg := s.UpdateRatingSubDisplayNameByIdLegacy(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 	}
 }
 
@@ -316,6 +348,17 @@ func makGetListRatingSummary(s service.RatingService) endpoint.Endpoint {
 	}
 }
 
+func makeGetRatingBySourceTypeAndActor(s service.RatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.GetRatingBySourceTypeAndActorRequest)
+		result, msg := s.GetRatingBySourceTypeAndActor(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
+	}
+}
+
 func makeCreateRatingFormula(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.SaveRatingFormula)
@@ -368,5 +411,16 @@ func makeRatingFormulas(s service.RatingService) endpoint.Endpoint {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 		}
 		return base.SetHttpResponse(msg.Code, msg.Message, result, pagination), nil
+	}
+}
+
+func makeCreateRatingSubHelpful(s service.RatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.CreateRatingSubHelpfulRequest)
+		msg := s.CreateRatingSubHelpful(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 	}
 }
