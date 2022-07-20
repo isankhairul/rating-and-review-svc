@@ -1,4 +1,4 @@
-basePath: /rating-svc
+basePath: /rating-svc/api/v1
 definitions:
   BodyUpdateRatingRequest:
     properties:
@@ -692,7 +692,7 @@ info:
   title: 'KD Boilerplate Go kit:'
   version: "1.0"
 paths:
-  /api/v1/public/helpful-rating-submission/:
+  /helpful-rating-submission/:
     post:
       description: Create Helpful Rating Submission
       operationId: ReqRatingSubHelpfulBody
@@ -712,8 +712,8 @@ paths:
           schema:
             $ref: '#/definitions/SuccessResponse'
       tags:
-      - PublicRating
-  /api/v1/public/rating-submission/{source_type}/{source_uid}:
+      - RatingSubHelpful
+  /public/rating-submissions/{source_type}/{source_uid}:
     get:
       description: Get Rating Submission By Source Type and Source UID
       operationId: GetPublicListRatingSubmissionRequest
@@ -759,106 +759,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - PublicRating
-  /api/v1/public/rating-submission/{source_type}/{source_uid}/{user_id_legacy}:
-    get:
-      description: Get Rating Submission with User Id Legacy
-      operationId: GetPublicListRatingSubmissionByUserIdRequest
-      parameters:
-      - description: SourceType
-        in: path
-        name: source_type
-        required: true
-        type: string
-        x-go-name: SourceType
-      - description: SourceUID
-        in: path
-        name: source_uid
-        required: true
-        type: string
-        x-go-name: SourceUID
-      - description: UserIdLegacy
-        in: path
-        name: user_id_legacy
-        required: true
-        type: string
-        x-go-name: UserIdLegacy
-      - format: int64
-        in: query
-        name: limit
-        type: integer
-        x-go-name: Limit
-      - format: int64
-        in: query
-        name: page
-        type: integer
-        x-go-name: Page
-      - in: query
-        name: sort
-        type: string
-        x-go-name: Sort
-      - in: query
-        name: dir
-        type: string
-        x-go-name: Dir
-      responses:
-        "200":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
-        "401":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
-      tags:
-      - PublicRating
-  /api/v1/public/rating-submission/user-id-legacy/{user_id_legacy}:
-    put:
-      description: Update Rating Submission Display Name By Id Legacy
-      operationId: ReqUpdateRatingSubDisplayNameBody
-      parameters:
-      - in: path
-        name: user_id_legacy
-        required: true
-        type: string
-        x-go-name: UserIdLegacy
-      - in: body
-        name: body
-        schema:
-          $ref: '#/definitions/UpdateRatingSubDisplayNameRequest'
-        x-go-name: Body
-      responses:
-        "200":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
-        "401":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
-      tags:
-      - PublicRating
-  /api/v1/public/rating-submissions/:
-    post:
-      description: Create Rating Submission Public
-      operationId: ReqPublicRatingSubmissionBody
-      parameters:
-      - in: body
-        name: body
-        schema:
-          $ref: '#/definitions/CreateRatingSubmissionRequest'
-        x-go-name: Body
-      responses:
-        "200":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
-        "401":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
-      tags:
-      - PublicRating
-  /api/v1/public/ratings-summary/{source_type}:
+  /public/ratings-summary/{source_type}:
     get:
       description: Get Rating Summary By Source Type
       operationId: GetPublicListRatingSummaryRequest
@@ -903,33 +804,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - PublicRating
-  /api/v1/public/ratings/{source_type}/{source_uid}:
-    get:
-      description: Get Rating By Source Type and Source UID
-      operationId: GetRatingBySourceTypeAndActor
-      parameters:
-      - in: path
-        name: source_type
-        required: true
-        type: string
-        x-go-name: SourceType
-      - in: path
-        name: source_uid
-        required: true
-        type: string
-        x-go-name: SourceUID
-      responses:
-        "200":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
-        "401":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
-      tags:
-      - PublicRating
-  /api/v1/rating-formula:
+  /rating-formula:
     get:
       description: Get Rating Formula Listing
       operationId: getRatingFormulas
@@ -971,7 +846,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - RatingFormula
-  /api/v1/rating-formula/:
+  /rating-formula/:
     post:
       description: Create Rating Formula
       operationId: createRatingFormula
@@ -993,7 +868,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - RatingFormula
-  /api/v1/rating-formula/{id}:
+  /rating-formula/{id}:
     delete:
       description: Delete Rating Formula
       operationId: deleteRatingFormula
@@ -1060,7 +935,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - RatingFormula
-  /api/v1/rating-submissions:
+  /rating-submissions:
     get:
       description: Get List Rating Submissions
       operationId: ListRatingSubmissionRequest
@@ -1098,7 +973,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - RatingSubmission
-  /api/v1/rating-submissions/:
+  /rating-submissions/:
     post:
       description: Create Rating Submission
       operationId: ReqRatingSubmissionBody
@@ -1119,7 +994,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - RatingSubmission
-  /api/v1/rating-submissions/{id}:
+  /rating-submissions/{id}:
     delete:
       description: Delete Rating Submission
       operationId: ReqDeleteRatingSubmissionById
@@ -1189,7 +1064,85 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - RatingSubmission
-  /api/v1/rating-types-likert:
+  /rating-submissions/{source_type}/{source_uid}/{user_id_legacy}:
+    get:
+      description: Get Rating Submission with User Id Legacy
+      operationId: GetPublicListRatingSubmissionByUserIdRequest
+      parameters:
+      - description: SourceType
+        in: path
+        name: source_type
+        required: true
+        type: string
+        x-go-name: SourceType
+      - description: SourceUID
+        in: path
+        name: source_uid
+        required: true
+        type: string
+        x-go-name: SourceUID
+      - description: UserIdLegacy
+        in: path
+        name: user_id_legacy
+        required: true
+        type: string
+        x-go-name: UserIdLegacy
+      - format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - in: query
+        name: sort
+        type: string
+        x-go-name: Sort
+      - in: query
+        name: dir
+        type: string
+        x-go-name: Dir
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - RatingSubmission
+  /rating-submissions/user-id-legacy/{user_id_legacy}:
+    put:
+      description: Update Rating Submission Display Name By Id Legacy
+      operationId: ReqUpdateRatingSubDisplayNameBody
+      parameters:
+      - in: path
+        name: user_id_legacy
+        required: true
+        type: string
+        x-go-name: UserIdLegacy
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/UpdateRatingSubDisplayNameRequest'
+        x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - RatingSubmission
+  /rating-types-likert:
     get:
       description: Get Likert Rating Types Listing
       operationId: getRatingTypeLikerts
@@ -1231,7 +1184,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - RatingTypesLikert
-  /api/v1/rating-types-likert/:
+  /rating-types-likert/:
     post:
       description: Create Likert Rating Types
       operationId: createRatingTypeLikertRequest
@@ -1253,7 +1206,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - RatingTypesLikert
-  /api/v1/rating-types-likert/{id}:
+  /rating-types-likert/{id}:
     delete:
       description: Delete Likert Rating Types
       operationId: deleteRatingTypeLikert
@@ -1320,7 +1273,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - RatingTypesLikert
-  /api/v1/rating-types-numeric:
+  /rating-types-numeric:
     get:
       description: Get Numeric Rating Types Listing
       operationId: getRatingTypeNums
@@ -1362,7 +1315,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - RatingTypeNum
-  /api/v1/rating-types-numeric/:
+  /rating-types-numeric/:
     post:
       description: Create Numeric Rating Types
       operationId: createRatingTypeNum
@@ -1384,7 +1337,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - RatingTypeNum
-  /api/v1/rating-types-numeric/{id}:
+  /rating-types-numeric/{id}:
     delete:
       description: Delete Numeric Rating Type
       operationId: deleteRatingTypeNum
@@ -1451,7 +1404,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - RatingTypeNum
-  /api/v1/ratings:
+  /ratings:
     get:
       description: Get list Rating
       operationId: GetListRatingsRequest
@@ -1480,10 +1433,12 @@ paths:
         x-go-name: Dir
       responses:
         "200":
-          $ref: '#/responses/RatingsCol'
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
       tags:
       - Ratings
-  /api/v1/ratings/:
+  /ratings/:
     post:
       description: Create New Rating
       operationId: CreateRatingRequest
@@ -1500,7 +1455,7 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - Ratings
-  /api/v1/ratings/{id}:
+  /ratings/{id}:
     delete:
       description: Delete Rating
       operationId: DeleteRatingRequest
@@ -1528,7 +1483,9 @@ paths:
         x-go-name: Id
       responses:
         "200":
-          $ref: '#/responses/RatingsCol'
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
       tags:
       - Ratings
     put:
@@ -1552,7 +1509,33 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - Ratings
-  /api/v1/ratings/summary/{source_type}:
+  /ratings/{source_type}/{source_uid}:
+    get:
+      description: Get Rating By Source Type and Source UID
+      operationId: GetRatingBySourceTypeAndActor
+      parameters:
+      - in: path
+        name: source_type
+        required: true
+        type: string
+        x-go-name: SourceType
+      - in: path
+        name: source_uid
+        required: true
+        type: string
+        x-go-name: SourceUID
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - Ratings
+  /ratings/summary/{source_type}:
     get:
       description: Get list Rating Summary
       operationId: GetListRatingSummaryRequest
@@ -1587,7 +1570,9 @@ paths:
         x-go-name: SourceType
       responses:
         "200":
-          $ref: '#/responses/RatingsCol'
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
       tags:
       - Ratings
 produces:

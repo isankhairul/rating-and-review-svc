@@ -29,11 +29,13 @@ type RatingService interface {
 	GetRatingTypeNums(input request.GetRatingTypeNumsRequest) ([]entity.RatingTypesNumCol, *base.Pagination, message.Message)
 
 	// Rating submission
-	CreateRatingSubmission(input request.CreateRatingSubmissionRequest) message.Message
+	CreateRatingSubmission(input request.CreateRatingSubmissionRequest) ([]response.PublicCreateRatingSubmissionResponse, message.Message)
 	UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest) message.Message
 	GetRatingSubmission(id string) (*response.RatingSubmissonResponse, message.Message)
 	GetListRatingSubmissions(input request.ListRatingSubmissionRequest) ([]response.RatingSubmissonResponse, *base.Pagination, message.Message)
 	DeleteRatingSubmission(id string) message.Message
+	GetListRatingSubmissionWithUserIdLegacy(input request.GetPublicListRatingSubmissionByUserIdRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message)
+	UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) message.Message
 
 	// Rating type likert
 	CreateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) message.Message
@@ -49,6 +51,7 @@ type RatingService interface {
 	DeleteRating(id string) message.Message
 	GetListRatings(input request.GetListRatingsRequest) ([]entity.RatingsCol, *base.Pagination, message.Message)
 	GetListRatingSummary(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryResponse, message.Message)
+	GetRatingBySourceTypeAndActor(input request.GetRatingBySourceTypeAndActorRequest) (*response.RatingBySourceTypeAndActorResponse, message.Message)
 
 	// Rating Formula
 	CreateRatingFormula(input request.SaveRatingFormula) (*entity.RatingFormulaCol, message.Message)
@@ -56,23 +59,28 @@ type RatingService interface {
 	UpdateRatingFormula(input request.SaveRatingFormula) message.Message
 	DeleteRatingFormulaById(input request.GetRatingFormulaRequest) message.Message
 	GetRatingFormulas(input request.GetRatingFormulasRequest) ([]entity.RatingFormulaCol, *base.Pagination, message.Message)
+
+	// Rating Sub Helpful
+	CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) message.Message
 }
 
 type ratingServiceImpl struct {
-	logger          log.Logger
-	ratingRepo      repository.RatingRepository
-	medicalFacility util.MedicalFacilitySvc
+	logger           log.Logger
+	ratingRepo       repository.RatingRepository
+	publicRatingRepo repository.PublicRatingRepository
+	medicalFacility  util.MedicalFacilitySvc
 }
 
 func NewRatingService(
 	lg log.Logger,
 	rr repository.RatingRepository,
+	prr repository.PublicRatingRepository,
 	mf util.MedicalFacilitySvc,
 ) RatingService {
-	return &ratingServiceImpl{lg, rr, mf}
+	return &ratingServiceImpl{lg, rr, prr, mf}
 }
 
-// swagger:route POST /api/v1/rating-types-numeric/ RatingTypeNum createRatingTypeNum
+// swagger:route POST /rating-types-numeric/ RatingTypeNum createRatingTypeNum
 // Create Numeric Rating Types
 //
 // security:
@@ -109,7 +117,7 @@ func (s *ratingServiceImpl) CreateRatingTypeNum(input request.CreateRatingTypeNu
 	return result, message.SuccessMsg
 }
 
-// swagger:route GET /api/v1/rating-types-numeric/{id} RatingTypeNum getRatingTypeNumById
+// swagger:route GET /rating-types-numeric/{id} RatingTypeNum getRatingTypeNumById
 // Get Numeric Rating Types by ID
 //
 // security:
@@ -163,7 +171,7 @@ func checkConditionUpdateRatingTypeNum(s *ratingServiceImpl, input request.EditR
 	return message.SuccessMsg
 }
 
-// swagger:route PUT /api/v1/rating-types-numeric/{id} RatingTypeNum updateRatingTypeNum
+// swagger:route PUT /rating-types-numeric/{id} RatingTypeNum updateRatingTypeNum
 // Update Numeric Rating Type
 //
 // security:
@@ -194,7 +202,7 @@ func (s *ratingServiceImpl) UpdateRatingTypeNum(input request.EditRatingTypeNumR
 	return message.SuccessMsg
 }
 
-// swagger:route Delete /api/v1/rating-types-numeric/{id} RatingTypeNum deleteRatingTypeNum
+// swagger:route Delete /rating-types-numeric/{id} RatingTypeNum deleteRatingTypeNum
 // Delete Numeric Rating Type
 //
 // security:
@@ -229,7 +237,7 @@ func (s *ratingServiceImpl) DeleteRatingTypeNumById(input request.GetRatingTypeN
 	return message.SuccessMsg
 }
 
-// swagger:route GET /api/v1/rating-types-numeric RatingTypeNum getRatingTypeNums
+// swagger:route GET /rating-types-numeric RatingTypeNum getRatingTypeNums
 // Get Numeric Rating Types Listing
 //
 // security:
@@ -278,16 +286,17 @@ func (s *ratingServiceImpl) GetRatingTypeNums(input request.GetRatingTypeNumsReq
 	return results, pagination, message.SuccessMsg
 }
 
-// swagger:route POST /api/v1/rating-submissions/ RatingSubmission ReqRatingSubmissionBody
+// swagger:route POST /rating-submissions/ RatingSubmission ReqRatingSubmissionBody
 // Create Rating Submission
 //
 // security:
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
-func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSubmissionRequest) message.Message {
+func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSubmissionRequest) ([]response.PublicCreateRatingSubmissionResponse, message.Message) {
 	var saveReq = make([]request.SaveRatingSubmission, 0)
 	var empty = ""
+	result := []response.PublicCreateRatingSubmissionResponse{}
 
 	// One of the following user_id and user_id_legacy must be filled
 	if input.UserID == nil || *input.UserID == "" {
@@ -298,28 +307,27 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 	}
 
 	if input.UserID == &empty && input.UserIDLegacy == &empty {
-		return message.UserUIDRequired
+		return result, message.UserUIDRequired
 	}
 
 	for _, argRatings := range input.Ratings {
-
 		// Find rating_type_id by rating_id
 		objectRatingId, err := primitive.ObjectIDFromHex(argRatings.ID)
 		if err != nil {
-			return message.ErrRatingNotFound
+			return result, message.ErrRatingNotFound
 		}
 		rating, err := s.ratingRepo.FindRatingByRatingID(objectRatingId)
 		if err != nil {
-			return message.ErrRatingNotFound
+			return result, message.ErrRatingNotFound
 		}
 		if rating == nil || *rating.Status == false {
-			return message.ErrRatingNotFound
+			return result, message.ErrRatingNotFound
 		}
 
 		// Validate numeric type value
 		objectRatingTypeId, err := primitive.ObjectIDFromHex(rating.RatingTypeId)
 		if err != nil {
-			return message.ErrRatingNumericTypeNotFound
+			return result, message.ErrRatingNumericTypeNotFound
 		}
 		var validateMsg message.Message
 
@@ -329,27 +337,27 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 		} else {
 			value, er := strconv.ParseFloat(*argRatings.Value, 64)
 			if er != nil {
-				return message.ErrValueFormatForNumericType
+				return result, message.ErrValueFormatForNumericType
 			}
 			validateMsg = util.ValidateTypeNumeric(ratingNumericType, value)
 		}
 
 		if validateMsg.Code == message.ValidationFailCode {
-			return validateMsg
+			return result, validateMsg
 		}
 
 		// Validate numeric type value
 		if validateMsg == message.ErrRatingNumericTypeNotFound {
 			ratingTypeLikert, err := s.ratingRepo.GetRatingTypeLikertByIdAndStatus(objectRatingTypeId)
 			if err != nil {
-				return message.ErrLikertTypeNotFound
+				return result, message.ErrLikertTypeNotFound
 			}
 			if ratingTypeLikert == nil {
-				return message.ErrLikertTypeNotFound
+				return result, message.ErrLikertTypeNotFound
 			}
 			strValue := strings.Split(*argRatings.Value, ",")
 			if validateErr, validList := util.ValidateLikertType(ratingTypeLikert, strValue); validateErr != nil {
-				return message.Message{
+				return result, message.Message{
 					Code:    message.ValidationFailCode,
 					Message: "value must be integer and include in " + fmt.Sprintf("%v", validList),
 				}
@@ -361,13 +369,13 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID, input.SourceTransID)
 			val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er)
 			if val {
-				return message.UserRated
+				return result, message.UserRated
 			}
 			if !val {
 				ratingSubmission, er = s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID, input.SourceTransID)
 				valL := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er)
 				if valL {
-					return message.UserRated
+					return result, message.UserRated
 
 				}
 			}
@@ -376,24 +384,24 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 		if input.UserID == &empty {
 			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID, input.SourceTransID)
 			if val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val == true {
-				return message.UserRated
+				return result, message.UserRated
 			}
 		}
 
 		if input.UserIDLegacy == &empty {
 			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID, input.SourceTransID)
 			if val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val == true {
-				return message.UserRated
+				return result, message.UserRated
 			}
 		}
 
 		//The maximum length of user_agent allowed is 200 characters. Crop at 197 characters with triple dots (...) at the end.
 		if len(strings.TrimSpace(input.UserAgent)) > 200 {
-			return message.UserAgentTooLong
+			return result, message.UserAgentTooLong
 		}
 
 		if isExisted := isIdExisted(saveReq, argRatings.ID); isExisted == false {
-			return message.ErrCannotSameRatingId
+			return result, message.ErrCannotSameRatingId
 		}
 
 		if ratingNumericType == nil {
@@ -425,13 +433,36 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 		}
 	}
 	if len(saveReq) < 0 {
-		return message.ErrTypeNotFound
+		return result, message.ErrTypeNotFound
 	}
-	_, err := s.ratingRepo.CreateRatingSubmission(saveReq)
+	ratingSubs, err := s.ratingRepo.CreateRatingSubmission(saveReq)
 	if err != nil {
-		return message.ErrSaveData
+		return result, message.ErrSaveData
 	}
-	return message.SuccessMsg
+
+	for _, arg := range *ratingSubs {
+		data := response.PublicCreateRatingSubmissionResponse{}
+		ratingSub, err := s.ratingRepo.GetRatingSubmissionById(arg.ID)
+		if err != nil {
+			return result, message.FailedMsg
+		}
+		ratingID, err := primitive.ObjectIDFromHex(ratingSub.RatingID)
+		if err != nil {
+			return result, message.FailedMsg
+		}
+		rating, err := s.ratingRepo.GetRatingById(ratingID)
+		if err != nil {
+			return result, message.FailedMsg
+		}
+
+		data.ID = ratingSub.ID
+		data.RatingID = ratingSub.RatingID
+		data.RatingDescription = *rating.Description
+		data.Value = ratingSub.Value
+
+		result = append(result, data)
+	}
+	return result, message.SuccessMsg
 }
 
 func isIdExisted(saveReq []request.SaveRatingSubmission, ratingId string) bool {
@@ -443,7 +474,7 @@ func isIdExisted(saveReq []request.SaveRatingSubmission, ratingId string) bool {
 	return true
 }
 
-// swagger:route PUT /api/v1/rating-submissions/{id} RatingSubmission ReqUpdateRatingSubmissionBody
+// swagger:route PUT /rating-submissions/{id} RatingSubmission ReqUpdateRatingSubmissionBody
 // Update Rating Submission
 //
 // security:
@@ -574,7 +605,7 @@ func (s *ratingServiceImpl) UpdateRatingSubmission(input request.UpdateRatingSub
 
 }
 
-// swagger:route DELETE /api/v1/rating-submissions/{id} RatingSubmission ReqDeleteRatingSubmissionById
+// swagger:route DELETE /rating-submissions/{id} RatingSubmission ReqDeleteRatingSubmissionById
 // Delete Rating Submission
 //
 // security:
@@ -596,7 +627,103 @@ func (s *ratingServiceImpl) DeleteRatingSubmission(id string) message.Message {
 	return message.SuccessMsg
 }
 
-// swagger:route GET /api/v1/rating-submissions/{id} RatingSubmission ReqRatingSubmissionById
+// swagger:route GET /rating-submissions/{source_type}/{source_uid}/{user_id_legacy} RatingSubmission GetPublicListRatingSubmissionByUserIdRequest
+// Get Rating Submission with User Id Legacy
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input request.GetPublicListRatingSubmissionByUserIdRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message) {
+	results := []response.PublicRatingSubmissionResponse{}
+	var dir int
+	if input.Dir == "asc" {
+		dir = 1
+	} else {
+		dir = -1
+	}
+	//Set default value
+	if input.Page <= 0 {
+		input.Page = 1
+	}
+	if input.Limit <= 0 {
+		input.Limit = 50
+	}
+	if input.Sort == "" {
+		input.Sort = "created at"
+	}
+
+	// Get Rating By SourceType and SourceUID
+	filterRating := request.FilterRatingSummary{
+		SourceType: input.SourceType,
+		SourceUid:  []string{input.SourceUID},
+	}
+	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filterRating)
+	if err != nil {
+		return nil, nil, message.FailedMsg
+	}
+
+	// Get Rating Submission
+	filterRatingSubs := request.FilterRatingSubmission{}
+	for _, v := range ratings {
+		filterRatingSubs.RatingID = append(filterRatingSubs.RatingID, v.ID.Hex())
+	}
+	ratingSubs, pagination, err := s.publicRatingRepo.GetPublicRatingSubmissions(input.Limit, input.Page, dir, input.Sort, filterRatingSubs)
+	if err != nil {
+		return nil, nil, message.FailedMsg
+	}
+	if len(ratings) <= 0 {
+		return results, pagination, message.SuccessMsg
+	}
+
+	for _, v := range ratingSubs {
+		likeByme := false
+		// Get like by me value
+		ratingSubHelpful, err := s.publicRatingRepo.GetRatingSubHelpfulByRatingSubAndActor(v.ID.Hex(), input.UserIdLegacy)
+		if err != nil {
+			return nil, nil, message.FailedMsg
+		}
+		if ratingSubHelpful != nil {
+			likeByme = ratingSubHelpful.Status
+		}
+
+		results = append(results, response.PublicRatingSubmissionResponse{
+			ID:            v.ID,
+			UserID:        v.UserID,
+			UserIDLegacy:  v.UserIDLegacy,
+			DisplayName:   *v.DisplayName,
+			Avatar:        "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg",
+			Comment:       v.Comment,
+			SourceTransID: v.SourceTransID,
+			LikeCounter:   v.LikeCounter,
+			CreatedAt:     v.CreatedAt,
+			LikeByMe:      likeByme,
+		})
+	}
+	return results, pagination, message.SuccessMsg
+}
+
+// swagger:route PUT /rating-submissions/user-id-legacy/{user_id_legacy} RatingSubmission ReqUpdateRatingSubDisplayNameBody
+// Update Rating Submission Display Name By Id Legacy
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) message.Message {
+	if input.DisplayName == "" {
+		return message.ErrDisplayNameRequired
+	}
+
+	err := s.publicRatingRepo.UpdateRatingSubDisplayNameByIdLegacy(input)
+	if err != nil {
+		return message.ErrSaveData
+	}
+
+	return message.SuccessMsg
+}
+
+// swagger:route GET /rating-submissions/{id} RatingSubmission ReqRatingSubmissionById
 // Get Rating Submission By Id
 //
 // security:
@@ -626,7 +753,7 @@ func (s *ratingServiceImpl) GetRatingSubmission(id string) (*response.RatingSubm
 	return &result, message.SuccessMsg
 }
 
-// swagger:route GET /api/v1/rating-submissions RatingSubmission ListRatingSubmissionRequest
+// swagger:route GET /rating-submissions RatingSubmission ListRatingSubmissionRequest
 // Get List Rating Submissions
 //
 // security:
@@ -706,7 +833,7 @@ func filterScoreSubmission(ratingSubmissions entity.RatingSubmisson, score []flo
 	return false
 }
 
-// swagger:route POST /api/v1/rating-types-likert/ RatingTypesLikert createRatingTypeLikertRequest
+// swagger:route POST /rating-types-likert/ RatingTypesLikert createRatingTypeLikertRequest
 // Create Likert Rating Types
 //
 // security:
@@ -734,7 +861,7 @@ func (s *ratingServiceImpl) CreateRatingTypeLikert(input request.SaveRatingTypeL
 	return message.SuccessMsg
 }
 
-// swagger:route GET /api/v1/rating-types-likert/{id} RatingTypesLikert getRatingTypeLikertById
+// swagger:route GET /rating-types-likert/{id} RatingTypesLikert getRatingTypeLikertById
 // Get Likert Rating Types by ID
 //
 // security:
@@ -756,7 +883,7 @@ func (s *ratingServiceImpl) GetRatingTypeLikertById(input request.GetRatingTypeL
 	return result, message.SuccessMsg
 }
 
-// swagger:route PUT /api/v1/rating-types-likert/{id} RatingTypesLikert updateRatingTypeLikert
+// swagger:route PUT /rating-types-likert/{id} RatingTypesLikert updateRatingTypeLikert
 // Update Likert Rating Types
 //
 // security:
@@ -817,7 +944,7 @@ func (s *ratingServiceImpl) UpdateRatingTypeLikert(input request.SaveRatingTypeL
 	return message.SuccessMsg
 }
 
-// swagger:route DELETE /api/v1/rating-types-likert/{id} RatingTypesLikert deleteRatingTypeLikert
+// swagger:route DELETE /rating-types-likert/{id} RatingTypesLikert deleteRatingTypeLikert
 // Delete Likert Rating Types
 //
 // security:
@@ -852,7 +979,7 @@ func (s *ratingServiceImpl) DeleteRatingTypeLikertById(input request.GetRatingTy
 	return message.SuccessMsg
 }
 
-// swagger:route GET /api/v1/rating-types-likert RatingTypesLikert getRatingTypeLikerts
+// swagger:route GET /rating-types-likert RatingTypesLikert getRatingTypeLikerts
 // Get Likert Rating Types Listing
 //
 // security:
@@ -902,7 +1029,7 @@ func (s *ratingServiceImpl) GetRatingTypeLikerts(input request.GetRatingTypeLike
 	return results, pagination, message.SuccessMsg
 }
 
-// swagger:route POST /api/v1/ratings/ Ratings CreateRatingRequest
+// swagger:route POST /ratings/ Ratings CreateRatingRequest
 // Create New Rating
 //
 // responses:
@@ -978,11 +1105,11 @@ func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*enti
 	return result, message.SuccessMsg
 }
 
-// swagger:route GET /api/v1/ratings/{id} Ratings GetRatingRequest
+// swagger:route GET /ratings/{id} Ratings GetRatingRequest
 // Get Rating By Id
 //
 // responses:
-//  200: RatingsCol
+//  200: SuccessResponse
 func (s *ratingServiceImpl) GetRatingById(id string) (*entity.RatingsCol, message.Message) {
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -1000,7 +1127,7 @@ func (s *ratingServiceImpl) GetRatingById(id string) (*entity.RatingsCol, messag
 	return result, message.SuccessMsg
 }
 
-// swagger:route PUT /api/v1/ratings/{id} Ratings UpdateRatingRequest
+// swagger:route PUT /ratings/{id} Ratings UpdateRatingRequest
 // Update Rating
 //
 // responses:
@@ -1076,7 +1203,7 @@ func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) mess
 	return message.SuccessMsg
 }
 
-// swagger:route DELETE /api/v1/ratings/{id} Ratings DeleteRatingRequest
+// swagger:route DELETE /ratings/{id} Ratings DeleteRatingRequest
 // Delete Rating
 //
 // responses:
@@ -1114,11 +1241,11 @@ func (s *ratingServiceImpl) DeleteRating(id string) message.Message {
 	return message.SuccessMsg
 }
 
-// swagger:route GET /api/v1/ratings Ratings GetListRatingsRequest
+// swagger:route GET /ratings Ratings GetListRatingsRequest
 // Get list Rating
 //
 // responses:
-//  200: RatingsCol
+//  200: SuccessResponse
 func (s *ratingServiceImpl) GetListRatings(input request.GetListRatingsRequest) ([]entity.RatingsCol, *base.Pagination, message.Message) {
 	input.MakeDefaultValueIfEmpty()
 	var dir int
@@ -1233,11 +1360,11 @@ func updateRatingTypeLikertHaveSubmission(s *ratingServiceImpl, input request.Sa
 	return message.SuccessMsg
 }
 
-// swagger:route GET /api/v1/ratings/summary/{source_type} Ratings GetListRatingSummaryRequest
+// swagger:route GET /ratings/summary/{source_type} Ratings GetListRatingSummaryRequest
 // Get list Rating Summary
 //
 // responses:
-//  200: RatingsCol
+//  200: SuccessResponse
 func (s *ratingServiceImpl) GetListRatingSummary(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryResponse, message.Message) {
 	input.MakeDefaultValueIfEmpty()
 	var dir int
@@ -1373,7 +1500,57 @@ func getScore(score []float64) (float64, float64) {
 	return min, max
 }
 
-// swagger:route POST /api/v1/rating-formula/ RatingFormula createRatingFormula
+// swagger:route GET /ratings/{source_type}/{source_uid} Ratings GetRatingBySourceTypeAndActor
+// Get Rating By Source Type and Source UID
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) GetRatingBySourceTypeAndActor(input request.GetRatingBySourceTypeAndActorRequest) (*response.RatingBySourceTypeAndActorResponse, message.Message) {
+	result := response.RatingBySourceTypeAndActorResponse{}
+	// Get Ratings By Type and Actor UID
+	ratings, err := s.publicRatingRepo.GetRatingsBySourceTypeAndActor(input.SourceType, input.SourceUID)
+	if err != nil {
+		return nil, message.FailedMsg
+	}
+	if len(ratings) == 0 {
+		return nil, message.ErrNoData
+	}
+
+	result.SourceType = input.SourceType
+	result.SourceUID = input.SourceUID
+	// Get Rating Type from Rating
+	for _, v := range ratings {
+		// check rating type exist
+		ratingTypeId, err := primitive.ObjectIDFromHex(v.RatingTypeId)
+		if err != nil {
+			return nil, message.ErrRatingTypeNotExist
+		}
+
+		likert, err := s.publicRatingRepo.GetRatingTypeLikertById(ratingTypeId)
+		if err != nil {
+			return nil, message.FailedMsg
+		}
+		if likert != nil {
+			likertResp := response.MapRatingLikertToRatingNumericResp(*likert, v.ID.Hex())
+			result.Ratings = append(result.Ratings, likertResp)
+		} else {
+			numeric, err := s.publicRatingRepo.GetRatingTypeNumById(ratingTypeId)
+			if err != nil {
+				return nil, message.FailedMsg
+			}
+			if numeric == nil {
+				return nil, message.ErrRatingTypeNotExist
+			}
+			numericResp := response.MapRatingNumericToRatingNumericResp(*numeric, v.ID.Hex())
+			result.Ratings = append(result.Ratings, numericResp)
+		}
+	}
+	return &result, message.SuccessMsg
+}
+
+// swagger:route POST /rating-formula/ RatingFormula createRatingFormula
 // Create Rating Formula
 //
 // security:
@@ -1395,7 +1572,7 @@ func (s *ratingServiceImpl) CreateRatingFormula(input request.SaveRatingFormula)
 	return result, message.SuccessMsg
 }
 
-// swagger:route GET /api/v1/rating-formula/{id} RatingFormula getRatingFormulaById
+// swagger:route GET /rating-formula/{id} RatingFormula getRatingFormulaById
 // Get Rating Formula by ID
 //
 // security:
@@ -1417,7 +1594,7 @@ func (s *ratingServiceImpl) GetRatingFormulaById(input request.GetRatingFormulaR
 	return result, message.SuccessMsg
 }
 
-// swagger:route PUT /api/v1/rating-formula/{id} RatingFormula updateRatingFormula
+// swagger:route PUT /rating-formula/{id} RatingFormula updateRatingFormula
 // Update Rating Formula
 //
 // security:
@@ -1442,7 +1619,7 @@ func (s *ratingServiceImpl) UpdateRatingFormula(input request.SaveRatingFormula)
 	return message.SuccessMsg
 }
 
-// swagger:route Delete /api/v1/rating-formula/{id} RatingFormula deleteRatingFormula
+// swagger:route Delete /rating-formula/{id} RatingFormula deleteRatingFormula
 // Delete Rating Formula
 //
 // security:
@@ -1464,7 +1641,7 @@ func (s *ratingServiceImpl) DeleteRatingFormulaById(input request.GetRatingFormu
 	return message.SuccessMsg
 }
 
-// swagger:route GET /api/v1/rating-formula RatingFormula getRatingFormulas
+// swagger:route GET /rating-formula RatingFormula getRatingFormulas
 // Get Rating Formula Listing
 //
 // security:
@@ -1511,4 +1688,68 @@ func (s *ratingServiceImpl) GetRatingFormulas(input request.GetRatingFormulasReq
 	results = ratingFormulas
 
 	return results, pagination, message.SuccessMsg
+}
+
+// swagger:route POST /helpful-rating-submission/ RatingSubHelpful ReqRatingSubHelpfulBody
+// Create Helpful Rating Submission
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) message.Message {
+	counter := 0
+	// check rating submission is exist
+	ratingSubmissionId, err := primitive.ObjectIDFromHex(input.RatingSubmissionID)
+	if err != nil {
+		return message.RatingSubmissionNotFound
+	}
+
+	ratingSubmission, err := s.ratingRepo.GetRatingSubmissionById(ratingSubmissionId)
+	if err != nil {
+		if !errors.Is(err, mongo.ErrNoDocuments) {
+			return message.FailedMsg
+		}
+		return message.FailedMsg
+	}
+	if ratingSubmission == nil {
+		return message.ErrRatingSubmissionNotFound
+	}
+	counter = ratingSubmission.LikeCounter
+
+	// Check rating sub helpful exist or not
+	ratingSubHelpful, err := s.publicRatingRepo.GetRatingSubHelpfulByRatingSubAndActor(input.RatingSubmissionID, input.UserIDLegacy)
+	if err != nil {
+		return message.FailedMsg
+	}
+	if ratingSubHelpful == nil {
+		counter = counter + 1
+		// Create new one of rating sub helpful
+		_, errCr := s.publicRatingRepo.CreateRatingSubHelpful(input)
+		if errCr != nil {
+			if mongo.IsDuplicateKeyError(err) {
+				return message.ErrDuplicateRatingName
+			}
+			return message.FailedMsg
+		}
+
+	} else {
+		if !ratingSubHelpful.Status {
+			counter = counter + 1
+		} else {
+			counter = counter - 1
+		}
+		// Update status of rating sub helpful
+		errUpd := s.publicRatingRepo.UpdateStatusRatingSubHelpful(ratingSubHelpful.ID, ratingSubHelpful.Status)
+		if errUpd != nil {
+			return message.FailedMsg
+		}
+	}
+
+	// Update like_counter rating submission
+	err3 := s.publicRatingRepo.UpdateCounterRatingSubmission(ratingSubmissionId, int64(counter))
+	if err3 != nil {
+		return message.ErrSaveData
+	}
+	return message.SuccessMsg
 }

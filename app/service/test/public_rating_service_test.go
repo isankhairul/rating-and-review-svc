@@ -20,7 +20,7 @@ import (
 )
 
 var publicRatingRepository = &repository_mock.PublicRatingRepositoryMock{Mock: mock.Mock{}}
-var publicRactingService = service.NewPublicRatingService(logger, ratingRepository, publicRatingRepository)
+var publicRatingService = service.NewPublicRatingService(logger, ratingRepository, publicRatingRepository)
 
 func init() {
 	{
@@ -45,6 +45,7 @@ var (
 	idDummy1          = "62c4f2b96d90d90d6594fab7"
 	idDummy2          = "62c4f30f6d90d90d6594fab8"
 	failedId          = "62c3e57b457ed515928c3690"
+	displayName       = "User Name"
 )
 
 var requestSummary = request.GetPublicListRatingSummaryRequest{
@@ -102,7 +103,7 @@ func TestGetRatingBySourceTypeAndSourceUID(t *testing.T) {
 	publicRatingRepository.Mock.On("GetRatingsBySourceTypeAndActor", req.SourceType, req.SourceUID).Return(resultRatings, nil).Once()
 	publicRatingRepository.Mock.On("GetRatingTypeLikertById", ratingTypeId).Return(resultRatingType, nil).Once()
 
-	_, msg := publicRactingService.GetRatingBySourceTypeAndActor(req)
+	_, msg := svc.GetRatingBySourceTypeAndActor(req)
 	assert.Equal(t, message.SuccessMsg, msg)
 }
 
@@ -114,7 +115,7 @@ func TestGetRatingBySourceTypeAndSourceUIDErrNoDataRating(t *testing.T) {
 	resultRatings := []entity.RatingsCol{}
 	publicRatingRepository.Mock.On("GetRatingsBySourceTypeAndActor", req.SourceType, req.SourceUID).Return(resultRatings, nil)
 
-	_, msg := publicRactingService.GetRatingBySourceTypeAndActor(req)
+	_, msg := svc.GetRatingBySourceTypeAndActor(req)
 	assert.Equal(t, message.ErrNoData, msg)
 }
 
@@ -158,7 +159,7 @@ func TestCreateRatingSubHelpfulSuccess(t *testing.T) {
 	publicRatingRepository.Mock.On("CreateRatingSubHelpful", input).Return(ratingSubHelpful, nil).Once()
 	publicRatingRepository.Mock.On("UpdateCounterRatingSubmission", objectId, counter).Return(nil).Once()
 
-	msg := publicRactingService.CreateRatingSubHelpful(input)
+	msg := svc.CreateRatingSubHelpful(input)
 	assert.Equal(t, message.SuccessMsg, msg)
 }
 
@@ -188,7 +189,7 @@ func TestCreateRatingSubHelpfulRatingSubmissionNil(t *testing.T) {
 
 	ratingRepository.Mock.On("GetRatingSubmissionById", objectRatingSubmissionId).Return(ratingSubmission, nil).Once()
 
-	msg := publicRactingService.CreateRatingSubHelpful(input)
+	msg := svc.CreateRatingSubHelpful(input)
 	assert.Equal(t, message.FailedMsg, msg)
 }
 
@@ -231,7 +232,7 @@ func TestCreateRatingSubHelpfulUpdateCounterFailed(t *testing.T) {
 	publicRatingRepository.Mock.On("CreateRatingSubHelpful", input).Return(ratingSubHelpful, nil).Once()
 	publicRatingRepository.Mock.On("UpdateCounterRatingSubmission", objectId, ratingSubmission.LikeCounter).Return(errors.New("error")).Once()
 
-	msg := publicRactingService.CreateRatingSubHelpful(input)
+	msg := svc.CreateRatingSubHelpful(input)
 	assert.Equal(t, message.SuccessMsg, msg)
 }
 
@@ -282,7 +283,7 @@ func TestGetRatingSummaryBySourceType(t *testing.T) {
 	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idObj.Hex()).Return(ratingSubDatas, nil).Once()
 	publicRatingRepository.Mock.On("GetRatingFormulaByRatingTypeIdAndSourceType", ratingid, requestSummary.SourceType).Return(&ratingFormula, nil).Once()
 
-	result, pagination, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
+	result, pagination, msg := publicRatingService.GetListRatingSummaryBySourceType(requestSummary)
 	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
 	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
 	assert.Equal(t, 1, len(result), "Count of list kd must be 1")
@@ -299,7 +300,7 @@ func TestGetRatingSummaryBySourceTypeErrEmptyRating(t *testing.T) {
 	}
 	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, errors.New("error")).Once()
 
-	result, pagination, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
+	result, pagination, msg := publicRatingService.GetListRatingSummaryBySourceType(requestSummary)
 	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
 	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
 	assert.Equal(t, 0, len(result), "Count of list kd must be 0")
@@ -323,7 +324,7 @@ func TestGetRatingSummaryBySourceTypeFailedGetRating(t *testing.T) {
 	}
 	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "failed", filterSummary).Return(ratingDatas, &paginationResult, errors.New("error")).Once()
 
-	_, _, msg := publicRactingService.GetListRatingSummaryBySourceType(request)
+	_, _, msg := publicRatingService.GetListRatingSummaryBySourceType(request)
 	assert.Equal(t, message.FailedMsg.Code, msg.Code, "Code must be 412002")
 	assert.Equal(t, message.FailedMsg.Message, msg.Message, "Message must be failed")
 }
@@ -352,7 +353,7 @@ func TestGetRatingSummaryBySourceTypeErrGetRatingSubmission(t *testing.T) {
 	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", ratingTypeObj).Return(nil, mongo.ErrNoDocuments).Once()
 	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", failedId).Return(nil, errors.New("error")).Once()
 
-	_, _, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
+	_, _, msg := publicRatingService.GetListRatingSummaryBySourceType(requestSummary)
 	assert.Equal(t, message.ErrFailedSummaryRatingNumeric.Code, msg.Code, "Code must be 412002")
 	assert.Equal(t, message.ErrFailedSummaryRatingNumeric.Message, msg.Message, "Message must be Failed to summary rating numeric")
 }
@@ -391,7 +392,7 @@ func TestGetRatingSummaryBySourceTypeErrFailedCalculate(t *testing.T) {
 	publicRatingRepository.Mock.On("GetRatingSubsByRatingId", idObj.Hex()).Return(ratingSubDatas, nil).Once()
 	publicRatingRepository.Mock.On("GetRatingFormulaByRatingTypeIdAndSourceType", failID, requestSummary.SourceType).Return(nil, nil).Once()
 
-	_, _, msg := publicRactingService.GetListRatingSummaryBySourceType(requestSummary)
+	_, _, msg := publicRatingService.GetListRatingSummaryBySourceType(requestSummary)
 	assert.Equal(t, message.ErrFailedSummaryRatingNumeric.Code, msg.Code, "Code must be 412002")
 	assert.Equal(t, message.ErrFailedSummaryRatingNumeric.Message, msg.Message, "Message must be Failed to summary rating numeric")
 }
@@ -431,6 +432,7 @@ func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
 			RatingID:      idDummy1.Hex(),
 			UserID:        &userId,
 			UserIDLegacy:  &userId,
+			DisplayName:   &displayName,
 			Comment:       &comment,
 			SourceTransID: sourceTransId,
 			LikeCounter:   5,
@@ -445,7 +447,7 @@ func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
 	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
 	publicRatingRepository.Mock.On("GetPublicRatingSubmissions", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSubmission).Return(ratingSubDatas, &paginationResult, nil).Once()
 
-	result, pagination, msg := publicRactingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
+	result, pagination, msg := publicRatingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
 	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
 	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
 	assert.Equal(t, 1, len(result), "Count of list kd must be 1")
@@ -491,7 +493,7 @@ func TestGetRatingSubmissionBySourceTypeAndUIDEmptyList(t *testing.T) {
 	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
 	publicRatingRepository.Mock.On("GetPublicRatingSubmissions", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSubmission).Return(ratingSubDatas, &paginationResult, nil).Once()
 
-	result, pagination, msg := publicRactingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
+	result, pagination, msg := publicRatingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
 	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
 	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
 	assert.Equal(t, 0, len(result), "Count of list kd must be 0")
@@ -504,7 +506,7 @@ func TestGetRatingSubmissionBySourceTypeAndUIDErrGetRating(t *testing.T) {
 
 	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "failed", filterSummary).Return(nil, nil, errors.New("error")).Once()
 
-	_, _, msg := publicRactingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
+	_, _, msg := publicRatingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
 	assert.Equal(t, message.FailedMsg.Code, msg.Code, "Code must be 412002")
 	assert.Equal(t, message.FailedMsg.Message, msg.Message, "Message must be failed")
 }

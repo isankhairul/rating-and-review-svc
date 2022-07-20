@@ -291,10 +291,11 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 		if err = sessionContext.CommitTransaction(sessionContext); err != nil {
 			return err
 		}
-		for _, argEs := range ratingSubmission {
-			for _, args := range result.InsertedIDs {
-				argEs.ID = args.(primitive.ObjectID)
+		for _, args := range result.InsertedIDs {
+			data := entity.RatingSubmisson{
+				ID: args.(primitive.ObjectID),
 			}
+			ratingSubmission = append(ratingSubmission, data)
 		}
 		return nil
 	})

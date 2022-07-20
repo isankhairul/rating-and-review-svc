@@ -2,7 +2,6 @@ package transport
 
 import (
 	"context"
-	"encoding/json"
 	"go-klikdokter/app/api/endpoint"
 	"go-klikdokter/app/model/base/encoder"
 	"go-klikdokter/app/model/request"
@@ -25,20 +24,6 @@ func PublicRatingHttpHandler(s service.PublicRatingService, logger log.Logger) h
 		httptransport.ServerErrorEncoder(encoder.EncodeError),
 	}
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "public/ratings/{source_type}/{source_uid}").Handler(httptransport.NewServer(
-		ep.GetRatingBySourceTypeAndActor,
-		decodeGetRatingBySourceTypeAndActor,
-		encoder.EncodeResponseHTTP,
-		options...,
-	))
-
-	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "public/helpful-rating-submission/").Handler(httptransport.NewServer(
-		ep.CreateRatingSubHelpful,
-		decodeCreateRatingSubHelpful,
-		encoder.EncodeResponseHTTP,
-		options...,
-	))
-
 	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "public/ratings-summary/{source_type}").Handler(httptransport.NewServer(
 		ep.GetListRatingSummaryBySourceType,
 		decodeGetRatingSummaryBySourceType,
@@ -46,54 +31,14 @@ func PublicRatingHttpHandler(s service.PublicRatingService, logger log.Logger) h
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "public/rating-submission/{source_type}/{source_uid}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "public/rating-submissions/{source_type}/{source_uid}").Handler(httptransport.NewServer(
 		ep.GetListRatingSubmissionBySourceTypeAndUID,
 		decodeGetRatingSubmissionBySourceTypeAndUID,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "public/rating-submission/{source_type}/{source_uid}/{user_id_legacy}").Handler(httptransport.NewServer(
-		ep.GetListRatingSubmissionWithUserIdLegacy,
-		decodeGetRatingSubmissionWithUserIdLegacy,
-		encoder.EncodeResponseHTTP,
-		options...,
-	))
-
-	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "public/rating-submissions/").Handler(httptransport.NewServer(
-		ep.CreateRatingSubmission,
-		decodeCreatePublicRatingSubmission,
-		encoder.EncodeResponseHTTP,
-		options...,
-	))
-
-	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "public/rating-submission/user-id-legacy/{user_id_legacy}").Handler(httptransport.NewServer(
-		ep.UpdateRatingSubDisplayNameByIdLegacy,
-		decodeUpdatePublicRatingSubDisplayName,
-		encoder.EncodeResponseHTTP,
-		options...,
-	))
-
 	return pr
-}
-
-func decodeGetRatingBySourceTypeAndActor(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
-	var req request.GetRatingBySourceTypeAndActorRequest
-	req.SourceType = mux.Vars(r)["source_type"]
-	req.SourceUID = mux.Vars(r)["source_uid"]
-	return req, nil
-}
-
-func decodeCreateRatingSubHelpful(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
-	var req request.CreateRatingSubHelpfulRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	err = req.Validate()
-	if err != nil {
-		return nil, err
-	}
-	return req, nil
 }
 
 func decodeGetRatingSummaryBySourceType(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
@@ -123,43 +68,4 @@ func decodeGetRatingSubmissionBySourceTypeAndUID(ctx context.Context, r *http.Re
 		return nil, err
 	}
 	return params, nil
-}
-
-func decodeGetRatingSubmissionWithUserIdLegacy(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
-	var params request.GetPublicListRatingSubmissionByUserIdRequest
-	if err := r.ParseForm(); err != nil {
-		return nil, err
-	}
-	if err = schema.NewDecoder().Decode(&params, r.Form); err != nil {
-		return nil, err
-	}
-	params.SourceType = mux.Vars(r)["source_type"]
-	params.SourceUID = mux.Vars(r)["source_uid"]
-	params.UserIdLegacy = mux.Vars(r)["user_id_legacy"]
-	err = params.ValidateSourceType()
-	if err != nil {
-		return nil, err
-	}
-	return params, nil
-}
-
-func decodeCreatePublicRatingSubmission(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
-	var req request.CreateRatingSubmissionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	err = req.Validate()
-	if err != nil {
-		return nil, err
-	}
-	return req, nil
-}
-
-func decodeUpdatePublicRatingSubDisplayName(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
-	var req request.UpdateRatingSubDisplayNameRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
-	}
-	req.UserIdLegacy = mux.Vars(r)["user_id_legacy"]
-	return req, nil
 }

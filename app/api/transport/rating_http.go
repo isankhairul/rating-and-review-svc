@@ -96,6 +96,20 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 		options...,
 	))
 
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-submissions/{source_type}/{source_uid}/{user_id_legacy}").Handler(httptransport.NewServer(
+		ep.GetListRatingSubmissionWithUserIdLegacy,
+		decodeGetRatingSubmissionWithUserIdLegacy,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "rating-submissions/user-id-legacy/{user_id_legacy}").Handler(httptransport.NewServer(
+		ep.UpdateRatingSubDisplayNameByIdLegacy,
+		decodeUpdatePublicRatingSubDisplayName,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
 	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "rating-types-likert/").Handler(httptransport.NewServer(
 		ep.CreateRatingTypeLikert,
 		decodeCreateRatingTypeLikert,
@@ -131,7 +145,7 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 		options...,
 	))
 
-	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + _struct.PrefixRating + "/").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "ratings/").Handler(httptransport.NewServer(
 		ep.CreateRating,
 		decodeCreateRating,
 		encoder.EncodeResponseHTTP,
@@ -145,31 +159,37 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 		options...,
 	))
 
-	ratingPathUid := _struct.PrefixBase + _struct.PrefixRating + "/{id}"
-	pr.Methods(http.MethodGet).Path(ratingPathUid).Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "ratings/{id}").Handler(httptransport.NewServer(
 		ep.ShowRating,
 		decodeGetById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPut).Path(ratingPathUid).Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "ratings/{id}").Handler(httptransport.NewServer(
 		ep.UpdateRating,
 		decodeEditRatingById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodDelete).Path(ratingPathUid).Handler(httptransport.NewServer(
+	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "ratings/{id}").Handler(httptransport.NewServer(
 		ep.DeleteRating,
 		decodeGetById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + _struct.PrefixRating).Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "ratings").Handler(httptransport.NewServer(
 		ep.GetRatings,
 		decodeGetRatings,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "ratings/{source_type}/{source_uid}").Handler(httptransport.NewServer(
+		ep.GetRatingBySourceTypeAndActor,
+		decodeGetRatingBySourceTypeAndActor,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
@@ -205,6 +225,13 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "rating-formula/{id}").Handler(httptransport.NewServer(
 		ep.DeleteRatingFormulaById,
 		decodeDeleteRatingFormulaById,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "helpful-rating-submission/").Handler(httptransport.NewServer(
+		ep.CreateRatingSubHelpful,
+		decodeCreateRatingSubHelpful,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
@@ -447,5 +474,51 @@ func decodeUpdateRatingFormulaById(ctx context.Context, r *http.Request) (rqst i
 		return nil, err
 	}
 	req.Id = mux.Vars(r)["id"]
+	return req, nil
+}
+
+func decodeGetRatingBySourceTypeAndActor(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.GetRatingBySourceTypeAndActorRequest
+	req.SourceType = mux.Vars(r)["source_type"]
+	req.SourceUID = mux.Vars(r)["source_uid"]
+	return req, nil
+}
+
+func decodeGetRatingSubmissionWithUserIdLegacy(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var params request.GetPublicListRatingSubmissionByUserIdRequest
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+	if err = schema.NewDecoder().Decode(&params, r.Form); err != nil {
+		return nil, err
+	}
+	params.SourceType = mux.Vars(r)["source_type"]
+	params.SourceUID = mux.Vars(r)["source_uid"]
+	params.UserIdLegacy = mux.Vars(r)["user_id_legacy"]
+	err = params.ValidateSourceType()
+	if err != nil {
+		return nil, err
+	}
+	return params, nil
+}
+
+func decodeUpdatePublicRatingSubDisplayName(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.UpdateRatingSubDisplayNameRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	req.UserIdLegacy = mux.Vars(r)["user_id_legacy"]
+	return req, nil
+}
+
+func decodeCreateRatingSubHelpful(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.CreateRatingSubHelpfulRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	err = req.Validate()
+	if err != nil {
+		return nil, err
+	}
 	return req, nil
 }

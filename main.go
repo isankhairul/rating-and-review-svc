@@ -3,7 +3,7 @@
 //   title: Boilerplate Go Kit Api
 //  Schemes: https, http
 //  Host:
-//  BasePath: /rating-svc
+//  BasePath: /rating-svc/api/v1
 //  Produces:
 //    - application/json
 //
