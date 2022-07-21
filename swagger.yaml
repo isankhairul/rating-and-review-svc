@@ -821,12 +821,12 @@ paths:
         name: page
         type: integer
         x-go-name: Page
-      - example: name asc, uom desc
+      - description: Sort fields
         in: query
         name: sort
         type: string
         x-go-name: Sort
-      - example: name asc, uom desc
+      - description: Sort direction asc or desc
         in: query
         name: dir
         type: string
@@ -1159,12 +1159,12 @@ paths:
         name: page
         type: integer
         x-go-name: Page
-      - example: name asc, uom desc
+      - description: Sort fields
         in: query
         name: sort
         type: string
         x-go-name: Sort
-      - example: name asc, uom desc
+      - description: Sort direction asc or desc
         in: query
         name: dir
         type: string
@@ -1290,12 +1290,12 @@ paths:
         name: page
         type: integer
         x-go-name: Page
-      - example: name asc, uom desc
+      - description: Sort fields
         in: query
         name: sort
         type: string
         x-go-name: Sort
-      - example: name asc, uom desc
+      - description: Sort direction asc or desc
         in: query
         name: dir
         type: string
