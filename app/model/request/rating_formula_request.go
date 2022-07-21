@@ -11,11 +11,11 @@ type GetRatingFormulasRequest struct {
 	// in: query
 	Page int ` json:"page" schema:"page" binding:"omitempty,numeric,min=1"`
 
-	// Sort fields, example: name asc, uom desc
+	// Sort fields
 	// in: query
 	Sort string ` json:"sort" schema:"sort" binding:"omitempty"`
 
-	// Sort fields, example: name asc, uom desc
+	// Sort direction asc or desc
 	// in: query
 	Dir string ` json:"dir" schema:"dir" binding:"omitempty"`
 
