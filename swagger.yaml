@@ -711,8 +711,95 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingSubHelpful
+  /list-rating-submissions/{source_type}/{source_uid}/{user_id_legacy}:
+    get:
+      description: Get Rating Submission with User Id Legacy
+      operationId: GetPublicListRatingSubmissionByUserIdRequest
+      parameters:
+      - description: SourceType
+        in: path
+        name: source_type
+        required: true
+        type: string
+        x-go-name: SourceType
+      - description: SourceUID
+        in: path
+        name: source_uid
+        required: true
+        type: string
+        x-go-name: SourceUID
+      - description: UserIdLegacy
+        in: path
+        name: user_id_legacy
+        required: true
+        type: string
+        x-go-name: UserIdLegacy
+      - format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - in: query
+        name: sort
+        type: string
+        x-go-name: Sort
+      - in: query
+        name: dir
+        type: string
+        x-go-name: Dir
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
+      tags:
+      - RatingSubmission
+  /list-ratings/{source_type}/{source_uid}:
+    get:
+      description: Get Rating By Source Type and Source UID
+      operationId: GetRatingBySourceTypeAndActor
+      parameters:
+      - in: path
+        name: source_type
+        required: true
+        type: string
+        x-go-name: SourceType
+      - in: path
+        name: source_uid
+        required: true
+        type: string
+        x-go-name: SourceUID
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
+      tags:
+      - Ratings
   /public/rating-submissions/{source_type}/{source_uid}:
     get:
       description: Get Rating Submission By Source Type and Source UID
@@ -844,6 +931,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingFormula
   /rating-formula/:
@@ -866,6 +956,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingFormula
   /rating-formula/{id}:
@@ -887,6 +980,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingFormula
     get:
@@ -907,6 +1003,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingFormula
     put:
@@ -933,6 +1032,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingFormula
   /rating-submissions:
@@ -971,6 +1073,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingSubmission
   /rating-submissions/:
@@ -992,6 +1097,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingSubmission
   /rating-submissions/{id}:
@@ -1014,6 +1122,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingSubmission
     get:
@@ -1035,6 +1146,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingSubmission
     put:
@@ -1062,58 +1176,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
-      tags:
-      - RatingSubmission
-  /rating-submissions/{source_type}/{source_uid}/{user_id_legacy}:
-    get:
-      description: Get Rating Submission with User Id Legacy
-      operationId: GetPublicListRatingSubmissionByUserIdRequest
-      parameters:
-      - description: SourceType
-        in: path
-        name: source_type
-        required: true
-        type: string
-        x-go-name: SourceType
-      - description: SourceUID
-        in: path
-        name: source_uid
-        required: true
-        type: string
-        x-go-name: SourceUID
-      - description: UserIdLegacy
-        in: path
-        name: user_id_legacy
-        required: true
-        type: string
-        x-go-name: UserIdLegacy
-      - format: int64
-        in: query
-        name: limit
-        type: integer
-        x-go-name: Limit
-      - format: int64
-        in: query
-        name: page
-        type: integer
-        x-go-name: Page
-      - in: query
-        name: sort
-        type: string
-        x-go-name: Sort
-      - in: query
-        name: dir
-        type: string
-        x-go-name: Dir
-      responses:
-        "200":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
-        "401":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingSubmission
   /rating-submissions/user-id-legacy/{user_id_legacy}:
@@ -1140,6 +1205,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingSubmission
   /rating-types-likert:
@@ -1182,6 +1250,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingTypesLikert
   /rating-types-likert/:
@@ -1204,6 +1275,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingTypesLikert
   /rating-types-likert/{id}:
@@ -1225,6 +1299,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingTypesLikert
     get:
@@ -1245,6 +1322,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingTypesLikert
     put:
@@ -1271,6 +1351,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingTypesLikert
   /rating-types-numeric:
@@ -1313,6 +1396,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingTypeNum
   /rating-types-numeric/:
@@ -1335,6 +1421,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingTypeNum
   /rating-types-numeric/{id}:
@@ -1356,6 +1445,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingTypeNum
     get:
@@ -1376,6 +1468,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingTypeNum
     put:
@@ -1402,6 +1497,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - RatingTypeNum
   /ratings:
@@ -1436,6 +1534,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - Ratings
   /ratings/:
@@ -1453,6 +1554,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - Ratings
   /ratings/{id}:
@@ -1470,6 +1574,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - Ratings
     get:
@@ -1486,6 +1593,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - Ratings
     put:
@@ -1507,32 +1617,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
-      tags:
-      - Ratings
-  /ratings/{source_type}/{source_uid}:
-    get:
-      description: Get Rating By Source Type and Source UID
-      operationId: GetRatingBySourceTypeAndActor
-      parameters:
-      - in: path
-        name: source_type
-        required: true
-        type: string
-        x-go-name: SourceType
-      - in: path
-        name: source_uid
-        required: true
-        type: string
-        x-go-name: SourceUID
-      responses:
-        "200":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
-        "401":
-          description: SuccessResponse
-          schema:
-            $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - Ratings
   /ratings/summary/{source_type}:
@@ -1573,6 +1660,9 @@ paths:
           description: SuccessResponse
           schema:
             $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
       tags:
       - Ratings
 produces:
@@ -1580,4 +1670,9 @@ produces:
 schemes:
 - https
 - http
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

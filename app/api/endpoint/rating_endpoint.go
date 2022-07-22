@@ -7,6 +7,8 @@ import (
 	"go-klikdokter/app/model/base/encoder"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/service"
+	"go-klikdokter/helper/global"
+	"go-klikdokter/helper/message"
 
 	"github.com/go-kit/kit/endpoint"
 )
@@ -92,6 +94,12 @@ func MakeRatingEndpoints(s service.RatingService) RatingEndpoint {
 func makeCreateRatingTypeNum(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.CreateRatingTypeNumRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, msg := s.CreateRatingTypeNum(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -104,6 +112,12 @@ func makeCreateRatingTypeNum(s service.RatingService) endpoint.Endpoint {
 func makeUpdateRatingById(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.EditRatingTypeNumRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		msg := s.UpdateRatingTypeNum(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -116,6 +130,12 @@ func makeUpdateRatingById(s service.RatingService) endpoint.Endpoint {
 func makeGetRatingTypeNumeById(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetRatingTypeNumRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, msg := s.GetRatingTypeNumById(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -128,6 +148,12 @@ func makeGetRatingTypeNumeById(s service.RatingService) endpoint.Endpoint {
 func makeDeleteRatingTypeNumById(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetRatingTypeNumRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		msg := s.DeleteRatingTypeNumById(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -140,6 +166,12 @@ func makeDeleteRatingTypeNumById(s service.RatingService) endpoint.Endpoint {
 func makeGetRatingTypeNums(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetRatingTypeNumsRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, pagination, msg := s.GetRatingTypeNums(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -152,6 +184,12 @@ func makeGetRatingTypeNums(s service.RatingService) endpoint.Endpoint {
 func makeCreateRatingSubmission(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.CreateRatingSubmissionRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, msg := s.CreateRatingSubmission(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
@@ -163,6 +201,12 @@ func makeCreateRatingSubmission(s service.RatingService) endpoint.Endpoint {
 func makeUpdateRatingSubmission(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.UpdateRatingSubmissionRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		msg := s.UpdateRatingSubmission(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -174,6 +218,12 @@ func makeUpdateRatingSubmission(s service.RatingService) endpoint.Endpoint {
 func makeDeleteRatingSubmission(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		msg := s.DeleteRatingSubmission(fmt.Sprint(rqst))
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 		}
@@ -185,6 +235,18 @@ func makeDeleteRatingSubmission(s service.RatingService) endpoint.Endpoint {
 func makeGetListRatingSubmissionWithUserIdLegacy(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetPublicListRatingSubmissionByUserIdRequest)
+
+		jwtObj, msg := global.SetJWTInfoFromContext(ctx)
+		if msg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
+		}
+
+		// Validate jwtObj User Id
+		if jwtObj.UserIdLegacy != req.UserIdLegacy {
+			msg := message.ErrUserNotFound
+			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
+		}
+
 		result, pagination, msg := s.GetListRatingSubmissionWithUserIdLegacy(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil
@@ -196,6 +258,12 @@ func makeGetListRatingSubmissionWithUserIdLegacy(s service.RatingService) endpoi
 func makeUpdatePublicRatingSubDisplayNameByIdLegacy(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.UpdateRatingSubDisplayNameRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		msg := s.UpdateRatingSubDisplayNameByIdLegacy(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
@@ -207,6 +275,12 @@ func makeUpdatePublicRatingSubDisplayNameByIdLegacy(s service.RatingService) end
 func makeGetRatingSubmission(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		result, msg := s.GetRatingSubmission(fmt.Sprint(rqst))
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 		}
@@ -218,6 +292,12 @@ func makeGetRatingSubmission(s service.RatingService) endpoint.Endpoint {
 func makeGetListRatingSubmissions(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.ListRatingSubmissionRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, pagination, msg := s.GetListRatingSubmissions(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -230,6 +310,12 @@ func makeGetListRatingSubmissions(s service.RatingService) endpoint.Endpoint {
 func makeCreateRatingTypeLikert(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.SaveRatingTypeLikertRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		msg := s.CreateRatingTypeLikert(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -242,6 +328,12 @@ func makeCreateRatingTypeLikert(s service.RatingService) endpoint.Endpoint {
 func makeGetRatingTypeLikertById(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetRatingTypeLikertRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, msg := s.GetRatingTypeLikertById(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -254,6 +346,12 @@ func makeGetRatingTypeLikertById(s service.RatingService) endpoint.Endpoint {
 func makeUpdateRatingTypeLikertById(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.SaveRatingTypeLikertRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		msg := s.UpdateRatingTypeLikert(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -266,6 +364,12 @@ func makeUpdateRatingTypeLikertById(s service.RatingService) endpoint.Endpoint {
 func makeDeleteRatingTypeLikertById(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetRatingTypeLikertRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		msg := s.DeleteRatingTypeLikertById(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -278,6 +382,12 @@ func makeDeleteRatingTypeLikertById(s service.RatingService) endpoint.Endpoint {
 func makeRatingTypeLikerts(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetRatingTypeLikertsRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, pagination, msg := s.GetRatingTypeLikerts(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -290,6 +400,12 @@ func makeRatingTypeLikerts(s service.RatingService) endpoint.Endpoint {
 func makeCreateRating(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.SaveRatingRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		_, msg := s.CreateRating(req)
 
 		return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
@@ -298,6 +414,11 @@ func makeCreateRating(s service.RatingService) endpoint.Endpoint {
 
 func makeShowRating(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, msg := s.GetRatingById(fmt.Sprint(rqst))
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -309,6 +430,11 @@ func makeShowRating(s service.RatingService) endpoint.Endpoint {
 
 func makeUpdateRating(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		req := rqst.(request.UpdateRatingRequest)
 		msg := s.UpdateRating(req)
 
@@ -318,6 +444,11 @@ func makeUpdateRating(s service.RatingService) endpoint.Endpoint {
 
 func makeDeleteRatingById(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		msg := s.DeleteRating(fmt.Sprint(rqst))
 		return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 	}
@@ -326,6 +457,12 @@ func makeDeleteRatingById(s service.RatingService) endpoint.Endpoint {
 func makeGetListRatings(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetListRatingsRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, paging, msg := s.GetListRatings(req)
 
 		if msg.Code != 212000 {
@@ -339,6 +476,12 @@ func makeGetListRatings(s service.RatingService) endpoint.Endpoint {
 func makGetListRatingSummary(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetListRatingSummaryRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, msg := s.GetListRatingSummary(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -351,6 +494,12 @@ func makGetListRatingSummary(s service.RatingService) endpoint.Endpoint {
 func makeGetRatingBySourceTypeAndActor(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetRatingBySourceTypeAndActorRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, msg := s.GetRatingBySourceTypeAndActor(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -362,6 +511,12 @@ func makeGetRatingBySourceTypeAndActor(s service.RatingService) endpoint.Endpoin
 func makeCreateRatingFormula(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.SaveRatingFormula)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, msg := s.CreateRatingFormula(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -373,6 +528,12 @@ func makeCreateRatingFormula(s service.RatingService) endpoint.Endpoint {
 func makeUpdateRatingFormulaById(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.SaveRatingFormula)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		msg := s.UpdateRatingFormula(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -384,6 +545,12 @@ func makeUpdateRatingFormulaById(s service.RatingService) endpoint.Endpoint {
 func makeGetRatingFormulaById(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetRatingFormulaRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, msg := s.GetRatingFormulaById(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -395,6 +562,12 @@ func makeGetRatingFormulaById(s service.RatingService) endpoint.Endpoint {
 func makeDeleteRatingFormulaById(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetRatingFormulaRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		msg := s.DeleteRatingFormulaById(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -406,6 +579,12 @@ func makeDeleteRatingFormulaById(s service.RatingService) endpoint.Endpoint {
 func makeRatingFormulas(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetRatingFormulasRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		result, pagination, msg := s.GetRatingFormulas(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
@@ -417,6 +596,12 @@ func makeRatingFormulas(s service.RatingService) endpoint.Endpoint {
 func makeCreateRatingSubHelpful(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.CreateRatingSubHelpfulRequest)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
 		msg := s.CreateRatingSubHelpful(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil

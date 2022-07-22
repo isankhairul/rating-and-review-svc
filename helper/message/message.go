@@ -80,6 +80,7 @@ var ErrFailedToCalculate = Message{Code: ValidationFailCode, Message: "Failed to
 var ErrFailedToGetFormula = Message{Code: ValidationFailCode, Message: "Failed to get formula rating"}
 var ErrFailedSummaryRatingNumeric = Message{Code: ValidationFailCode, Message: "Failed to summary rating numeric"}
 var ErrDisplayNameRequired = Message{Code: ValidationFailCode, Message: "Display Name is required"}
+var ErrUserNotFound = Message{Code: ValidationFailCode, Message: "User not found"}
 
 // Code 39000 - 39999 Server error
 var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}

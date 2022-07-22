@@ -7,6 +7,7 @@ require (
 	github.com/go-kit/kit v0.12.0
 	github.com/go-kit/log v0.2.0
 	github.com/go-openapi/runtime v0.21.0
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/schema v1.2.0
@@ -16,7 +17,7 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
-	github.com/vjeantet/govaluate v1.3.0 // indirect
+	github.com/vjeantet/govaluate v1.3.0
 	go.mongodb.org/mongo-driver v1.7.3
 	gorm.io/driver/mysql v1.2.0
 	gorm.io/driver/postgres v1.2.2
