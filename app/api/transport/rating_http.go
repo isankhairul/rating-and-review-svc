@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/schema"
 
+	"github.com/go-kit/kit/auth/jwt"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
@@ -24,6 +25,7 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 	options := []httptransport.ServerOption{
 		httptransport.ServerErrorLogger(logger),
 		httptransport.ServerErrorEncoder(encoder.EncodeError),
+		httptransport.ServerBefore(jwt.HTTPToContext()),
 	}
 
 	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "rating-types-numeric/").Handler(httptransport.NewServer(
@@ -96,7 +98,7 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-submissions/{source_type}/{source_uid}/{user_id_legacy}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "list-rating-submissions/{source_type}/{source_uid}/{user_id_legacy}").Handler(httptransport.NewServer(
 		ep.GetListRatingSubmissionWithUserIdLegacy,
 		decodeGetRatingSubmissionWithUserIdLegacy,
 		encoder.EncodeResponseHTTP,
@@ -187,7 +189,7 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "ratings/{source_type}/{source_uid}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "list-ratings/{source_type}/{source_uid}").Handler(httptransport.NewServer(
 		ep.GetRatingBySourceTypeAndActor,
 		decodeGetRatingBySourceTypeAndActor,
 		encoder.EncodeResponseHTTP,

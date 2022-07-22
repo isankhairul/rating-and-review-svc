@@ -14,6 +14,7 @@ import (
 	"strconv"
 
 	"github.com/go-kit/log"
+	"github.com/spf13/viper"
 	"github.com/vjeantet/govaluate"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -263,17 +264,30 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 	}
 
 	for _, v := range ratingSubs {
+		// Get Rating value
+		ratingId, err := primitive.ObjectIDFromHex(v.RatingID)
+		if err != nil {
+			return nil, nil, message.FailedMsg
+		}
+		rating, err := s.ratingRepo.GetRatingById(ratingId)
+		if err != nil {
+			return nil, nil, message.ErrRatingNotFound
+		}
+
+		baseUrlS3 := viper.GetString("url.base-url-s3")
 		results = append(results, response.PublicRatingSubmissionResponse{
 			ID:            v.ID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
 			DisplayName:   *v.DisplayName,
-			Avatar:        "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg",
+			Avatar:        baseUrlS3 + "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg",
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,
 			LikeCounter:   v.LikeCounter,
-			CreatedAt:     v.CreatedAt,
+			RatingType:    rating.RatingType,
+			Value:         v.Value,
 			LikeByMe:      false,
+			CreatedAt:     v.CreatedAt,
 		})
 	}
 	return results, pagination, message.SuccessMsg

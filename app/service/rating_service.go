@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/go-kit/log"
+	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -84,6 +85,7 @@ func NewRatingService(
 // Create Numeric Rating Types
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -121,6 +123,7 @@ func (s *ratingServiceImpl) CreateRatingTypeNum(input request.CreateRatingTypeNu
 // Get Numeric Rating Types by ID
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -175,6 +178,7 @@ func checkConditionUpdateRatingTypeNum(s *ratingServiceImpl, input request.EditR
 // Update Numeric Rating Type
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -206,6 +210,7 @@ func (s *ratingServiceImpl) UpdateRatingTypeNum(input request.EditRatingTypeNumR
 // Delete Numeric Rating Type
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -241,6 +246,7 @@ func (s *ratingServiceImpl) DeleteRatingTypeNumById(input request.GetRatingTypeN
 // Get Numeric Rating Types Listing
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -290,6 +296,7 @@ func (s *ratingServiceImpl) GetRatingTypeNums(input request.GetRatingTypeNumsReq
 // Create Rating Submission
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -478,6 +485,7 @@ func isIdExisted(saveReq []request.SaveRatingSubmission, ratingId string) bool {
 // Update Rating Submission
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -609,6 +617,7 @@ func (s *ratingServiceImpl) UpdateRatingSubmission(input request.UpdateRatingSub
 // Delete Rating Submission
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -627,10 +636,11 @@ func (s *ratingServiceImpl) DeleteRatingSubmission(id string) message.Message {
 	return message.SuccessMsg
 }
 
-// swagger:route GET /rating-submissions/{source_type}/{source_uid}/{user_id_legacy} RatingSubmission GetPublicListRatingSubmissionByUserIdRequest
+// swagger:route GET /list-rating-submissions/{source_type}/{source_uid}/{user_id_legacy} RatingSubmission GetPublicListRatingSubmissionByUserIdRequest
 // Get Rating Submission with User Id Legacy
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -678,6 +688,16 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 
 	for _, v := range ratingSubs {
 		likeByme := false
+		// Get Rating value
+		ratingId, err := primitive.ObjectIDFromHex(v.RatingID)
+		if err != nil {
+			return nil, nil, message.FailedMsg
+		}
+		rating, err := s.ratingRepo.GetRatingById(ratingId)
+		if err != nil {
+			return nil, nil, message.ErrRatingNotFound
+		}
+
 		// Get like by me value
 		ratingSubHelpful, err := s.publicRatingRepo.GetRatingSubHelpfulByRatingSubAndActor(v.ID.Hex(), input.UserIdLegacy)
 		if err != nil {
@@ -687,17 +707,20 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 			likeByme = ratingSubHelpful.Status
 		}
 
+		baseUrlS3 := viper.GetString("url.base-url-s3")
 		results = append(results, response.PublicRatingSubmissionResponse{
 			ID:            v.ID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
 			DisplayName:   *v.DisplayName,
-			Avatar:        "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg",
+			Avatar:        baseUrlS3 + "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg",
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,
 			LikeCounter:   v.LikeCounter,
-			CreatedAt:     v.CreatedAt,
 			LikeByMe:      likeByme,
+			RatingType:    rating.RatingType,
+			Value:         v.Value,
+			CreatedAt:     v.CreatedAt,
 		})
 	}
 	return results, pagination, message.SuccessMsg
@@ -707,6 +730,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 // Update Rating Submission Display Name By Id Legacy
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -727,6 +751,7 @@ func (s *ratingServiceImpl) UpdateRatingSubDisplayNameByIdLegacy(input request.U
 // Get Rating Submission By Id
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -757,6 +782,7 @@ func (s *ratingServiceImpl) GetRatingSubmission(id string) (*response.RatingSubm
 // Get List Rating Submissions
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -837,6 +863,7 @@ func filterScoreSubmission(ratingSubmissions entity.RatingSubmisson, score []flo
 // Create Likert Rating Types
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -865,6 +892,7 @@ func (s *ratingServiceImpl) CreateRatingTypeLikert(input request.SaveRatingTypeL
 // Get Likert Rating Types by ID
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -887,6 +915,7 @@ func (s *ratingServiceImpl) GetRatingTypeLikertById(input request.GetRatingTypeL
 // Update Likert Rating Types
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -948,6 +977,7 @@ func (s *ratingServiceImpl) UpdateRatingTypeLikert(input request.SaveRatingTypeL
 // Delete Likert Rating Types
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -983,6 +1013,7 @@ func (s *ratingServiceImpl) DeleteRatingTypeLikertById(input request.GetRatingTy
 // Get Likert Rating Types Listing
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -1032,6 +1063,8 @@ func (s *ratingServiceImpl) GetRatingTypeLikerts(input request.GetRatingTypeLike
 // swagger:route POST /ratings/ Ratings CreateRatingRequest
 // Create New Rating
 //
+// security:
+// - Bearer: []
 // responses:
 //  200: SuccessResponse
 func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*entity.RatingsCol, message.Message) {
@@ -1108,6 +1141,8 @@ func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*enti
 // swagger:route GET /ratings/{id} Ratings GetRatingRequest
 // Get Rating By Id
 //
+// security:
+// - Bearer: []
 // responses:
 //  200: SuccessResponse
 func (s *ratingServiceImpl) GetRatingById(id string) (*entity.RatingsCol, message.Message) {
@@ -1130,6 +1165,8 @@ func (s *ratingServiceImpl) GetRatingById(id string) (*entity.RatingsCol, messag
 // swagger:route PUT /ratings/{id} Ratings UpdateRatingRequest
 // Update Rating
 //
+// security:
+// - Bearer: []
 // responses:
 //  200: SuccessResponse
 func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) message.Message {
@@ -1206,6 +1243,8 @@ func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) mess
 // swagger:route DELETE /ratings/{id} Ratings DeleteRatingRequest
 // Delete Rating
 //
+// security:
+// - Bearer: []
 // responses:
 //  200: SuccessResponse
 func (s *ratingServiceImpl) DeleteRating(id string) message.Message {
@@ -1244,6 +1283,8 @@ func (s *ratingServiceImpl) DeleteRating(id string) message.Message {
 // swagger:route GET /ratings Ratings GetListRatingsRequest
 // Get list Rating
 //
+// security:
+// - Bearer: []
 // responses:
 //  200: SuccessResponse
 func (s *ratingServiceImpl) GetListRatings(input request.GetListRatingsRequest) ([]entity.RatingsCol, *base.Pagination, message.Message) {
@@ -1363,6 +1404,8 @@ func updateRatingTypeLikertHaveSubmission(s *ratingServiceImpl, input request.Sa
 // swagger:route GET /ratings/summary/{source_type} Ratings GetListRatingSummaryRequest
 // Get list Rating Summary
 //
+// security:
+// - Bearer: []
 // responses:
 //  200: SuccessResponse
 func (s *ratingServiceImpl) GetListRatingSummary(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryResponse, message.Message) {
@@ -1500,10 +1543,11 @@ func getScore(score []float64) (float64, float64) {
 	return min, max
 }
 
-// swagger:route GET /ratings/{source_type}/{source_uid} Ratings GetRatingBySourceTypeAndActor
+// swagger:route GET /list-ratings/{source_type}/{source_uid} Ratings GetRatingBySourceTypeAndActor
 // Get Rating By Source Type and Source UID
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -1554,6 +1598,7 @@ func (s *ratingServiceImpl) GetRatingBySourceTypeAndActor(input request.GetRatin
 // Create Rating Formula
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -1576,6 +1621,7 @@ func (s *ratingServiceImpl) CreateRatingFormula(input request.SaveRatingFormula)
 // Get Rating Formula by ID
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -1598,6 +1644,7 @@ func (s *ratingServiceImpl) GetRatingFormulaById(input request.GetRatingFormulaR
 // Update Rating Formula
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -1623,6 +1670,7 @@ func (s *ratingServiceImpl) UpdateRatingFormula(input request.SaveRatingFormula)
 // Delete Rating Formula
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -1645,6 +1693,7 @@ func (s *ratingServiceImpl) DeleteRatingFormulaById(input request.GetRatingFormu
 // Get Rating Formula Listing
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
@@ -1694,6 +1743,7 @@ func (s *ratingServiceImpl) GetRatingFormulas(input request.GetRatingFormulasReq
 // Create Helpful Rating Submission
 //
 // security:
+// - Bearer: []
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse

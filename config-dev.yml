@@ -27,6 +27,9 @@ security:
     token-validity-in-second: 86400
     token-validity-in-second-for-remember-me: 2592000
 
+url:
+  base-url-s3: 
+
 cache:
   redis:
     host: localhost

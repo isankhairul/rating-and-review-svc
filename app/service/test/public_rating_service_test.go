@@ -446,6 +446,7 @@ func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
 	}
 	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
 	publicRatingRepository.Mock.On("GetPublicRatingSubmissions", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSubmission).Return(ratingSubDatas, &paginationResult, nil).Once()
+	ratingRepository.Mock.On("GetRatingById", idDummy1).Return(&ratingDatas[0], nil)
 
 	result, pagination, msg := publicRatingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
 	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")

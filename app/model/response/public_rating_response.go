@@ -38,6 +38,8 @@ type PublicRatingSubmissionResponse struct {
 	Comment       *string            `json:"comment,omitempty"`
 	SourceTransID string             `json:"source_trans_id,omitempty"`
 	LikeCounter   int                `json:"like_counter"`
+	RatingType    string             `json:"rating_type"`
+	Value         string             `json:"value"`
 	LikeByMe      bool               `json:"like_by_me"`
 	CreatedAt     time.Time          `json:"created_at"`
 }
