@@ -56,7 +56,7 @@ func main() {
 	//override with env vars
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("KD")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 	// Logging init
 	logfile, err := os.OpenFile(viper.GetString("server.output-file-path"), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
