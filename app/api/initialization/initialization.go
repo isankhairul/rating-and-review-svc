@@ -53,8 +53,8 @@ func InitRouting(db *mongo.Database, logger log.Logger) *http.ServeMux {
 	// Routing path
 	mux := http.NewServeMux()
 	mux.Handle("/", swagHttp) //don't delete or change this!!
-	mux.Handle(_struct.PrefixBase+"public/", publicRatingHttp)
-	mux.Handle(_struct.PrefixBase, ratingHttp)
+	mux.Handle(_struct.PrefixBase+"/public/", publicRatingHttp)
+	mux.Handle(_struct.PrefixBase+"/", ratingHttp)
 
 	return mux
 }

@@ -8,10 +8,10 @@ database:
   driver: sqlite
   hostname: localhost
   port: 27017
-  username: admin
-  password: admin
+  username: mongoadmin
+  password: mongoadmin
   dbname: ratingsNReviewsDB
-  uri: mongodb://
+  uri: mongodb
 
 server:
   port: 5600
@@ -51,3 +51,8 @@ source-type: [
   article,
   doctor
 ]
+
+#route
+route:
+  site: "/rating-svc"
+  apiprefix: "/api/v1"

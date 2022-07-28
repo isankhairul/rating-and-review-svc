@@ -2,8 +2,8 @@ package _struct
 
 var (
 	//prefix route
-	BasePath     = "/rating-svc/"
-	PrefixBase   = BasePath + "api/v1/"
+	// BasePath     = "/rating-svc/"
+	PrefixBase   = ""
 	PrefixRating = "ratings"
 
 	//medical facility path

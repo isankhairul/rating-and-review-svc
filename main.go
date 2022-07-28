@@ -99,9 +99,10 @@ func main() {
 	defer registar.Deregister()
 
 	// Routing initialization
+	_struct.PrefixBase = viper.GetString("route.site") + viper.GetString("route.apiprefix")
+
 	mux := initialization.InitRouting(db, logger)
 	http.Handle("/", accessControl(mux))
-	http.Handle(_struct.PrefixBase, accessControl(mux))
 
 	errs := make(chan error, 2)
 

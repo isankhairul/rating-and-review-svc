@@ -28,210 +28,210 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 		httptransport.ServerBefore(jwt.HTTPToContext()),
 	}
 
-	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "rating-types-numeric/").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "/rating-types-numeric/").Handler(httptransport.NewServer(
 		ep.CreateRatingTypeNum,
 		decodeCreateRatingTypeNum,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-types-numeric/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/rating-types-numeric/{id}").Handler(httptransport.NewServer(
 		ep.GetRatingTypeNumById,
 		decodeGetRatingById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "rating-types-numeric/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "/rating-types-numeric/{id}").Handler(httptransport.NewServer(
 		ep.UpdateRatingById,
 		decodeUpdateRatingById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "rating-types-numeric/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "/rating-types-numeric/{id}").Handler(httptransport.NewServer(
 		ep.DeleteRatingTypeNumById,
 		decodeGetRatingById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-types-numeric").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/rating-types-numeric").Handler(httptransport.NewServer(
 		ep.GetRatingTypeNums,
 		decodeGetRatingTypeNums,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "rating-submissions/").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "/rating-submissions/").Handler(httptransport.NewServer(
 		ep.CreateRatingSubmission,
 		decodeCreateRatingSubmission,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-submissions").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/rating-submissions").Handler(httptransport.NewServer(
 		ep.GetListRatingSubmission,
 		decodeGetListRatingSubmission,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "rating-submissions/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "/rating-submissions/{id}").Handler(httptransport.NewServer(
 		ep.UpdateRatingSubmission,
 		decodeUpdateRatingSubmission,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-submissions/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/rating-submissions/{id}").Handler(httptransport.NewServer(
 		ep.GetRatingSubmission,
 		decodeGetById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "rating-submissions/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "/rating-submissions/{id}").Handler(httptransport.NewServer(
 		ep.DeleteRatingSubmission,
 		decodeGetById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "list-rating-submissions/{source_type}/{source_uid}/{user_id_legacy}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/list-rating-submissions/{source_type}/{source_uid}/{user_id_legacy}").Handler(httptransport.NewServer(
 		ep.GetListRatingSubmissionWithUserIdLegacy,
 		decodeGetRatingSubmissionWithUserIdLegacy,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "rating-submissions/user-id-legacy/{user_id_legacy}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "/rating-submissions/user-id-legacy/{user_id_legacy}").Handler(httptransport.NewServer(
 		ep.UpdateRatingSubDisplayNameByIdLegacy,
 		decodeUpdatePublicRatingSubDisplayName,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "rating-types-likert/").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "/rating-types-likert/").Handler(httptransport.NewServer(
 		ep.CreateRatingTypeLikert,
 		decodeCreateRatingTypeLikert,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-types-likert/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/rating-types-likert/{id}").Handler(httptransport.NewServer(
 		ep.GetRatingTypeLikertById,
 		decodeGetRatingTypeLikertById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "rating-types-likert/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "/rating-types-likert/{id}").Handler(httptransport.NewServer(
 		ep.UpdateRatingTypeLikertById,
 		decodeUpdateRatingTypeLikertById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "rating-types-likert/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "/rating-types-likert/{id}").Handler(httptransport.NewServer(
 		ep.DeleteRatingTypeLikertById,
 		decodeGetRatingTypeLikertById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-types-likert").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/rating-types-likert").Handler(httptransport.NewServer(
 		ep.GetRatingTypeLikerts,
 		decodeRatingTypeLikerts,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "ratings/").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "/ratings/").Handler(httptransport.NewServer(
 		ep.CreateRating,
 		decodeCreateRating,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "ratings/summary/{source_type}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/ratings/summary/{source_type}").Handler(httptransport.NewServer(
 		ep.GetListRatingSummary,
 		decodeGetRatingSummary,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "ratings/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/ratings/{id}").Handler(httptransport.NewServer(
 		ep.ShowRating,
 		decodeGetById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "ratings/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "/ratings/{id}").Handler(httptransport.NewServer(
 		ep.UpdateRating,
 		decodeEditRatingById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "ratings/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "/ratings/{id}").Handler(httptransport.NewServer(
 		ep.DeleteRating,
 		decodeGetById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "ratings").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/ratings").Handler(httptransport.NewServer(
 		ep.GetRatings,
 		decodeGetRatings,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "list-ratings/{source_type}/{source_uid}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/list-ratings/{source_type}/{source_uid}").Handler(httptransport.NewServer(
 		ep.GetRatingBySourceTypeAndActor,
 		decodeGetRatingBySourceTypeAndActor,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "rating-formula/").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "/rating-formula/").Handler(httptransport.NewServer(
 		ep.CreateRatingFormula,
 		decodeCreateRatingFormula,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-formula").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/rating-formula").Handler(httptransport.NewServer(
 		ep.GetRatingFormulas,
 		decodeGetRatingFormulas,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "rating-formula/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/rating-formula/{id}").Handler(httptransport.NewServer(
 		ep.GetRatingFormulaById,
 		decodeGetRatingFormulaById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "rating-formula/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "/rating-formula/{id}").Handler(httptransport.NewServer(
 		ep.UpdateRatingFormulaById,
 		decodeUpdateRatingFormulaById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "rating-formula/{id}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodDelete).Path(_struct.PrefixBase + "/rating-formula/{id}").Handler(httptransport.NewServer(
 		ep.DeleteRatingFormulaById,
 		decodeDeleteRatingFormulaById,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "helpful-rating-submission/").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "/helpful-rating-submission/").Handler(httptransport.NewServer(
 		ep.CreateRatingSubHelpful,
 		decodeCreateRatingSubHelpful,
 		encoder.EncodeResponseHTTP,

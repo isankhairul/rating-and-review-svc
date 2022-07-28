@@ -23,15 +23,14 @@ func PublicRatingHttpHandler(s service.PublicRatingService, logger log.Logger) h
 		httptransport.ServerErrorLogger(logger),
 		httptransport.ServerErrorEncoder(encoder.EncodeError),
 	}
-
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "public/ratings-summary/{source_type}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/public/ratings-summary/{source_type}").Handler(httptransport.NewServer(
 		ep.GetListRatingSummaryBySourceType,
 		decodeGetRatingSummaryBySourceType,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "public/rating-submissions/{source_type}/{source_uid}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/public/rating-submissions/{source_type}/{source_uid}").Handler(httptransport.NewServer(
 		ep.GetListRatingSubmissionBySourceTypeAndUID,
 		decodeGetRatingSubmissionBySourceTypeAndUID,
 		encoder.EncodeResponseHTTP,
