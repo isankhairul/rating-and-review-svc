@@ -34,3 +34,7 @@ source-type: [
   article,
   doctor
 ]
+
+route:
+  site: "/rating-svc"
+  apiprefix: "/api/v1"
