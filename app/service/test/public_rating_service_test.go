@@ -322,7 +322,7 @@ func TestGetRatingSummaryBySourceTypeFailedGetRating(t *testing.T) {
 		Page:         1,
 		TotalRecords: 1,
 	}
-	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "failed", filterSummary).Return(ratingDatas, &paginationResult, errors.New("error")).Once()
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSummary.Limit, requestSummary.Page, "Collection tidak ditemukan", filterSummary).Return(ratingDatas, &paginationResult, errors.New("error")).Once()
 
 	_, _, msg := publicRatingService.GetListRatingSummaryBySourceType(request)
 	assert.Equal(t, message.FailedMsg.Code, msg.Code, "Code must be 412002")
