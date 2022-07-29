@@ -87,6 +87,7 @@ var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}
 var ErrPageNotFound = Message{Code: 39404, Message: "Halaman Tidak ditemukan"}
 var SuccessMsg = Message{Code: SuccessCode, Message: "Success"}
 var FailedMsg = Message{Code: ValidationFailCode, Message: "Failed"}
+var RecordNotFound = Message{Code: ValidationFailCode, Message: "Collection tidak ditemukan"}
 var ErrReqParam = Message{Code: ValidationFailCode, Message: "Invalid Request Parameter(s)"}
 
 // msg in api get booking Medical facility
