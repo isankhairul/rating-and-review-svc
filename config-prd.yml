@@ -29,7 +29,7 @@ access-control:
   request-headers: "Origin, Content-Type, Authorization"
 
 url:
-  base-url-s3: 
+  base-url-s3: ${S3_BASE_URI}
 
 #source type available
 source-type: [
