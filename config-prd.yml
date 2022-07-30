@@ -28,6 +28,9 @@ access-control:
   allow-headers: "Origin, Content-Type, Authorization"
   request-headers: "Origin, Content-Type, Authorization"
 
+url:
+  base-url-s3: 
+
 #source type available
 source-type: [
   hospital,
