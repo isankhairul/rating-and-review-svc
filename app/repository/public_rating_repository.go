@@ -225,6 +225,7 @@ func countRatingSubHelpful(r *publicRatingRepo, ratingSubId string) (int64, erro
 
 func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort string, filter request.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error) {
 	var results []entity.RatingsCol
+	var resultOne entity.RatingsCol
 	var allResults []bson.D
 	var pagination base.Pagination
 
@@ -240,26 +241,35 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 			bsonSourceType = bson.D{{Key: "source_type", Value: filter.SourceType}}
 		}
 	}
-	if len(filter.RatingType) > 0 {
-		bsonRatingType = bson.D{{Key: "rating_type", Value: bson.D{{Key: "$in", Value: filter.RatingType}}}}
-	}
 
-	bsonFilter := bson.D{{Key: "$and",
+	var bsonFilter = bson.D{{Key: "$and",
 		Value: bson.A{
 			bsonStatus,
 			bsonSourceType,
 			bsonSourceUid,
-			bson.D{{Key: "$or",
-				Value: bson.A{
-					bsonRatingType,
-				}}},
 		},
 	},
 	}
 
+	if len(filter.RatingType) > 0 {
+		bsonRatingType = bson.D{{Key: "rating_type", Value: bson.D{{Key: "$in", Value: filter.RatingType}}}}
+		bsonFilter = bson.D{{Key: "$and",
+			Value: bson.A{
+				bsonStatus,
+				bsonSourceType,
+				bsonSourceUid,
+				bson.D{{Key: "$or",
+					Value: bson.A{
+						bsonRatingType,
+					}}},
+			},
+		},
+		}
+	}
+
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
 	if len(filter.SourceUid) > 0 {
-		err := r.db.Collection(entity.RatingsCol{}.CollectionName()).FindOne(ctx, bsonFilter).Decode(&results)
+		err := r.db.Collection(entity.RatingsCol{}.CollectionName()).FindOne(ctx, bsonFilter).Decode(&resultOne)
 		if err != nil {
 			if errors.Is(err, mongo.ErrNoDocuments) {
 				return results, nil, err
