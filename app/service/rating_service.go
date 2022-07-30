@@ -670,7 +670,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 	}
 	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filterRating)
 	if err != nil {
-		return nil, nil, message.FailedMsg
+		return nil, nil, message.RecordNotFound
 	}
 
 	// Get Rating Submission

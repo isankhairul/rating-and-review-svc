@@ -258,6 +258,15 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	if len(filter.SourceUid) > 0 {
+		err := r.db.Collection(entity.RatingsCol{}.CollectionName()).FindOne(ctx, bsonFilter).Decode(&results)
+		if err != nil {
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				return results, nil, err
+			}
+			return nil, nil, err
+		}
+	}
 	cursor, err := r.db.Collection(entity.RatingsCol{}.CollectionName()).
 		Find(ctx, bsonFilter,
 			newMongoPaginate(limit, page).getPaginatedOpts().

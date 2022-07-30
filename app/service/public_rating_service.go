@@ -66,7 +66,7 @@ func (s *publicRatingServiceImpl) GetListRatingSummaryBySourceType(input request
 
 	ratings, pagination, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filter)
 	if err != nil {
-		return nil, nil, message.FailedMsg
+		return nil, nil, message.RecordNotFound
 	}
 	if len(ratings) <= 0 {
 		return results, pagination, message.SuccessMsg
