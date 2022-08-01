@@ -495,8 +495,8 @@ func TestGetRatingSubmissionBySourceTypeAndUIDEmptyList(t *testing.T) {
 	publicRatingRepository.Mock.On("GetPublicRatingSubmissions", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSubmission).Return(ratingSubDatas, &paginationResult, nil).Once()
 
 	result, pagination, msg := publicRatingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
-	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
-	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
+	assert.Equal(t, message.ErrNoData.Code, msg.Code, "Code must be 212004")
+	assert.Equal(t, message.ErrNoData.Message, msg.Message, "Message must be erro data not found")
 	assert.Equal(t, 0, len(result), "Count of list kd must be 0")
 	assert.Equal(t, int64(0), pagination.Records, "Total record must be 0")
 }

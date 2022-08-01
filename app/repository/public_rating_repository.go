@@ -8,6 +8,7 @@ import (
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/pkg/util"
 	"math"
+	"reflect"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -225,13 +226,9 @@ func countRatingSubHelpful(r *publicRatingRepo, ratingSubId string) (int64, erro
 
 func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort string, filter request.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error) {
 	var results []entity.RatingsCol
-	var resultOne entity.RatingsCol
-	var allResults []bson.D
-	var pagination base.Pagination
-
+	limit64 := int64(limit)
 	bsonSourceUid := bson.D{}
 	bsonSourceType := bson.D{}
-	bsonRatingType := bson.D{}
 
 	if len(filter.SourceUid) > 0 {
 		bsonSourceUid = bson.D{{Key: "source_uid", Value: bson.D{{Key: "$in", Value: filter.SourceUid}}}}
@@ -241,7 +238,6 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 			bsonSourceType = bson.D{{Key: "source_type", Value: filter.SourceType}}
 		}
 	}
-
 	var bsonFilter = bson.D{{Key: "$and",
 		Value: bson.A{
 			bsonStatus,
@@ -250,67 +246,26 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 		},
 	},
 	}
-
-	if len(filter.RatingType) > 0 {
-		bsonRatingType = bson.D{{Key: "rating_type", Value: bson.D{{Key: "$in", Value: filter.RatingType}}}}
-		bsonFilter = bson.D{{Key: "$and",
-			Value: bson.A{
-				bsonStatus,
-				bsonSourceType,
-				bsonSourceUid,
-				bson.D{{Key: "$or",
-					Value: bson.A{
-						bsonRatingType,
-					}}},
-			},
-		},
-		}
-	}
-
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	if len(filter.SourceUid) > 0 {
-		err := r.db.Collection(entity.RatingsCol{}.CollectionName()).FindOne(ctx, bsonFilter).Decode(&resultOne)
-		if err != nil {
-			if errors.Is(err, mongo.ErrNoDocuments) {
-				return results, nil, err
-			}
-			return nil, nil, err
-		}
-	}
-	cursor, err := r.db.Collection(entity.RatingsCol{}.CollectionName()).
-		Find(ctx, bsonFilter,
-			newMongoPaginate(limit, page).getPaginatedOpts().
-				SetSort(bson.D{{Key: sort, Value: dir}}))
-	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return results, nil, nil
-		}
-		return nil, nil, err
-	}
-	if err = cursor.All(ctx, &results); err != nil {
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	crsr, err := r.db.Collection(entity.RatingsCol{}.CollectionName()).Find(ctx, bsonFilter)
+	collectionName := "ratingsCol"
+	skip := int64(page)*limit64 - limit64
+	cursor, err := r.db.Collection(collectionName).
+		Find(context.Background(), bsonFilter,
+			&options.FindOptions{
+				Sort:  bson.D{bson.E{Key: sort, Value: dir}},
+				Limit: &limit64,
+				Skip:  &skip,
+			})
 	if err != nil {
 		return nil, nil, err
 	}
-	if err = crsr.All(ctx, &allResults); err != nil {
+
+	if err = cursor.All(context.TODO(), &results); err != nil {
 		if err != nil {
 			return nil, nil, err
 		}
 	}
-
-	totalRecords := int64(len(allResults))
-	pagination.Limit = limit
-	pagination.Page = page
-	pagination.TotalRecords = totalRecords
-	pagination.TotalPage = int(math.Ceil(float64(totalRecords) / float64(pagination.GetLimit())))
-	pagination.Records = int64(len(results))
-
-	return results, &pagination, nil
+	pagination := paginate(r, page, limit64, results, collectionName, bsonFilter)
+	return results, pagination, nil
 }
 
 func (r *publicRatingRepo) GetRatingSubsByRatingId(ratingId string) ([]entity.RatingSubmisson, error) {
@@ -348,45 +303,30 @@ func (r *publicRatingRepo) CountRatingSubsByRatingIdAndValue(ratingId, value str
 
 func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error) {
 	var results []entity.RatingSubmisson
-	var allResults []bson.D
-	var pagination base.Pagination
+	limit64 := int64(limit)
 
 	bsonRatingID := bson.D{{Key: "rating_id", Value: bson.D{{Key: "$in", Value: filter.RatingID}}}}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	cursor, err := r.db.Collection("ratingSubCol").
-		Find(ctx, bsonRatingID,
-			newMongoPaginate(limit, page).getPaginatedOpts().
-				SetSort(bson.D{{Key: sort, Value: dir}}))
+	collectionName := "ratingSubCol"
+	skip := int64(page)*limit64 - limit64
+	cursor, err := r.db.Collection(collectionName).
+		Find(context.Background(), bsonRatingID,
+			&options.FindOptions{
+				Sort:  bson.D{bson.E{Key: sort, Value: dir}},
+				Limit: &limit64,
+				Skip:  &skip,
+			})
 	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return results, nil, nil
-		}
 		return nil, nil, err
 	}
-	if err = cursor.All(ctx, &results); err != nil {
+
+	if err = cursor.All(context.TODO(), &results); err != nil {
 		if err != nil {
 			return nil, nil, err
 		}
 	}
-	crsr, err := r.db.Collection("ratingSubCol").Find(ctx, bsonRatingID)
-	if err != nil {
-		return nil, nil, err
-	}
-	if err = crsr.All(ctx, &allResults); err != nil {
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	totalRecords := int64(len(allResults))
-	pagination.Limit = limit
-	pagination.Page = page
-	pagination.TotalRecords = totalRecords
-	pagination.TotalPage = int(math.Ceil(float64(totalRecords) / float64(pagination.GetLimit())))
-	pagination.Records = int64(len(results))
-
-	return results, &pagination, nil
+	pagination := paginate(r, page, limit64, results, collectionName, bsonRatingID)
+	return results, pagination, nil
 }
 
 func (r *publicRatingRepo) GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId, sourceType string) (*entity.RatingFormulaCol, error) {
@@ -425,4 +365,19 @@ func (r *publicRatingRepo) UpdateRatingSubDisplayNameByIdLegacy(input request.Up
 	}
 
 	return nil
+}
+
+func paginate(r *publicRatingRepo, page int, limit int64, result interface{}, collectionName string, filter bson.D) *base.Pagination {
+	var pagination base.Pagination
+	s := reflect.ValueOf(result)
+	totalRecord, err := r.db.Collection(collectionName).CountDocuments(context.Background(), filter, &options.CountOptions{})
+	if err != nil {
+		return nil
+	}
+	pagination.Page = page
+	pagination.Limit = int(limit)
+	pagination.TotalRecords = totalRecord
+	pagination.TotalPage = int(math.Ceil(float64(pagination.TotalRecords) / float64(pagination.GetLimit())))
+	pagination.Records = int64(s.Len())
+	return &pagination
 }

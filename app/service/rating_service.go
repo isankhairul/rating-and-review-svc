@@ -390,14 +390,14 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 
 		if input.UserID == &empty {
 			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID, input.SourceTransID)
-			if val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val == true {
+			if val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val {
 				return result, message.UserRated
 			}
 		}
 
 		if input.UserIDLegacy == &empty {
 			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID, input.SourceTransID)
-			if val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val == true {
+			if val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val {
 				return result, message.UserRated
 			}
 		}
@@ -407,7 +407,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 			return result, message.UserAgentTooLong
 		}
 
-		if isExisted := isIdExisted(saveReq, argRatings.ID); isExisted == false {
+		if isExisted := isIdExisted(saveReq, argRatings.ID); !isExisted {
 			return result, message.ErrCannotSameRatingId
 		}
 
@@ -564,7 +564,6 @@ func (s *ratingServiceImpl) UpdateRatingSubmission(input request.UpdateRatingSub
 	}
 
 	// A submission with a combination of either (rating_id and user_id) OR (rating_id and user_id_legacy) is allowed once
-
 	if ratingSubmission.UserID == nil {
 		ratingSubmission.UserID = &empty
 	}
@@ -670,7 +669,19 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 	}
 	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filterRating)
 	if err != nil {
-		return nil, nil, message.RecordNotFound
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil, message.Message{
+				Code:    message.ValidationFailCode,
+				Message: "Cannot find rating with params SourceType :" + input.SourceType + ", SourceUid:" + input.SourceUID,
+			}
+		}
+		return nil, nil, message.FailedMsg
+	}
+	if len(ratings) <= 0 {
+		return nil, nil, message.Message{
+			Code:    message.ValidationFailCode,
+			Message: "Cannot find rating with params SourceType :" + input.SourceType + ", SourceUid:" + input.SourceUID,
+		}
 	}
 
 	// Get Rating Submission
@@ -680,10 +691,13 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 	}
 	ratingSubs, pagination, err := s.publicRatingRepo.GetPublicRatingSubmissions(input.Limit, input.Page, dir, input.Sort, filterRatingSubs)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return results, pagination, message.ErrNoData
+		}
 		return nil, nil, message.FailedMsg
 	}
-	if len(ratings) <= 0 {
-		return results, pagination, message.SuccessMsg
+	if len(ratingSubs) <= 0 {
+		return results, pagination, message.ErrNoData
 	}
 
 	for _, v := range ratingSubs {
@@ -788,6 +802,8 @@ func (s *ratingServiceImpl) GetRatingSubmission(id string) (*response.RatingSubm
 //  200: SuccessResponse
 func (s *ratingServiceImpl) GetListRatingSubmissions(input request.ListRatingSubmissionRequest) ([]response.RatingSubmissonResponse, *base.Pagination, message.Message) {
 	var dir interface{}
+	userIdEmpty := ""
+	commentEmpty := ""
 	if input.Dir == "asc" {
 		dir = 1
 	} else {
@@ -814,13 +830,19 @@ func (s *ratingServiceImpl) GetListRatingSubmissions(input request.ListRatingSub
 	ratingSubmissions, pagination, err := s.ratingRepo.GetListRatingSubmissions(filter, input.Page, input.Limit, input.Sort, dir)
 	if err != nil {
 		if !errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, nil, message.WrongFilter
+			return nil, nil, message.ErrDataNotFound
 		}
 	}
 
 	results := make([]response.RatingSubmissonResponse, 0)
 	for _, args := range ratingSubmissions {
-		if filScore := filterScoreSubmission(args, filter.Score); filScore == true {
+		if args.UserID == nil {
+			args.UserID = &userIdEmpty
+		}
+		if args.Comment == nil {
+			args.Comment = &commentEmpty
+		}
+		if filScore := filterScoreSubmission(args, filter.Score); filScore {
 			results = append(results, response.RatingSubmissonResponse{
 				RatingID:     args.RatingID,
 				UserID:       args.UserID,

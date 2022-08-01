@@ -247,7 +247,19 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 	}
 	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filterRating)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil, message.Message{
+				Code:    message.ValidationFailCode,
+				Message: "Cannot find rating with params SourceType :" + input.SourceType + ", SourceUid:" + input.SourceUID,
+			}
+		}
 		return nil, nil, message.FailedMsg
+	}
+	if len(ratings) <= 0 {
+		return nil, nil, message.Message{
+			Code:    message.ValidationFailCode,
+			Message: "Cannot find rating with params SourceType :" + input.SourceType + ", SourceUid:" + input.SourceUID,
+		}
 	}
 
 	// Get Rating Submission
@@ -257,10 +269,13 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 	}
 	ratingSubs, pagination, err := s.publicRatingRepo.GetPublicRatingSubmissions(input.Limit, input.Page, dir, input.Sort, filterRatingSubs)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return results, pagination, message.ErrNoData
+		}
 		return nil, nil, message.FailedMsg
 	}
-	if len(ratings) <= 0 {
-		return results, pagination, message.SuccessMsg
+	if len(ratingSubs) <= 0 {
+		return results, pagination, message.ErrNoData
 	}
 
 	for _, v := range ratingSubs {
