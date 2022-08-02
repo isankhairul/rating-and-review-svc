@@ -46,6 +46,10 @@ func NewMongo() (*mongo.Database, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = CreateIndexRatingsCol(client)
+	if err != nil {
+		return nil, err
+	}
 
 	return client.Database(config.GetConfigString(viper.GetString("database.dbname"))), nil
 }
@@ -56,6 +60,16 @@ func CreateIndex(client *mongo.Client, collection, col string) error {
 		mongo.IndexModel{
 			Keys:    bson.D{{Key: col, Value: 1}},
 			Options: options.Index().SetUnique(true),
+		},
+	)
+	return err
+}
+
+func CreateIndexRatingsCol(client *mongo.Client) error {
+	_, err := client.Database(config.GetConfigString(viper.GetString("database.dbname"))).Collection("ratingsCol").Indexes().CreateOne(
+		context.Background(),
+		mongo.IndexModel{
+			Keys: bson.D{{Key: "source_uid", Value: 1}, {Key: "source_type", Value: 1}, {Key: "update_at", Value: 1}},
 		},
 	)
 	return err
