@@ -237,7 +237,7 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 		input.Limit = 50
 	}
 	if input.Sort == "" {
-		input.Sort = "created at"
+		input.Sort = "updated_at"
 	}
 
 	// Get Rating By SourceType and SourceUID

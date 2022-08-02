@@ -659,7 +659,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 		input.Limit = 50
 	}
 	if input.Sort == "" {
-		input.Sort = "created at"
+		input.Sort = "updated_at"
 	}
 
 	// Get Rating By SourceType and SourceUID
@@ -802,6 +802,7 @@ func (s *ratingServiceImpl) GetRatingSubmission(id string) (*response.RatingSubm
 //  200: SuccessResponse
 func (s *ratingServiceImpl) GetListRatingSubmissions(input request.ListRatingSubmissionRequest) ([]response.RatingSubmissonResponse, *base.Pagination, message.Message) {
 	var dir interface{}
+	results := make([]response.RatingSubmissonResponse, 0)
 	userIdEmpty := ""
 	commentEmpty := ""
 	if input.Dir == "asc" {
@@ -829,12 +830,12 @@ func (s *ratingServiceImpl) GetListRatingSubmissions(input request.ListRatingSub
 	}
 	ratingSubmissions, pagination, err := s.ratingRepo.GetListRatingSubmissions(filter, input.Page, input.Limit, input.Sort, dir)
 	if err != nil {
-		if !errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, nil, message.ErrDataNotFound
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return results, pagination, message.ErrDataNotFound
 		}
+		return nil, nil, message.FailedMsg
 	}
 
-	results := make([]response.RatingSubmissonResponse, 0)
 	for _, args := range ratingSubmissions {
 		if args.UserID == nil {
 			args.UserID = &userIdEmpty

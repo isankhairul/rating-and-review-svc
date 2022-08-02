@@ -698,7 +698,6 @@ func (r *ratingRepo) GetListRatingSubmissions(filter request.RatingSubmissionFil
 	}
 
 	filter1 := bson.D{{"$and",
-
 		bson.A{
 			bson.D{{"$or",
 				bson.A{
@@ -735,6 +734,9 @@ func (r *ratingRepo) GetListRatingSubmissions(filter request.RatingSubmissionFil
 		}
 	}
 	pagination := getPagination(r, page, limit, results, collectionName, filter1)
+	if len(results) == 0 {
+		return results, pagination, mongo.ErrNoDocuments
+	}
 	return results, pagination, nil
 }
 

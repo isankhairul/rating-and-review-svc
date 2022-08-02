@@ -2160,7 +2160,7 @@ func TestGetListRatingSubmissionErrWrongFilter(t *testing.T) {
 
 	_, _, msg := svc.GetListRatingSubmissions(input)
 
-	assert.Equal(t, message.ErrDataNotFound, msg)
+	assert.Equal(t, message.FailedMsg, msg)
 }
 
 func TestUpdateRatingSubmissionErrMarshall1(t *testing.T) {

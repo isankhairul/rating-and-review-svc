@@ -240,9 +240,9 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 	}
 	var bsonFilter = bson.D{{Key: "$and",
 		Value: bson.A{
-			bsonStatus,
 			bsonSourceType,
 			bsonSourceUid,
+			bsonStatus,
 		},
 	},
 	}
