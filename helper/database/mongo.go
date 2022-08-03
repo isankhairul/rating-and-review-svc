@@ -30,19 +30,23 @@ func NewMongo() (*mongo.Database, error) {
 		return nil, err
 	}
 
-	err = CreateIndex(client, "ratingTypesNumCol", "type")
+	err = CreateIndex(client, "ratingTypesNumCol", "type", true)
 	if err != nil {
 		return nil, err
 	}
-	err = CreateIndex(client, "ratingTypesLikertCol", "type")
+	err = CreateIndex(client, "ratingTypesLikertCol", "type", true)
 	if err != nil {
 		return nil, err
 	}
-	err = CreateIndex(client, "ratingsCol", "name")
+	err = CreateIndex(client, "ratingsCol", "name", true)
 	if err != nil {
 		return nil, err
 	}
-	err = CreateIndex(client, "ratingSubCol", "source_trans_id")
+	err = CreateIndex(client, "ratingSubCol", "source_trans_id", true)
+	if err != nil {
+		return nil, err
+	}
+	err = CreateIndex(client, "ratingSubCol", "rating_id", false)
 	if err != nil {
 		return nil, err
 	}
@@ -54,12 +58,12 @@ func NewMongo() (*mongo.Database, error) {
 	return client.Database(config.GetConfigString(viper.GetString("database.dbname"))), nil
 }
 
-func CreateIndex(client *mongo.Client, collection, col string) error {
+func CreateIndex(client *mongo.Client, collection, col string, isUnique bool) error {
 	_, err := client.Database(config.GetConfigString(viper.GetString("database.dbname"))).Collection(collection).Indexes().CreateOne(
 		context.Background(),
 		mongo.IndexModel{
 			Keys:    bson.D{{Key: col, Value: 1}},
-			Options: options.Index().SetUnique(true),
+			Options: options.Index().SetUnique(isUnique),
 		},
 	)
 	return err

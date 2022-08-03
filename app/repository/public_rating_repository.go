@@ -312,7 +312,6 @@ func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort
 	cursor, err := r.db.Collection(collectionName).
 		Find(context.Background(), bsonRatingID,
 			&options.FindOptions{
-				Sort:  bson.D{bson.E{Key: sort, Value: dir}},
 				Limit: &limit64,
 				Skip:  &skip,
 			})
