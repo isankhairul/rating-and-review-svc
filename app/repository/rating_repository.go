@@ -265,7 +265,7 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 			{"value", args.Value},
 			{"ip_address", args.IPAddress},
 			{"user_agent", args.UserAgent},
-			{"source_trans_id", args.SourceTransID},
+			{"source_trans_id", args.SourceTransID + "||" + args.RatingID},
 			{"user_platform", args.UserPlatform},
 			{"like_counter", 0},
 			{"created_at", time.Now().In(util.Loc)},
