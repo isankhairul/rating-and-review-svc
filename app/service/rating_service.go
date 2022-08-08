@@ -317,7 +317,11 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 		return result, message.UserUIDRequired
 	}
 
+	originalSourceTransID := input.SourceTransID
 	for _, argRatings := range input.Ratings {
+		// Concate source_trans_id
+		input.SourceTransID = originalSourceTransID + "||" + argRatings.ID
+
 		// Find rating_type_id by rating_id
 		objectRatingId, err := primitive.ObjectIDFromHex(argRatings.ID)
 		if err != nil {
