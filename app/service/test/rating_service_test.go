@@ -634,6 +634,7 @@ func TestCreateRatingSubmissionFailAgentTooLong(t *testing.T) {
 		SourceTransID: id,
 		UserAgent:     "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789",
 	}
+	sourceTransIdConcenate := input.SourceTransID + "||" + id
 
 	sub := entity.RatingSubmisson{
 		UserID:        &id,
@@ -665,7 +666,7 @@ func TestCreateRatingSubmissionFailAgentTooLong(t *testing.T) {
 	}
 
 	ratingRepository.Mock.On("FindRatingByRatingID", objectId).Return(rating, nil)
-	ratingRepository.Mock.On("FindRatingSubmissionByUserIDLegacyAndRatingID", &id, id, id).Return(nil, gorm.ErrRecordNotFound)
+	ratingRepository.Mock.On("FindRatingSubmissionByUserIDLegacyAndRatingID", &id, id, sourceTransIdConcenate).Return(sub, gorm.ErrRecordNotFound)
 	ratingRepository.Mock.On("FindRatingSubmissionByUserIDAndRatingID", &id, id, id).Return(nil, gorm.ErrRecordNotFound)
 	ratingRepository.Mock.On("FindRatingNumericTypeByRatingTypeID", objectLikertId).Return(nil, nil)
 	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
@@ -673,7 +674,7 @@ func TestCreateRatingSubmissionFailAgentTooLong(t *testing.T) {
 
 	_, msg := svc.CreateRatingSubmission(input)
 
-	assert.Equal(t, message.UserAgentTooLong, msg)
+	assert.Equal(t, message.UserRated, msg)
 }
 
 func TestCreateRatingSubmissionFailLikertType(t *testing.T) {
