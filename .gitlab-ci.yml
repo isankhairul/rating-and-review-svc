@@ -60,7 +60,7 @@ build-prod:
   script:
     - echo $CI_COMMIT_TAG
     - crane auth login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - crane tag $CI_REGISTRY/$CI_REGISTRY_IMAGE:$OLD_TAG $NEW_TAG
+    - crane cp $CI_REGISTRY/$CI_REGISTRY_IMAGE:$OLD_TAG $CI_REGISTRY/$CI_REGISTRY_IMAGE_PROD:$NEW_TAG
   rules:
     - if: '$OLD_TAG == null || $NEW_TAG == null || $CI_COMMIT_BRANCH != "master"'
       when: never
