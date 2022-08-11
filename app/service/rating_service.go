@@ -312,8 +312,10 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 	if input.UserIDLegacy == nil || *input.UserIDLegacy == "" {
 		input.UserIDLegacy = &empty
 	}
-
-	if input.UserID == &empty && input.UserIDLegacy == &empty {
+	if input.DisplayName == nil || *input.DisplayName == "" {
+		input.DisplayName = &empty
+	}
+	if input.UserID == &empty && input.UserIDLegacy == &empty && input.DisplayName == &empty {
 		return result, message.UserUIDRequired
 	}
 
