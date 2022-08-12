@@ -60,7 +60,6 @@ route:
 thumbor:
   base_url: https://img-cdn.medkomtek-stg.com 
   format_image: smart/filters:quality(75):strip_icc():format(webp)
-  secret: KnebAQw98BwpHZPLcuERNhUZLtWkQJRL
   size_large_screen: "48 x 48"
   size_small_screen:  "32 x 32"
 
