@@ -10,11 +10,12 @@ import (
 	"go-klikdokter/app/model/response"
 	"go-klikdokter/app/repository"
 	"go-klikdokter/helper/message"
+	"go-klikdokter/helper/thumbor"
+	"go-klikdokter/pkg/util"
 	"math"
 	"strconv"
 
 	"github.com/go-kit/log"
-	"github.com/spf13/viper"
 	"github.com/vjeantet/govaluate"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -237,7 +238,7 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 		input.Limit = 50
 	}
 	if input.Sort == "" {
-		input.Sort = "updated_at"
+		input.Sort = "created_at"
 	}
 
 	// Get Rating By SourceType and SourceUID
@@ -245,7 +246,8 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 		SourceType: input.SourceType,
 		SourceUid:  []string{input.SourceUID},
 	}
-	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filterRating)
+	sortRating := "updated_at"
+	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, sortRating, filterRating)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil, message.Message{
@@ -289,20 +291,24 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 			return nil, nil, message.ErrRatingNotFound
 		}
 
-		baseUrlS3 := viper.GetString("url.base-url-s3")
+		avatarPath := "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg"
+
+		// Get Images from thumbor
+		newMediaImages := thumbor.GetNewThumborImages(avatarPath)
+
 		results = append(results, response.PublicRatingSubmissionResponse{
 			ID:            v.ID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
 			DisplayName:   *v.DisplayName,
-			Avatar:        baseUrlS3 + "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg",
+			Avatar:        newMediaImages,
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,
 			LikeCounter:   v.LikeCounter,
 			RatingType:    rating.RatingType,
 			Value:         v.Value,
 			LikeByMe:      false,
-			CreatedAt:     v.CreatedAt,
+			CreatedAt:     v.CreatedAt.In(util.Loc),
 		})
 	}
 	return results, pagination, message.SuccessMsg

@@ -19,8 +19,9 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/vjeantet/govaluate v1.3.0
 	go.mongodb.org/mongo-driver v1.7.3
-	gorm.io/driver/mysql v1.2.0
-	gorm.io/driver/postgres v1.2.2
-	gorm.io/driver/sqlite v1.2.4
-	gorm.io/gorm v1.22.3
+	gorm.io/datatypes v1.0.7
+	gorm.io/driver/mysql v1.3.2
+	gorm.io/driver/postgres v1.3.4
+	gorm.io/driver/sqlite v1.3.1
+	gorm.io/gorm v1.23.6
 )

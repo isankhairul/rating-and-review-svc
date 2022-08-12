@@ -984,7 +984,7 @@ func TestGetListRatingSubmission(t *testing.T) {
 		Page:         1,
 	}
 
-	ratingRepository.Mock.On("GetListRatingSubmissions", filter, 1, int64(page.Limit), "updated_at", 1).Return(subs, &page, nil)
+	ratingRepository.Mock.On("GetListRatingSubmissions", filter, 1, int64(page.Limit), "created_at", 1).Return(subs, &page, nil)
 
 	_, _, msg := svc.GetListRatingSubmissions(input)
 
@@ -1015,7 +1015,7 @@ func TestGetListRatingSubmissionMarshalErr(t *testing.T) {
 		Page:         1,
 	}
 
-	ratingRepository.Mock.On("GetListRatingSubmissions", filter, 1, int64(page.Limit), "updated_at", 1).Return(subs, &page, nil)
+	ratingRepository.Mock.On("GetListRatingSubmissions", filter, 1, int64(page.Limit), "created_at", 1).Return(subs, &page, nil)
 
 	_, _, msg := svc.GetListRatingSubmissions(input)
 
@@ -2135,7 +2135,7 @@ func TestGetListRatingSummary(t *testing.T) {
 		TotalPage: 1,
 	}
 	ratingRepository.Mock.On("GetRatingsByParams", request.RatingFilter{SourceUid: []string{"2729", "2951"}, RatingTypeId: []string(nil)}, 1, 50, "updated_at", -1).Return(result2, &paginationResult, nil)
-	ratingRepository.Mock.On("GetListRatingSubmissions", request.RatingSubmissionFilter{UserID: []string(nil), Score: []float64{0, 5}, RatingID: []string{"629ec07e6f3c2761ba2dc468", "629ec07e6f3c2761ba2dc848"}, StartDate: "", EndDate: ""}, 1, int64(50), "updated_at", -1).Return(result, &paginationResult, nil)
+	ratingRepository.Mock.On("GetListRatingSubmissions", request.RatingSubmissionFilter{UserIDLegacy: []string(nil), Score: []float64{0, 5}, RatingID: []string{"629ec07e6f3c2761ba2dc468", "629ec07e6f3c2761ba2dc848"}, StartDate: "", EndDate: ""}, 1, int64(50), "updated_at", -1).Return(result, &paginationResult, nil)
 	_, msg := svc.GetListRatingSummary(req)
 	assert.Equal(t, message.SuccessMsg, msg)
 }
@@ -2298,7 +2298,7 @@ func TestGetListRatingSummaryWrongFilter(t *testing.T) {
 		TotalPage: 1,
 	}
 	ratingRepository.Mock.On("GetRatingsByParams", request.RatingFilter{SourceUid: []string{"2729", "2951"}, RatingTypeId: []string(nil)}, 1, 50, "wrong filter", -1).Return(result2, &paginationResult, nil)
-	ratingRepository.Mock.On("GetListRatingSubmissions", request.RatingSubmissionFilter{UserID: []string(nil), Score: []float64(nil), RatingID: []string{"629ec07e6f3c2761ba2dc468", "629ec07e6f3c2761ba2dc848"}, StartDate: "", EndDate: ""}, 1, int64(50), "wrong filter", -1).Return(nil, &paginationResult, gorm.ErrInvalidDB)
+	ratingRepository.Mock.On("GetListRatingSubmissions", request.RatingSubmissionFilter{UserIDLegacy: []string(nil), Score: []float64(nil), RatingID: []string{"629ec07e6f3c2761ba2dc468", "629ec07e6f3c2761ba2dc848"}, StartDate: "", EndDate: ""}, 1, int64(50), "wrong filter", -1).Return(nil, &paginationResult, gorm.ErrInvalidDB)
 	_, msg := svc.GetListRatingSummary(req)
 	assert.Equal(t, message.WrongFilter, msg)
 }
@@ -2344,7 +2344,7 @@ func TestGetListRatingSummaryWrongScoreFilter(t *testing.T) {
 		TotalPage: 1,
 	}
 	ratingRepository.Mock.On("GetRatingsByParams", request.RatingFilter{SourceUid: []string{"2729", "2951"}, RatingTypeId: []string(nil)}, 1, 50, "updated_at", -1).Return(result2, &paginationResult, nil)
-	ratingRepository.Mock.On("GetListRatingSubmissions", request.RatingSubmissionFilter{UserID: []string(nil), Score: []float64{4, 5, 6}, RatingID: []string{"629ec07e6f3c2761ba2dc468", "629ec07e6f3c2761ba2dc848"}, StartDate: "", EndDate: ""}, 1, int64(50), "updated_at", -1).Return(result, &paginationResult, nil)
+	ratingRepository.Mock.On("GetListRatingSubmissions", request.RatingSubmissionFilter{UserIDLegacy: []string(nil), Score: []float64{4, 5, 6}, RatingID: []string{"629ec07e6f3c2761ba2dc468", "629ec07e6f3c2761ba2dc848"}, StartDate: "", EndDate: ""}, 1, int64(50), "updated_at", -1).Return(result, &paginationResult, nil)
 	_, msg := svc.GetListRatingSummary(req)
 	assert.Equal(t, message.WrongScoreFilter, msg)
 }
@@ -2390,7 +2390,7 @@ func TestGetListRatingSummaryNoScoreFilter(t *testing.T) {
 		TotalPage: 1,
 	}
 	ratingRepository.Mock.On("GetRatingsByParams", request.RatingFilter{SourceUid: []string{"2729", "2951"}, RatingTypeId: []string(nil)}, 1, 50, "updated_at", 1).Return(result2, &paginationResult, nil)
-	ratingRepository.Mock.On("GetListRatingSubmissions", request.RatingSubmissionFilter{UserID: []string(nil), Score: []float64(nil), RatingID: []string{"629ec07e6f3c2761ba2dc468", "629ec07e6f3c2761ba2dc848"}, StartDate: "", EndDate: ""}, 1, int64(50), "updated_at", 1).Return(result, &paginationResult, nil)
+	ratingRepository.Mock.On("GetListRatingSubmissions", request.RatingSubmissionFilter{UserIDLegacy: []string(nil), Score: []float64(nil), RatingID: []string{"629ec07e6f3c2761ba2dc468", "629ec07e6f3c2761ba2dc848"}, StartDate: "", EndDate: ""}, 1, int64(50), "updated_at", 1).Return(result, &paginationResult, nil)
 	_, msg := svc.GetListRatingSummary(req)
 	assert.Equal(t, message.SuccessMsg, msg)
 }
@@ -2436,7 +2436,7 @@ func TestGetListRatingSummaryErrSourceUidRequired(t *testing.T) {
 		TotalPage: 1,
 	}
 	ratingRepository.Mock.On("GetRatingsByParams", request.RatingFilter{SourceUid: []string{"2729", "2951"}, RatingTypeId: []string(nil)}, 1, 50, "updated_at", -1).Return(result2, &paginationResult, nil)
-	ratingRepository.Mock.On("GetListRatingSubmissions", request.RatingSubmissionFilter{UserID: []string(nil), Score: []float64(nil), RatingID: []string{"629ec07e6f3c2761ba2dc468", "629ec07e6f3c2761ba2dc848"}, StartDate: "", EndDate: ""}, 1, int64(50), "updated_at", -1).Return(result, &paginationResult, nil)
+	ratingRepository.Mock.On("GetListRatingSubmissions", request.RatingSubmissionFilter{UserIDLegacy: []string(nil), Score: []float64(nil), RatingID: []string{"629ec07e6f3c2761ba2dc468", "629ec07e6f3c2761ba2dc848"}, StartDate: "", EndDate: ""}, 1, int64(50), "updated_at", -1).Return(result, &paginationResult, nil)
 	_, msg := svc.GetListRatingSummary(req)
 	assert.Equal(t, message.ErrSourceUidRequire, msg)
 }

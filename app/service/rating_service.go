@@ -9,11 +9,14 @@ import (
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/model/response"
 	"go-klikdokter/app/repository"
+	"go-klikdokter/helper/config"
 	"go-klikdokter/helper/message"
+	"go-klikdokter/helper/thumbor"
 	"go-klikdokter/pkg/util"
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-kit/log"
 	"github.com/spf13/viper"
@@ -651,6 +654,7 @@ func (s *ratingServiceImpl) DeleteRatingSubmission(id string) message.Message {
 //  200: SuccessResponse
 func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input request.GetPublicListRatingSubmissionByUserIdRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message) {
 	results := []response.PublicRatingSubmissionResponse{}
+	timezone := config.GetConfigString(viper.GetString("util.timezone"))
 	var dir int
 	if input.Dir == "asc" {
 		dir = 1
@@ -665,7 +669,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 		input.Limit = 50
 	}
 	if input.Sort == "" {
-		input.Sort = "updated_at"
+		input.Sort = "created_at"
 	}
 
 	// Get Rating By SourceType and SourceUID
@@ -673,7 +677,8 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 		SourceType: input.SourceType,
 		SourceUid:  []string{input.SourceUID},
 	}
-	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filterRating)
+	sortRating := "updated_at"
+	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, sortRating, filterRating)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil, message.Message{
@@ -727,20 +732,23 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 			likeByme = ratingSubHelpful.Status
 		}
 
-		baseUrlS3 := viper.GetString("url.base-url-s3")
+		avatarPath := "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg"
+		// Get Images from thumbor
+		newMediaImages := thumbor.GetNewThumborImages(avatarPath)
+		Loc, _ := time.LoadLocation(timezone)
 		results = append(results, response.PublicRatingSubmissionResponse{
 			ID:            v.ID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
 			DisplayName:   *v.DisplayName,
-			Avatar:        baseUrlS3 + "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg",
+			Avatar:        newMediaImages,
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,
 			LikeCounter:   v.LikeCounter,
 			LikeByMe:      likeByme,
 			RatingType:    rating.RatingType,
 			Value:         v.Value,
-			CreatedAt:     v.CreatedAt,
+			CreatedAt:     v.CreatedAt.In(Loc),
 		})
 	}
 	return results, pagination, message.SuccessMsg
@@ -824,7 +832,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissions(input request.ListRatingSub
 		input.Limit = 50
 	}
 	if input.Sort == "" {
-		input.Sort = "updated_at"
+		input.Sort = "created_at"
 	}
 
 	filter := request.RatingSubmissionFilter{}

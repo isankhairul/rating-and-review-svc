@@ -444,7 +444,7 @@ func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
 		Page:         1,
 		TotalRecords: 1,
 	}
-	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
 	publicRatingRepository.Mock.On("GetPublicRatingSubmissions", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSubmission).Return(ratingSubDatas, &paginationResult, nil).Once()
 	ratingRepository.Mock.On("GetRatingById", idDummy1).Return(&ratingDatas[0], nil)
 
@@ -491,7 +491,7 @@ func TestGetRatingSubmissionBySourceTypeAndUIDEmptyList(t *testing.T) {
 		Page:         1,
 		TotalRecords: 0,
 	}
-	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
 	publicRatingRepository.Mock.On("GetPublicRatingSubmissions", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSubmission).Return(ratingSubDatas, &paginationResult, nil).Once()
 
 	result, pagination, msg := publicRatingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
@@ -505,9 +505,17 @@ func TestGetRatingSubmissionBySourceTypeAndUIDErrGetRating(t *testing.T) {
 	requestSubmission.Sort = "failed"
 	filterSummary.SourceUid = []string{requestSubmission.SourceUID}
 
-	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "failed", filterSummary).Return(nil, nil, errors.New("error")).Once()
+	paginationResult := base.Pagination{
+		Records:      0,
+		Limit:        10,
+		Page:         1,
+		TotalRecords: 0,
+	}
+
+	message := "Cannot find rating with params SourceType :" + requestSubmission.SourceType + ", SourceUid:" + requestSubmission.SourceUID
+	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "updated_at", filterSummary).Return([]entity.RatingsCol{}, &paginationResult, errors.New("error")).Once()
 
 	_, _, msg := publicRatingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
-	assert.Equal(t, message.FailedMsg.Code, msg.Code, "Code must be 412002")
-	assert.Equal(t, message.FailedMsg.Message, msg.Message, "Message must be failed")
+	assert.Equal(t, 412002, msg.Code, "Code must be 412002")
+	assert.Equal(t, message, msg.Message, "Message must be "+message)
 }
