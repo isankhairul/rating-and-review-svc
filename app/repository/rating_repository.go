@@ -256,6 +256,7 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 	var ratingSubmission []entity.RatingSubmisson
 	var docs []interface{}
 	for _, args := range input {
+		dateNow := time.Now().In(util.Loc)
 		docs = append(docs, bson.D{
 			{"rating_id", args.RatingID},
 			{"user_id", args.UserID},
@@ -268,8 +269,8 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 			{"source_trans_id", args.SourceTransID},
 			{"user_platform", args.UserPlatform},
 			{"like_counter", 0},
-			{"created_at", time.Now().In(util.Loc)},
-			{"updated_at", time.Now().In(util.Loc)},
+			{"created_at", dateNow},
+			{"updated_at", dateNow},
 		})
 	}
 	if len(docs) < 1 {
@@ -679,6 +680,8 @@ func (r *ratingRepo) Paginate(value interface{}, pagination *base.Pagination, db
 
 func (r *ratingRepo) GetListRatingSubmissions(filter request.RatingSubmissionFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingSubmisson, *base.Pagination, error) {
 	var results []entity.RatingSubmisson
+	var allResults []bson.D
+	var pagination base.Pagination
 	startDate, _ := time.Parse(util.LayoutDateOnly, filter.StartDate)
 	endDate, _ := time.Parse(util.LayoutDateOnly, filter.EndDate)
 	if errD := endDate.Before(startDate); errD == true {
@@ -687,57 +690,75 @@ func (r *ratingRepo) GetListRatingSubmissions(filter request.RatingSubmissionFil
 	bsonUserUid := bson.D{}
 	bsonRating := bson.D{}
 	bsonDate := bson.D{}
-	if len(filter.UserID) > 0 {
-		bsonUserUid = bson.D{{"user_id", bson.D{{"$in", filter.UserID}}}}
+	bsonTransId := bson.D{}
+	if len(filter.UserIDLegacy) > 0 {
+		bsonUserUid = bson.D{{Key: "user_id_legacy", Value: bson.D{{Key: "$in", Value: filter.UserIDLegacy}}}}
 	}
 	if len(filter.RatingID) > 0 {
-		bsonRating = bson.D{{"rating_id", bson.D{{"$in", filter.RatingID}}}}
+		bsonRating = bson.D{{Key: "rating_id", Value: bson.D{{Key: "$in", Value: filter.RatingID}}}}
 	}
 	if len(filter.StartDate) > 0 && len(filter.EndDate) > 0 {
-		bsonDate = bson.D{{"created_at", bson.D{{"$gt", startDate}, {"$lt", endDate.AddDate(0, 0, 1)}}}}
+		bsonDate = bson.D{{Key: "created_at", Value: bson.D{{Key: "$gt", Value: startDate}, {Key: "$lt", Value: endDate.AddDate(0, 0, 1)}}}}
+	}
+	if filter.SourceTransID != "" {
+		bsonTransId = bson.D{{Key: "source_trans_id", Value: filter.SourceTransID}}
 	}
 
-	filter1 := bson.D{{"$and",
-		bson.A{
-			bson.D{{"$or",
-				bson.A{
+	filter1 := bson.D{{Key: "$and",
+		Value: bson.A{
+			bson.D{{Key: "$or",
+				Value: bson.A{
 					bsonUserUid,
 				}}},
-			bson.D{{"$or",
-				bson.A{
+			bson.D{{Key: "$or",
+				Value: bson.A{
 					bsonRating,
 				}}},
-			bson.D{{"$or",
-				bson.A{
+			bson.D{{Key: "$or",
+				Value: bson.A{
+					bsonTransId,
+				}}},
+			bson.D{{Key: "$or",
+				Value: bson.A{
 					bsonDate,
 				},
 			}},
 		},
 	},
 	}
-	collectionName := "ratingSubCol"
-	skip := int64(page)*limit - limit
-	cursor, err := r.db.Collection(collectionName).
+
+	limitPage := int(limit)
+	cursor, err := r.db.Collection("ratingSubCol").
 		Find(context.Background(), filter1,
-			&options.FindOptions{
-				Sort:  bson.D{bson.E{Key: sort, Value: dir}},
-				Limit: &limit,
-				Skip:  &skip,
-			})
+			newMongoPaginate(limitPage, page).getPaginatedOpts().
+				SetSort(bson.D{{Key: sort, Value: dir}}))
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return results, nil, nil
+		}
 		return nil, nil, err
 	}
-
-	if err = cursor.All(context.TODO(), &results); err != nil {
+	if err = cursor.All(context.Background(), &results); err != nil {
 		if err != nil {
 			return nil, nil, err
 		}
 	}
-	pagination := getPagination(r, page, limit, results, collectionName, filter1)
-	if len(results) == 0 {
-		return results, pagination, mongo.ErrNoDocuments
+
+	crsr, err := r.db.Collection("ratingSubCol").Find(context.Background(), filter1)
+	if err = crsr.All(context.Background(), &allResults); err != nil {
+		if err != nil {
+			return nil, nil, err
+		}
 	}
-	return results, pagination, nil
+
+	totalRecords := int64(len(allResults))
+	pagination.Limit = limitPage
+	pagination.Page = page
+	pagination.TotalRecords = totalRecords
+	pagination.TotalPage = int(math.Ceil(float64(totalRecords) / float64(pagination.GetLimit())))
+	pagination.Records = int64(len(results))
+
+	return results, &pagination, nil
 }
 
 func (r *ratingRepo) CreateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) error {

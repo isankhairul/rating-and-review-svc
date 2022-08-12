@@ -22,11 +22,12 @@ type ListRatingSubmissionRequest struct {
 }
 
 type RatingSubmissionFilter struct {
-	UserID    []string  `json:"user_uid"`
-	Score     []float64 `json:"score"`
-	RatingID  []string  `json:"rating_id"`
-	StartDate string    `json:"start_date"`
-	EndDate   string    `json:"end_date"`
+	UserIDLegacy  []string  `json:"user_uid_legacy"`
+	Score         []float64 `json:"score"`
+	RatingID      []string  `json:"rating_id"`
+	StartDate     string    `json:"start_date"`
+	EndDate       string    `json:"end_date"`
+	SourceTransID string    `json:"source_trans_id"`
 }
 
 // swagger:parameters ReqRatingSubmissionBody ReqPublicRatingSubmissionBody
