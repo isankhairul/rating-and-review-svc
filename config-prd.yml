@@ -45,7 +45,7 @@ route:
 thumbor:
   base_url: https://img-cdn.medkomtek.com 
   format_image: smart/filters:quality(75):strip_icc():format(webp)
-  secret: ${THUMBOR_SECRET}
+  secret: ${SECRET_THUMBOR}
   size_large_screen: "48 x 48"
   size_small_screen:  "32 x 32"
 
