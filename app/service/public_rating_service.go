@@ -247,7 +247,7 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 		SourceUid:  []string{input.SourceUID},
 	}
 	sortRating := "updated_at"
-	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, sortRating, filterRating)
+	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, 1, dir, sortRating, filterRating)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil, message.Message{

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
@@ -229,6 +230,7 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 	limit64 := int64(limit)
 	bsonSourceUid := bson.D{}
 	bsonSourceType := bson.D{}
+	fmt.Println(bsonSourceType)
 
 	if len(filter.SourceUid) > 0 {
 		bsonSourceUid = bson.D{{Key: "source_uid", Value: bson.D{{Key: "$in", Value: filter.SourceUid}}}}
