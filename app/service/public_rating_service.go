@@ -293,6 +293,7 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 
 		avatarPath := "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg"
 
+		// avatarPathDefault := "https://asset-cdn.medkomtek.com/assets/images/profile/user-default-original.jpg"
 		// Get Images from thumbor
 		newMediaImages := thumbor.GetNewThumborImages(avatarPath)
 

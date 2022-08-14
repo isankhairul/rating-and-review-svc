@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"gorm.io/datatypes"
 )
 
 type PublicRatingSummaryResponse struct {
@@ -35,7 +34,7 @@ type PublicRatingSubmissionResponse struct {
 	UserID        *string            `json:"user_id,omitempty"`
 	UserIDLegacy  *string            `json:"user_id_legacy,omitempty"`
 	DisplayName   string             `json:"display_name,omitempty"`
-	Avatar        datatypes.JSON     `json:"avatar,omitempty"`
+	Avatar        string             `json:"avatar,omitempty"`
 	Comment       *string            `json:"comment,omitempty"`
 	SourceTransID string             `json:"source_trans_id,omitempty"`
 	LikeCounter   int                `json:"like_counter"`
