@@ -13,13 +13,15 @@ require (
 	github.com/gorilla/schema v1.2.0
 	github.com/hashicorp/consul/api v1.10.1
 	github.com/itgelo/ozzo-validation/v4 v4.3.1
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/lib/pq v1.10.4
 	github.com/matoous/go-nanoid/v2 v2.0.0
+	github.com/mattn/go-sqlite3 v1.14.12 // indirect
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
 	github.com/vjeantet/govaluate v1.3.0
 	go.mongodb.org/mongo-driver v1.7.3
-	gorm.io/datatypes v1.0.7
+	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
 	gorm.io/driver/mysql v1.3.2
 	gorm.io/driver/postgres v1.3.4
 	gorm.io/driver/sqlite v1.3.1

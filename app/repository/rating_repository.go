@@ -680,8 +680,6 @@ func (r *ratingRepo) Paginate(value interface{}, pagination *base.Pagination, db
 
 func (r *ratingRepo) GetListRatingSubmissions(filter request.RatingSubmissionFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingSubmisson, *base.Pagination, error) {
 	var results []entity.RatingSubmisson
-	var allResults []bson.D
-	var pagination base.Pagination
 	startDate, _ := time.Parse(util.LayoutDateOnly, filter.StartDate)
 	endDate, _ := time.Parse(util.LayoutDateOnly, filter.EndDate)
 	if errD := endDate.Before(startDate); errD == true {
@@ -743,22 +741,8 @@ func (r *ratingRepo) GetListRatingSubmissions(filter request.RatingSubmissionFil
 			return nil, nil, err
 		}
 	}
-
-	crsr, err := r.db.Collection("ratingSubCol").Find(context.Background(), filter1)
-	if err = crsr.All(context.Background(), &allResults); err != nil {
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	totalRecords := int64(len(allResults))
-	pagination.Limit = limitPage
-	pagination.Page = page
-	pagination.TotalRecords = totalRecords
-	pagination.TotalPage = int(math.Ceil(float64(totalRecords) / float64(pagination.GetLimit())))
-	pagination.Records = int64(len(results))
-
-	return results, &pagination, nil
+	pagination := getPagination(r, page, limit, results, "ratingSubCol", filter1)
+	return results, pagination, nil
 }
 
 func (r *ratingRepo) CreateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) error {
