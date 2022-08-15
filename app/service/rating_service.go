@@ -64,7 +64,7 @@ type RatingService interface {
 	GetRatingFormulas(input request.GetRatingFormulasRequest) ([]entity.RatingFormulaCol, *base.Pagination, message.Message)
 
 	// Rating Sub Helpful
-	CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) message.Message
+	CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) (response.RatingSubHelpfulResponse, message.Message)
 }
 
 type ratingServiceImpl struct {
@@ -1782,30 +1782,33 @@ func (s *ratingServiceImpl) GetRatingFormulas(input request.GetRatingFormulasReq
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
-func (s *ratingServiceImpl) CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) message.Message {
+func (s *ratingServiceImpl) CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) (response.RatingSubHelpfulResponse, message.Message) {
+	result := response.RatingSubHelpfulResponse{}
+	result.RatingSubmissionId = input.RatingSubmissionID
+	result.UserIdLegacy = input.UserIDLegacy
 	counter := 0
 	// check rating submission is exist
 	ratingSubmissionId, err := primitive.ObjectIDFromHex(input.RatingSubmissionID)
 	if err != nil {
-		return message.RatingSubmissionNotFound
+		return result, message.RatingSubmissionNotFound
 	}
 
 	ratingSubmission, err := s.ratingRepo.GetRatingSubmissionById(ratingSubmissionId)
 	if err != nil {
 		if !errors.Is(err, mongo.ErrNoDocuments) {
-			return message.FailedMsg
+			return result, message.FailedMsg
 		}
-		return message.FailedMsg
+		return result, message.FailedMsg
 	}
 	if ratingSubmission == nil {
-		return message.ErrRatingSubmissionNotFound
+		return result, message.ErrRatingSubmissionNotFound
 	}
 	counter = ratingSubmission.LikeCounter
 
 	// Check rating sub helpful exist or not
 	ratingSubHelpful, err := s.publicRatingRepo.GetRatingSubHelpfulByRatingSubAndActor(input.RatingSubmissionID, input.UserIDLegacy)
 	if err != nil {
-		return message.FailedMsg
+		return result, message.FailedMsg
 	}
 	if ratingSubHelpful == nil {
 		counter = counter + 1
@@ -1813,28 +1816,35 @@ func (s *ratingServiceImpl) CreateRatingSubHelpful(input request.CreateRatingSub
 		_, errCr := s.publicRatingRepo.CreateRatingSubHelpful(input)
 		if errCr != nil {
 			if mongo.IsDuplicateKeyError(err) {
-				return message.ErrDuplicateRatingName
+				return result, message.ErrDuplicateRatingName
 			}
-			return message.FailedMsg
+			return result, message.FailedMsg
 		}
-
+		// Set result counter & status
+		result.Status = "Like"
+		result.LikeCounter = counter
 	} else {
 		if !ratingSubHelpful.Status {
 			counter = counter + 1
+			result.Status = "Like"
 		} else {
 			counter = counter - 1
+			result.Status = "Unlike"
 		}
 		// Update status of rating sub helpful
 		errUpd := s.publicRatingRepo.UpdateStatusRatingSubHelpful(ratingSubHelpful.ID, ratingSubHelpful.Status)
 		if errUpd != nil {
-			return message.FailedMsg
+			return result, message.FailedMsg
 		}
+		// Set result counter & status
+		result.LikeCounter = counter
 	}
 
 	// Update like_counter rating submission
 	err3 := s.publicRatingRepo.UpdateCounterRatingSubmission(ratingSubmissionId, int64(counter))
 	if err3 != nil {
-		return message.ErrSaveData
+		return result, message.ErrSaveData
 	}
-	return message.SuccessMsg
+
+	return result, message.SuccessMsg
 }

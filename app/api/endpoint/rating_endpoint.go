@@ -614,15 +614,21 @@ func makeCreateRatingSubHelpful(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.CreateRatingSubHelpfulRequest)
 
-		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		jwtObj, jwtMsg := global.SetJWTInfoFromContext(ctx)
 		if jwtMsg.Code != message.SuccessMsg.Code {
 			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
 		}
 
-		msg := s.CreateRatingSubHelpful(req)
+		// Validate jwtObj User Id
+		if jwtObj.UserIdLegacy != req.UserIDLegacy {
+			msg := message.ErrUserNotFound
+			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
+		}
+
+		result, msg := s.CreateRatingSubHelpful(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 		}
-		return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
+		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
 	}
 }

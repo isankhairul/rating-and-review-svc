@@ -25,5 +25,6 @@ func (req CreateRatingSubHelpfulRequest) Validate() error {
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.RatingSubmissionID, validation.Required.Error(message.ErrReq.Message)),
 		validation.Field(&req.IPAddress, validation.Match(regexp.MustCompile(regexIP)).Error(message.ErrIPFormatReq.Message)),
+		validation.Field(&req.UserIDLegacy, validation.Required.Error(message.ErrReq.Message)),
 	)
 }
