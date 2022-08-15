@@ -9,13 +9,14 @@ import (
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/model/response"
 	"go-klikdokter/app/repository"
+	"go-klikdokter/helper/config"
 	"go-klikdokter/helper/message"
-	"go-klikdokter/helper/thumbor"
-	"go-klikdokter/pkg/util"
 	"math"
 	"strconv"
+	"time"
 
 	"github.com/go-kit/log"
+	"github.com/spf13/viper"
 	"github.com/vjeantet/govaluate"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -224,6 +225,8 @@ func calculateRatingValue(sourceUID, formula string, ratingSubs []entity.RatingS
 //  200: SuccessResponse
 func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(input request.GetPublicListRatingSubmissionRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message) {
 	results := []response.PublicRatingSubmissionResponse{}
+	timezone := config.GetConfigString(viper.GetString("util.timezone"))
+	avatarDefault := config.GetConfigString(viper.GetString("image.default-avatar"))
 	var dir int
 	if input.Dir == "asc" {
 		dir = 1
@@ -285,25 +288,24 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 			return nil, nil, message.ErrRatingNotFound
 		}
 
-		avatarPath := "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg"
-
-		// avatarPathDefault := "https://asset-cdn.medkomtek.com/assets/images/profile/user-default-original.jpg"
-		// Get Images from thumbor
-		newMediaImages := thumbor.GetNewThumborImages(avatarPath)
+		if v.Avatar == "" {
+			v.Avatar = avatarDefault
+		}
+		Loc, _ := time.LoadLocation(timezone)
 
 		results = append(results, response.PublicRatingSubmissionResponse{
 			ID:            v.ID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
 			DisplayName:   *v.DisplayName,
-			Avatar:        newMediaImages,
+			Avatar:        v.Avatar,
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,
 			LikeCounter:   v.LikeCounter,
 			RatingType:    rating.RatingType,
 			Value:         v.Value,
 			LikeByMe:      false,
-			CreatedAt:     v.CreatedAt.In(util.Loc),
+			CreatedAt:     v.CreatedAt.In(Loc),
 		})
 	}
 	return results, pagination, message.SuccessMsg

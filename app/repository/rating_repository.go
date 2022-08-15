@@ -258,19 +258,20 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 	for _, args := range input {
 		dateNow := time.Now().In(util.Loc)
 		docs = append(docs, bson.D{
-			{"rating_id", args.RatingID},
-			{"user_id", args.UserID},
-			{"user_id_legacy", args.UserIDLegacy},
-			{"display_name", args.DisplayName},
-			{"comment", args.Comment},
-			{"value", args.Value},
-			{"ip_address", args.IPAddress},
-			{"user_agent", args.UserAgent},
-			{"source_trans_id", args.SourceTransID},
-			{"user_platform", args.UserPlatform},
-			{"like_counter", 0},
-			{"created_at", dateNow},
-			{"updated_at", dateNow},
+			{Key: "rating_id", Value: args.RatingID},
+			{Key: "user_id", Value: args.UserID},
+			{Key: "user_id_legacy", Value: args.UserIDLegacy},
+			{Key: "display_name", Value: args.DisplayName},
+			{Key: "comment", Value: args.Comment},
+			{Key: "value", Value: args.Value},
+			{Key: "avatar", Value: args.Avatar},
+			{Key: "ip_address", Value: args.IPAddress},
+			{Key: "user_agent", Value: args.UserAgent},
+			{Key: "source_trans_id", Value: args.SourceTransID},
+			{Key: "user_platform", Value: args.UserPlatform},
+			{Key: "like_counter", Value: 0},
+			{Key: "created_at", Value: dateNow},
+			{Key: "updated_at", Value: dateNow},
 		})
 	}
 	if len(docs) < 1 {

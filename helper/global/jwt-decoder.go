@@ -11,6 +11,7 @@ import (
 
 type JWTObj struct {
 	UserIdLegacy string `json:"user_id_legacy"`
+	Fullname     string `json:"fullname"`
 	Avatar       string `json:"avatar"`
 }
 
@@ -22,23 +23,16 @@ func SetJWTInfoFromContext(ctx context.Context) (JWTObj, message.Message) {
 	}
 
 	if claims, ok := token.Claims.(jwtgo.MapClaims); ok {
+		// Get claim value
 		userIdLegacy := claims["sub"].(float64)
-		var avatar string
-		defaultAvatar := "https://asset-cdn.medkomtek.com/assets/images/profile/user-default-original.jpg"
-		rawAvatar, ok := claims["avatar"]
+		fullname := claims["full_name"]
+		avatar := claims["avatar"]
 
-		if !ok || rawAvatar == nil {
-			avatar = defaultAvatar
-		} else {
-			avatar = rawAvatar.(string)
-
-			if avatar == "" {
-				avatar = defaultAvatar
-			}
-		}
-
+		// Set value to JWTObj
 		jwtObj.UserIdLegacy = fmt.Sprintf("%.0f", userIdLegacy)
+		jwtObj.Fullname = fmt.Sprintf("%s", fullname)
 		jwtObj.Avatar = fmt.Sprintf("%s", avatar)
+
 		return jwtObj, message.SuccessMsg
 	} else {
 		return jwtObj, message.ErrNoAuth

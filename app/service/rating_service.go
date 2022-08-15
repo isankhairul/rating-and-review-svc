@@ -11,7 +11,6 @@ import (
 	"go-klikdokter/app/repository"
 	"go-klikdokter/helper/config"
 	"go-klikdokter/helper/message"
-	"go-klikdokter/helper/thumbor"
 	"go-klikdokter/pkg/util"
 	"math"
 	"strconv"
@@ -315,11 +314,13 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 	if input.UserIDLegacy == nil || *input.UserIDLegacy == "" {
 		input.UserIDLegacy = &empty
 	}
-	if input.DisplayName == nil || *input.DisplayName == "" {
-		input.DisplayName = &empty
-	}
-	if input.UserID == &empty && input.UserIDLegacy == &empty && input.DisplayName == &empty {
+	if input.UserID == &empty && input.UserIDLegacy == &empty {
 		return result, message.UserUIDRequired
+	}
+
+	// Validate displayname
+	if input.DisplayName == nil || *input.DisplayName == "" {
+		return result, message.ErrDisplayNameRequired
 	}
 
 	originalSourceTransID := input.SourceTransID
@@ -392,7 +393,6 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 				valL := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er)
 				if valL {
 					return result, message.UserRated
-
 				}
 			}
 		}
@@ -428,6 +428,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 				UserIDLegacy:  input.UserIDLegacy,
 				DisplayName:   input.DisplayName,
 				Comment:       "",
+				Avatar:        input.Avatar,
 				IPAddress:     input.IPAddress,
 				UserAgent:     input.UserAgent,
 				SourceTransID: input.SourceTransID,
@@ -441,6 +442,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 				UserIDLegacy:  input.UserIDLegacy,
 				DisplayName:   input.DisplayName,
 				Comment:       input.Comment,
+				Avatar:        input.Avatar,
 				IPAddress:     input.IPAddress,
 				UserAgent:     input.UserAgent,
 				SourceTransID: input.SourceTransID,
@@ -655,6 +657,7 @@ func (s *ratingServiceImpl) DeleteRatingSubmission(id string) message.Message {
 func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input request.GetPublicListRatingSubmissionByUserIdRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message) {
 	results := []response.PublicRatingSubmissionResponse{}
 	timezone := config.GetConfigString(viper.GetString("util.timezone"))
+	avatarDefault := config.GetConfigString(viper.GetString("image.default-avatar"))
 	var dir int
 	if input.Dir == "asc" {
 		dir = 1
@@ -726,16 +729,17 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 			likeByme = ratingSubHelpful.Status
 		}
 
-		avatarPath := "/avatar/" + *v.UserIDLegacy + "/original/avatar.jpg"
-		// Get Images from thumbor
-		newMediaImages := thumbor.GetNewThumborImages(avatarPath)
+		if v.Avatar == "" {
+			v.Avatar = avatarDefault
+		}
 		Loc, _ := time.LoadLocation(timezone)
+
 		results = append(results, response.PublicRatingSubmissionResponse{
 			ID:            v.ID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
 			DisplayName:   *v.DisplayName,
-			Avatar:        newMediaImages,
+			Avatar:        v.Avatar,
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,
 			LikeCounter:   v.LikeCounter,
