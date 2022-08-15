@@ -16,6 +16,7 @@ type RatingSubmisson struct {
 	Value         string             `json:"value" bson:"value,omitempty"`
 	IPAddress     string             `json:"ip_address" bson:"ip_address,omitempty"`
 	UserAgent     string             `json:"user_agent" bson:"user_agent,omitempty"`
+	Avatar        string             `json:"avatar" bson:"avatar,omitempty"`
 	SourceTransID string             `json:"source_trans_id" bson:"source_trans_id,omitempty"`
 	LikeCounter   int                `json:"like_counter" bson:"like_counter,omitempty"`
 	UserPlatform  string             `json:"user_platform" bson:"user_platform,omitempty"`

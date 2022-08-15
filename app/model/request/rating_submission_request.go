@@ -71,6 +71,7 @@ type CreateRatingSubmissionRequest struct {
 	UserAgent     string         `json:"user_agent" bson:"user_agent"`
 	SourceTransID string         `json:"source_trans_id" bson:"source_trans_id"`
 	UserPlatform  string         `json:"user_platform" bson:"user_platform"`
+	Avatar        string         `json:"-" bson:"-"`
 }
 
 type SaveRatingSubmission struct {
@@ -80,6 +81,7 @@ type SaveRatingSubmission struct {
 	DisplayName   *string `json:"display_name" bson:"display_name"`
 	Comment       string  `json:"comment" bson:"comment"`
 	Value         *string `json:"value" bson:"value"`
+	Avatar        string  `json:"avatar" bson:"avatar"`
 	IPAddress     string  `json:"ip_address" bson:"ip_address"`
 	UserAgent     string  `json:"user_agent" bson:"user_agent"`
 	SourceTransID string  `json:"source_trans_id" bson:"source_trans_id"`

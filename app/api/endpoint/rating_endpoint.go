@@ -185,10 +185,22 @@ func makeCreateRatingSubmission(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.CreateRatingSubmissionRequest)
 
-		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		jwtObj, jwtMsg := global.SetJWTInfoFromContext(ctx)
 		if jwtMsg.Code != message.SuccessMsg.Code {
 			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
 		}
+
+		// Validate jwtObj User Id
+		if jwtObj.UserIdLegacy != *req.UserIDLegacy {
+			msg := message.ErrUserNotFound
+			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
+		}
+
+		// Set value from extract JWT
+		if *req.DisplayName == "" {
+			req.DisplayName = &jwtObj.Fullname
+		}
+		req.Avatar = jwtObj.Avatar
 
 		result, msg := s.CreateRatingSubmission(req)
 		if msg.Code != 212000 {

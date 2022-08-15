@@ -8,6 +8,7 @@ import (
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/repository/repository_mock"
 	"go-klikdokter/app/service"
+	"go-klikdokter/helper/global"
 	"go-klikdokter/helper/message"
 	"go-klikdokter/pkg/util"
 	"go-klikdokter/pkg/util/mocks"
@@ -57,6 +58,11 @@ var (
 	callMFFailed  = "CallGetDetailMedicalFacilityFailed"
 	e             = errors.New("error")
 )
+
+var jwtObj = global.JWTObj{
+	UserIdLegacy: "12345",
+	Fullname:     "Test",
+}
 
 func TestCreateRatingTypeNum(t *testing.T) {
 	var minScore = 0
@@ -582,6 +588,7 @@ func TestCreateRatingSubmissionFailFindRating(t *testing.T) {
 		},
 		UserID:       &id,
 		UserIDLegacy: &id,
+		DisplayName:  &name,
 	}
 
 	sub := entity.RatingSubmisson{
@@ -632,6 +639,7 @@ func TestCreateRatingSubmissionFailAgentTooLong(t *testing.T) {
 		UserID:        &id,
 		UserIDLegacy:  &id,
 		SourceTransID: id,
+		DisplayName:   &name,
 		UserAgent:     "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789",
 	}
 	sourceTransIdConcenate := input.SourceTransID + "||" + id
@@ -691,6 +699,7 @@ func TestCreateRatingSubmissionFailLikertType(t *testing.T) {
 		},
 		UserID:       &id,
 		UserIDLegacy: &id,
+		DisplayName:  &name,
 	}
 
 	sub := entity.RatingSubmisson{
