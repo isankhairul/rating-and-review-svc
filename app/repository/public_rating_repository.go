@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
@@ -36,6 +35,7 @@ type PublicRatingRepository interface {
 	GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error)
 	GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId, sourceType string) (*entity.RatingFormulaCol, error)
 	UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) error
+	GetListRatingBySourceTypeAndUID(sourceType, sourceUID string) ([]entity.RatingsCol, error)
 }
 
 func NewPublicRatingRepository(db *mongo.Database) PublicRatingRepository {
@@ -230,7 +230,6 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 	limit64 := int64(limit)
 	bsonSourceUid := bson.D{}
 	bsonSourceType := bson.D{}
-	fmt.Println(bsonSourceType)
 
 	if len(filter.SourceUid) > 0 {
 		bsonSourceUid = bson.D{{Key: "source_uid", Value: bson.D{{Key: "$in", Value: filter.SourceUid}}}}
@@ -367,6 +366,30 @@ func (r *publicRatingRepo) UpdateRatingSubDisplayNameByIdLegacy(input request.Up
 	}
 
 	return nil
+}
+
+func (r *publicRatingRepo) GetListRatingBySourceTypeAndUID(sourceType, sourceUID string) ([]entity.RatingsCol, error) {
+	var results []entity.RatingsCol
+
+	bsonFilter := bson.D{{Key: "$and", Value: bson.A{
+		bson.D{{Key: "source_type", Value: sourceType}},
+		bson.D{{Key: "source_uid", Value: sourceUID}},
+		bson.D{{Key: "status", Value: true}},
+	}}}
+
+	cursor, err := r.db.Collection(entity.RatingsCol{}.CollectionName()).Find(context.Background(), bsonFilter)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return results, nil
+		}
+		return nil, err
+	}
+	if err = cursor.All(context.Background(), &results); err != nil {
+		if err != nil {
+			return nil, err
+		}
+	}
+	return results, nil
 }
 
 func paginate(r *publicRatingRepo, page int, limit int64, result interface{}, collectionName string, filter bson.D) *base.Pagination {

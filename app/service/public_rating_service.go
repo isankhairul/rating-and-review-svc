@@ -241,13 +241,7 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 		input.Sort = "created_at"
 	}
 
-	// Get Rating By SourceType and SourceUID
-	filterRating := request.FilterRatingSummary{
-		SourceType: input.SourceType,
-		SourceUid:  []string{input.SourceUID},
-	}
-	sortRating := "updated_at"
-	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, 1, dir, sortRating, filterRating)
+	ratings, err := s.publicRatingRepo.GetListRatingBySourceTypeAndUID(input.SourceType, input.SourceUID)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil, message.Message{

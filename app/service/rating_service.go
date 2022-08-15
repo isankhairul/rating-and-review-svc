@@ -672,13 +672,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 		input.Sort = "created_at"
 	}
 
-	// Get Rating By SourceType and SourceUID
-	filterRating := request.FilterRatingSummary{
-		SourceType: input.SourceType,
-		SourceUid:  []string{input.SourceUID},
-	}
-	sortRating := "updated_at"
-	ratings, _, err := s.publicRatingRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, sortRating, filterRating)
+	ratings, err := s.publicRatingRepo.GetListRatingBySourceTypeAndUID(input.SourceType, input.SourceUID)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil, message.Message{
