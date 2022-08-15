@@ -400,7 +400,6 @@ func TestGetRatingSummaryBySourceTypeErrFailedCalculate(t *testing.T) {
 func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
 	idDummy1, _ := primitive.ObjectIDFromHex(idDummy1)
 	idDummy2, _ := primitive.ObjectIDFromHex(idDummy2)
-	filterSummary.SourceUid = []string{requestSubmission.SourceUID}
 
 	var filterSubmission = request.FilterRatingSubmission{
 		RatingID: []string{idDummy1.Hex(), idDummy2.Hex()},
@@ -444,7 +443,7 @@ func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
 		Page:         1,
 		TotalRecords: 1,
 	}
-	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
+	publicRatingRepository.Mock.On("GetListRatingBySourceTypeAndUID", requestSubmission.SourceType, requestSubmission.SourceUID).Return(ratingDatas, nil).Once()
 	publicRatingRepository.Mock.On("GetPublicRatingSubmissions", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSubmission).Return(ratingSubDatas, &paginationResult, nil).Once()
 	ratingRepository.Mock.On("GetRatingById", idDummy1).Return(&ratingDatas[0], nil)
 
@@ -458,7 +457,6 @@ func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
 func TestGetRatingSubmissionBySourceTypeAndUIDEmptyList(t *testing.T) {
 	idDummy1, _ := primitive.ObjectIDFromHex(idDummy1)
 	idDummy2, _ := primitive.ObjectIDFromHex(idDummy2)
-	filterSummary.SourceUid = []string{requestSubmission.SourceUID}
 
 	var filterSubmission = request.FilterRatingSubmission{
 		RatingID: []string{idDummy1.Hex(), idDummy2.Hex()},
@@ -491,7 +489,7 @@ func TestGetRatingSubmissionBySourceTypeAndUIDEmptyList(t *testing.T) {
 		Page:         1,
 		TotalRecords: 0,
 	}
-	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "updated_at", filterSummary).Return(ratingDatas, &paginationResult, nil).Once()
+	publicRatingRepository.Mock.On("GetListRatingBySourceTypeAndUID", requestSubmission.SourceType, requestSubmission.SourceUID).Return(ratingDatas, nil).Once()
 	publicRatingRepository.Mock.On("GetPublicRatingSubmissions", requestSubmission.Limit, requestSubmission.Page, "created_at", filterSubmission).Return(ratingSubDatas, &paginationResult, nil).Once()
 
 	result, pagination, msg := publicRatingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
@@ -502,18 +500,8 @@ func TestGetRatingSubmissionBySourceTypeAndUIDEmptyList(t *testing.T) {
 }
 
 func TestGetRatingSubmissionBySourceTypeAndUIDErrGetRating(t *testing.T) {
-	requestSubmission.Sort = "failed"
-	filterSummary.SourceUid = []string{requestSubmission.SourceUID}
-
-	paginationResult := base.Pagination{
-		Records:      0,
-		Limit:        10,
-		Page:         1,
-		TotalRecords: 0,
-	}
-
 	message := "Cannot find rating with params SourceType :" + requestSubmission.SourceType + ", SourceUid:" + requestSubmission.SourceUID
-	publicRatingRepository.Mock.On("GetPublicRatingsByParams", requestSubmission.Limit, requestSubmission.Page, "updated_at", filterSummary).Return([]entity.RatingsCol{}, &paginationResult, errors.New("error")).Once()
+	publicRatingRepository.Mock.On("GetListRatingBySourceTypeAndUID", requestSubmission.SourceType, requestSubmission.SourceUID).Return([]entity.RatingsCol{}, errors.New("error")).Once()
 
 	_, _, msg := publicRatingService.GetListRatingSubmissionBySourceTypeAndUID(requestSubmission)
 	assert.Equal(t, 412002, msg.Code, "Code must be 412002")

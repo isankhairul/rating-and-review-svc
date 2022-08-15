@@ -132,3 +132,9 @@ func (repository *PublicRatingRepositoryMock) UpdateRatingSubDisplayNameByIdLega
 	}
 	return nil
 }
+
+func (repository *PublicRatingRepositoryMock) GetListRatingBySourceTypeAndUID(sourceType, sourceUID string) ([]entity.RatingsCol, error) {
+	arguments := repository.Mock.Called(sourceType, sourceUID)
+
+	return arguments.Get(0).([]entity.RatingsCol), nil
+}
