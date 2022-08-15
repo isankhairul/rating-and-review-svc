@@ -159,7 +159,7 @@ func TestCreateRatingSubHelpfulSuccess(t *testing.T) {
 	publicRatingRepository.Mock.On("CreateRatingSubHelpful", input).Return(ratingSubHelpful, nil).Once()
 	publicRatingRepository.Mock.On("UpdateCounterRatingSubmission", objectId, counter).Return(nil).Once()
 
-	msg := svc.CreateRatingSubHelpful(input)
+	_, msg := svc.CreateRatingSubHelpful(input)
 	assert.Equal(t, message.SuccessMsg, msg)
 }
 
@@ -189,7 +189,7 @@ func TestCreateRatingSubHelpfulRatingSubmissionNil(t *testing.T) {
 
 	ratingRepository.Mock.On("GetRatingSubmissionById", objectRatingSubmissionId).Return(ratingSubmission, nil).Once()
 
-	msg := svc.CreateRatingSubHelpful(input)
+	_, msg := svc.CreateRatingSubHelpful(input)
 	assert.Equal(t, message.FailedMsg, msg)
 }
 
@@ -232,7 +232,7 @@ func TestCreateRatingSubHelpfulUpdateCounterFailed(t *testing.T) {
 	publicRatingRepository.Mock.On("CreateRatingSubHelpful", input).Return(ratingSubHelpful, nil).Once()
 	publicRatingRepository.Mock.On("UpdateCounterRatingSubmission", objectId, ratingSubmission.LikeCounter).Return(errors.New("error")).Once()
 
-	msg := svc.CreateRatingSubHelpful(input)
+	_, msg := svc.CreateRatingSubHelpful(input)
 	assert.Equal(t, message.SuccessMsg, msg)
 }
 

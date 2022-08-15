@@ -171,7 +171,7 @@ func (r *publicRatingRepo) GetRatingSubHelpfulByRatingSubAndActor(ratingSubId, u
 
 func (r *publicRatingRepo) UpdateCounterRatingSubmission(id primitive.ObjectID, currentCounter int64) error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
-	timeUpdate := time.Now().In(util.Loc)
+	// timeUpdate := time.Now().In(util.Loc)
 
 	helpfulCounter, err := countRatingSubHelpful(r, id.Hex())
 	if err != nil {
@@ -181,12 +181,8 @@ func (r *publicRatingRepo) UpdateCounterRatingSubmission(id primitive.ObjectID, 
 		currentCounter = helpfulCounter
 	}
 
-	ratingSubmiss := entity.RatingSubmisson{
-		LikeCounter: int(currentCounter),
-		UpdatedAt:   timeUpdate,
-	}
 	filter := bson.D{{Key: "_id", Value: id}}
-	data := bson.D{{Key: "$set", Value: ratingSubmiss}}
+	update := bson.M{"$set": bson.M{"like_counter": int(currentCounter)}}
 
 	// transaction
 	errTransaction := r.db.Client().UseSession(ctx, func(sessionContext mongo.SessionContext) error {
@@ -194,7 +190,7 @@ func (r *publicRatingRepo) UpdateCounterRatingSubmission(id primitive.ObjectID, 
 		if err != nil {
 			return err
 		}
-		err1 := r.db.Collection("ratingSubCol").FindOneAndUpdate(context.Background(), filter, data, &options.FindOneAndUpdateOptions{})
+		err1 := r.db.Collection("ratingSubCol").FindOneAndUpdate(context.Background(), filter, update, &options.FindOneAndUpdateOptions{})
 		if err1 != nil {
 			sessionContext.AbortTransaction(sessionContext)
 			return err1.Err()
