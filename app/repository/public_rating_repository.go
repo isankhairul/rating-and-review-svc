@@ -370,6 +370,7 @@ func (r *publicRatingRepo) GetListRatingBySourceTypeAndUID(sourceType, sourceUID
 	bsonFilter := bson.D{{Key: "$and", Value: bson.A{
 		bson.D{{Key: "source_type", Value: sourceType}},
 		bson.D{{Key: "source_uid", Value: sourceUID}},
+		bson.D{{Key: "rating_type", Value: "rating_like_dislike"}},
 		bson.D{{Key: "status", Value: true}},
 	}}}
 
