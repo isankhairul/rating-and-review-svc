@@ -272,6 +272,7 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 			{Key: "like_counter", Value: 0},
 			{Key: "created_at", Value: dateNow},
 			{Key: "updated_at", Value: dateNow},
+			{Key: "source_uid", Value: args.SourceUID},
 		})
 	}
 	if len(docs) < 1 {
