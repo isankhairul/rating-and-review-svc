@@ -433,6 +433,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 				UserAgent:     input.UserAgent,
 				SourceTransID: input.SourceTransID,
 				UserPlatform:  input.UserPlatform,
+				SourceUID:     input.SourceUID,
 			})
 		} else {
 			saveReq = append(saveReq, request.SaveRatingSubmission{
@@ -447,6 +448,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 				UserAgent:     input.UserAgent,
 				SourceTransID: input.SourceTransID,
 				UserPlatform:  input.UserPlatform,
+				SourceUID:     input.SourceUID,
 			})
 		}
 	}

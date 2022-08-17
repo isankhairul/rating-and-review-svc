@@ -72,6 +72,7 @@ type CreateRatingSubmissionRequest struct {
 	SourceTransID string         `json:"source_trans_id" bson:"source_trans_id"`
 	UserPlatform  string         `json:"user_platform" bson:"user_platform"`
 	Avatar        string         `json:"-" bson:"-"`
+	SourceUID     string         `json:"source_uid" bson:"source_uid"`
 }
 
 type SaveRatingSubmission struct {
@@ -85,6 +86,7 @@ type SaveRatingSubmission struct {
 	IPAddress     string  `json:"ip_address" bson:"ip_address"`
 	UserAgent     string  `json:"user_agent" bson:"user_agent"`
 	SourceTransID string  `json:"source_trans_id" bson:"source_trans_id"`
+	SourceUID     string  `json:"source_uid" bson:"source_uid"`
 	UserPlatform  string  `json:"user_platform" bson:"user_platform"`
 }
 
