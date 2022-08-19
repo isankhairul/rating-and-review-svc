@@ -284,7 +284,8 @@ func (r *publicRatingRepo) GetRatingSubsByRatingId(ratingId string) ([]entity.Ra
 
 func (r *publicRatingRepo) CountRatingSubsByRatingIdAndValue(ratingId, value string) (int64, error) {
 	bsonRatingId := bson.D{{Key: "rating_id", Value: ratingId}}
-	bsonValue := bson.D{{Key: "value", Value: value}}
+	bsonValue := bson.M{"value": bson.M{"$regex": value, "$options": "im"}}
+
 	bsonFilter := bson.D{{Key: "$and",
 		Value: bson.A{
 			bsonRatingId,
@@ -302,12 +303,25 @@ func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort
 	var results []entity.RatingSubmisson
 	limit64 := int64(limit)
 
-	bsonRatingID := bson.D{{Key: "rating_id", Value: bson.D{{Key: "$in", Value: filter.RatingID}}}}
+	bsonFilter := bson.D{}
+	if filter.LikertFilter.RatingId != "" && len(filter.LikertFilter.Value) != 0 {
+		bsonRatingType := bson.D{{Key: "tagging.rating_id", Value: filter.LikertFilter.RatingId}}
+		bsonLikertVal := bson.D{{Key: "tagging.value", Value: bson.D{{Key: "$in", Value: filter.LikertFilter.Value}}}}
+		// bsonRatingID := bson.D{{Key: "rating_id", Value: bson.D{{Key: "$in", Value: filter.RatingID}}}}
+
+		bsonFilter = bson.D{{Key: "$and", Value: bson.A{
+			// bsonRatingID,
+			bsonRatingType,
+			bsonLikertVal,
+		}}}
+	} else {
+		bsonFilter = bson.D{{Key: "rating_id", Value: bson.D{{Key: "$in", Value: filter.RatingID}}}}
+	}
 
 	collectionName := "ratingSubCol"
 	skip := int64(page)*limit64 - limit64
 	cursor, err := r.db.Collection(collectionName).
-		Find(context.Background(), bsonRatingID,
+		Find(context.Background(), bsonFilter,
 			&options.FindOptions{
 				Sort:  bson.D{bson.E{Key: sort, Value: dir}},
 				Limit: &limit64,
@@ -322,7 +336,7 @@ func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort
 			return nil, nil, err
 		}
 	}
-	pagination := paginate(r, page, limit64, results, collectionName, bsonRatingID)
+	pagination := paginate(r, page, limit64, results, collectionName, bsonFilter)
 	return results, pagination, nil
 }
 

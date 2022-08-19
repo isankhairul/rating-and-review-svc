@@ -696,9 +696,17 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 
 	// Get Rating Submission
 	filterRatingSubs := request.FilterRatingSubmission{}
+	if input.Filter != "" {
+		errMarshal := json.Unmarshal([]byte(input.Filter), &filterRatingSubs)
+		if errMarshal != nil {
+			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+		}
+	}
+
 	for _, v := range ratings {
 		filterRatingSubs.RatingID = append(filterRatingSubs.RatingID, v.ID.Hex())
 	}
+
 	ratingSubs, pagination, err := s.publicRatingRepo.GetPublicRatingSubmissions(input.Limit, input.Page, dir, input.Sort, filterRatingSubs)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
