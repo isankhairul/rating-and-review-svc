@@ -42,7 +42,13 @@ type GetPublicListRatingSubmissionRequest struct {
 }
 
 type FilterRatingSubmission struct {
-	RatingID []string `json:"rating_id"`
+	RatingID     []string     `json:"rating_id"`
+	LikertFilter LikertFilter `json:"likert_filter"`
+}
+
+type LikertFilter struct {
+	RatingId string   `json:"rating_id"`
+	Value    []string `json:"value"`
 }
 
 // swagger:parameters GetRatingBySourceTypeAndActor

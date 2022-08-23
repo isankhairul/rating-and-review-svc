@@ -62,6 +62,9 @@ definitions:
       source_trans_id:
         type: string
         x-go-name: SourceTransID
+      source_uid:
+        type: string
+        x-go-name: SourceUID
       user_agent:
         type: string
         x-go-name: UserAgent
@@ -739,6 +742,12 @@ paths:
         required: true
         type: string
         x-go-name: UserIdLegacy
+      - description: 'Filter available {"likert_filter": {"rating_id": "", "value":
+          [""]}}'
+        in: query
+        name: filter
+        type: string
+        x-go-name: Filter
       - format: int64
         in: query
         name: limit

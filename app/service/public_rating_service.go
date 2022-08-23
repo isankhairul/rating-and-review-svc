@@ -124,6 +124,7 @@ func (s *publicRatingServiceImpl) summaryRatingLikert(rating entity.RatingsCol, 
 				return nil, err
 			}
 			likertObjCount := make(map[string]interface{})
+			likertObjCount["seq_id"] = i
 			likertObjCount["value"] = data
 			likertObjCount["total_reviewer"] = totalCount
 			likertSummary.ValueList = append(likertSummary.ValueList, likertObjCount)
