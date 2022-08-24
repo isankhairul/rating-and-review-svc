@@ -76,18 +76,24 @@ type CreateRatingSubmissionRequest struct {
 }
 
 type SaveRatingSubmission struct {
-	RatingID      string  `json:"rating_id" bson:"rating_id"`
-	UserID        *string `json:"user_id" bson:"user_id"`
-	UserIDLegacy  *string `json:"user_id_legacy" bson:"user_id_legacy"`
-	DisplayName   *string `json:"display_name" bson:"display_name"`
-	Comment       string  `json:"comment" bson:"comment"`
-	Value         *string `json:"value" bson:"value"`
-	Avatar        string  `json:"avatar" bson:"avatar"`
-	IPAddress     string  `json:"ip_address" bson:"ip_address"`
-	UserAgent     string  `json:"user_agent" bson:"user_agent"`
-	SourceTransID string  `json:"source_trans_id" bson:"source_trans_id"`
-	SourceUID     string  `json:"source_uid" bson:"source_uid"`
-	UserPlatform  string  `json:"user_platform" bson:"user_platform"`
+	RatingID      string     `json:"rating_id" bson:"rating_id"`
+	UserID        *string    `json:"user_id" bson:"user_id"`
+	UserIDLegacy  *string    `json:"user_id_legacy" bson:"user_id_legacy"`
+	DisplayName   *string    `json:"display_name" bson:"display_name"`
+	Comment       string     `json:"comment" bson:"comment"`
+	Value         *string    `json:"value" bson:"value"`
+	Avatar        string     `json:"avatar" bson:"avatar"`
+	IPAddress     string     `json:"ip_address" bson:"ip_address"`
+	UserAgent     string     `json:"user_agent" bson:"user_agent"`
+	SourceTransID string     `json:"source_trans_id" bson:"source_trans_id"`
+	SourceUID     string     `json:"source_uid" bson:"source_uid"`
+	UserPlatform  string     `json:"user_platform" bson:"user_platform"`
+	Tagging       TaggingObj `json:"tagging" bson:"tagging"`
+}
+
+type TaggingObj struct {
+	RatingId string   `json:"rating_id" bson:"rating_id"`
+	Value    []string `json:"value" bson:"value"`
 }
 
 type UpdateRatingSubmissionRequest struct {
