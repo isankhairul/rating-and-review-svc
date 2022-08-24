@@ -305,7 +305,12 @@ func (s *ratingServiceImpl) GetRatingTypeNums(input request.GetRatingTypeNumsReq
 func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSubmissionRequest) ([]response.PublicCreateRatingSubmissionResponse, message.Message) {
 	var saveReq = make([]request.SaveRatingSubmission, 0)
 	var empty = ""
+	var likertId = ""
+	var valueLikert = ""
+	var numId = ""
 	result := []response.PublicCreateRatingSubmissionResponse{}
+	haveRatNum := false
+	haveRatLikert := false
 
 	// One of the following user_id and user_id_legacy must be filled
 	if input.UserID == nil || *input.UserID == "" {
@@ -421,6 +426,9 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 		}
 
 		if ratingNumericType == nil {
+			haveRatLikert = true
+			likertId = argRatings.ID
+			valueLikert = *argRatings.Value
 			saveReq = append(saveReq, request.SaveRatingSubmission{
 				RatingID:      argRatings.ID,
 				Value:         argRatings.Value,
@@ -436,6 +444,8 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 				SourceUID:     input.SourceUID,
 			})
 		} else {
+			haveRatNum = true
+			numId = argRatings.ID
 			saveReq = append(saveReq, request.SaveRatingSubmission{
 				RatingID:      argRatings.ID,
 				Value:         argRatings.Value,
@@ -452,6 +462,12 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 			})
 		}
 	}
+
+	// Set Tagging for Numeric Rating Sub
+	if haveRatNum && haveRatLikert {
+		saveReq = createTagging(saveReq, numId, likertId, valueLikert)
+	}
+
 	if len(saveReq) < 0 {
 		return result, message.ErrTypeNotFound
 	}
@@ -492,6 +508,20 @@ func isIdExisted(saveReq []request.SaveRatingSubmission, ratingId string) bool {
 		}
 	}
 	return true
+}
+
+func createTagging(saveReq []request.SaveRatingSubmission, numId, likertId, valueLikert string) []request.SaveRatingSubmission {
+	// tagging := request.TaggingObj{
+	// 	RatingId: likertId,
+	// 	Value:    strings.Split(valueLikert, ","),
+	// }
+	for i, args := range saveReq {
+		if numId == args.RatingID {
+			saveReq[i].Tagging.RatingId = likertId
+			saveReq[i].Tagging.Value = strings.Split(valueLikert, ",")
+		}
+	}
+	return saveReq
 }
 
 // swagger:route PUT /rating-submissions/{id} RatingSubmission ReqUpdateRatingSubmissionBody

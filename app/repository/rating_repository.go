@@ -257,23 +257,44 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 	var docs []interface{}
 	for _, args := range input {
 		dateNow := time.Now().In(util.Loc)
-		docs = append(docs, bson.D{
-			{Key: "rating_id", Value: args.RatingID},
-			{Key: "user_id", Value: args.UserID},
-			{Key: "user_id_legacy", Value: args.UserIDLegacy},
-			{Key: "display_name", Value: args.DisplayName},
-			{Key: "comment", Value: args.Comment},
-			{Key: "value", Value: args.Value},
-			{Key: "avatar", Value: args.Avatar},
-			{Key: "ip_address", Value: args.IPAddress},
-			{Key: "user_agent", Value: args.UserAgent},
-			{Key: "source_trans_id", Value: args.SourceTransID},
-			{Key: "user_platform", Value: args.UserPlatform},
-			{Key: "like_counter", Value: 0},
-			{Key: "created_at", Value: dateNow},
-			{Key: "updated_at", Value: dateNow},
-			{Key: "source_uid", Value: args.SourceUID},
-		})
+		if args.Tagging.RatingId != "" {
+			docs = append(docs, bson.D{
+				{Key: "rating_id", Value: args.RatingID},
+				{Key: "user_id", Value: args.UserID},
+				{Key: "user_id_legacy", Value: args.UserIDLegacy},
+				{Key: "display_name", Value: args.DisplayName},
+				{Key: "comment", Value: args.Comment},
+				{Key: "value", Value: args.Value},
+				{Key: "avatar", Value: args.Avatar},
+				{Key: "ip_address", Value: args.IPAddress},
+				{Key: "user_agent", Value: args.UserAgent},
+				{Key: "source_trans_id", Value: args.SourceTransID},
+				{Key: "user_platform", Value: args.UserPlatform},
+				{Key: "like_counter", Value: 0},
+				{Key: "created_at", Value: dateNow},
+				{Key: "updated_at", Value: dateNow},
+				{Key: "source_uid", Value: args.SourceUID},
+				{Key: "tagging", Value: args.Tagging},
+			})
+		} else {
+			docs = append(docs, bson.D{
+				{Key: "rating_id", Value: args.RatingID},
+				{Key: "user_id", Value: args.UserID},
+				{Key: "user_id_legacy", Value: args.UserIDLegacy},
+				{Key: "display_name", Value: args.DisplayName},
+				{Key: "comment", Value: args.Comment},
+				{Key: "value", Value: args.Value},
+				{Key: "avatar", Value: args.Avatar},
+				{Key: "ip_address", Value: args.IPAddress},
+				{Key: "user_agent", Value: args.UserAgent},
+				{Key: "source_trans_id", Value: args.SourceTransID},
+				{Key: "user_platform", Value: args.UserPlatform},
+				{Key: "like_counter", Value: 0},
+				{Key: "created_at", Value: dateNow},
+				{Key: "updated_at", Value: dateNow},
+				{Key: "source_uid", Value: args.SourceUID},
+			})
+		}
 	}
 	if len(docs) < 1 {
 		return nil, mongo.ErrNilValue
