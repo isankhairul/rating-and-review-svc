@@ -24,6 +24,18 @@ definitions:
         x-go-name: SourceUid
     type: object
     x-go-package: go-klikdokter/app/model/request
+  CancelRatingById:
+    properties:
+      cancelled_reason:
+        type: string
+        x-go-name: CancelledReason
+      rating_submission_id:
+        items:
+          type: string
+        type: array
+        x-go-name: RatingSubmissionId
+    type: object
+    x-go-package: go-klikdokter/app/model/request
   CreateRatingSubHelpfulRequest:
     properties:
       ip_address:
@@ -695,6 +707,31 @@ info:
   title: 'KD Boilerplate Go kit:'
   version: "1.0"
 paths:
+  /cancel/rating-submissions:
+    put:
+      description: Cancel Rating Submission By Submission Id
+      operationId: ReqCancelRatingSubmission
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CancelRatingById'
+        x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
+      tags:
+      - RatingSubmission
   /helpful-rating-submission/:
     post:
       description: Create Helpful Rating Submission

@@ -56,6 +56,18 @@ type ReqUpdateRatingSubmissionBody struct {
 	Body UpdateRatingSubmissionRequest `json:"body"`
 }
 
+// swagger:parameters ReqCancelRatingSubmission
+type ReqCancelRatingSubmission struct {
+	// in: body
+	// required: true
+	Body CancelRatingById `json:"body"`
+}
+
+type CancelRatingById struct {
+	RatingSubmissionId []string `json:"rating_submission_id" bson:"rating_submission_id"`
+	CancelledReason    string   `json:"cancelled_reason" bson:"cancelled_reason"`
+}
+
 type RatingByType struct {
 	ID    string  `json:"uid" bson:"uid"`
 	Value *string `json:"value" bson:"value"`

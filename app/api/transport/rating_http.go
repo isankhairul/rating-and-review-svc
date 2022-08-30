@@ -98,6 +98,13 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler 
 		options...,
 	))
 
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "/cancel/rating-submissions").Handler(httptransport.NewServer(
+		ep.CancelRatingSubByIds,
+		decodeCancelRatingSub,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
 	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/list-rating-submissions/{source_type}/{source_uid}/{user_id_legacy}").Handler(httptransport.NewServer(
 		ep.GetListRatingSubmissionWithUserIdLegacy,
 		decodeGetRatingSubmissionWithUserIdLegacy,
@@ -519,6 +526,17 @@ func decodeCreateRatingSubHelpful(ctx context.Context, r *http.Request) (rqst in
 		return nil, err
 	}
 	err = req.Validate()
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func decodeCancelRatingSub(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.CancelRatingById
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
 	if err != nil {
 		return nil, err
 	}

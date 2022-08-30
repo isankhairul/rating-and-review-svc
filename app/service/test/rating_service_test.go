@@ -2449,3 +2449,39 @@ func TestGetListRatingSummaryErrSourceUidRequired(t *testing.T) {
 	_, msg := svc.GetListRatingSummary(req)
 	assert.Equal(t, message.ErrSourceUidRequire, msg)
 }
+
+func TestCancelRatingSubmissionSuccess(t *testing.T) {
+	ids := []primitive.ObjectID{}
+	input := request.CancelRatingById{
+		RatingSubmissionId: []string{"630dca3fc27e5483bdc006ec", "630dca3fc27e5483bdc006ed"},
+		CancelledReason:    "Cancelled Reason Test",
+	}
+
+	for _, id := range input.RatingSubmissionId {
+		objectId, _ := primitive.ObjectIDFromHex(id)
+		ids = append(ids, objectId)
+	}
+
+	ratingRepository.Mock.On("CancelRatingSubmissionByIds", ids, input.CancelledReason).Return(nil)
+	msg := svc.CancelRatingSubmission(input)
+
+	assert.Equal(t, message.SuccessMsg, msg)
+}
+
+func TestCancelRatingSubmissionFailed(t *testing.T) {
+	ids := []primitive.ObjectID{}
+	input := request.CancelRatingById{
+		RatingSubmissionId: []string{"630dca3fc27e5483bdc006ec", "630dca3fc27e5483bdc006ed"},
+		CancelledReason:    "failed",
+	}
+
+	for _, id := range input.RatingSubmissionId {
+		objectId, _ := primitive.ObjectIDFromHex(id)
+		ids = append(ids, objectId)
+	}
+
+	ratingRepository.Mock.On("CancelRatingSubmissionByIds", ids, input.CancelledReason).Return(errors.New("failed"))
+	msg := svc.CancelRatingSubmission(input)
+
+	assert.Equal(t, message.ErrSaveData, msg)
+}
