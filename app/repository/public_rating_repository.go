@@ -267,7 +267,17 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 
 func (r *publicRatingRepo) GetRatingSubsByRatingId(ratingId string) ([]entity.RatingSubmisson, error) {
 	var results []entity.RatingSubmisson
-	cursor, err := r.db.Collection("ratingSubCol").Find(context.Background(), bson.M{"rating_id": ratingId})
+	bsonRatingId := bson.D{{Key: "rating_id", Value: ratingId}}
+	bsonCancelled := bson.D{{Key: "cancelled", Value: false}}
+
+	bsonFilter := bson.D{{Key: "$and",
+		Value: bson.A{
+			bsonRatingId,
+			bsonCancelled,
+		},
+	}}
+
+	cursor, err := r.db.Collection("ratingSubCol").Find(context.Background(), bsonFilter)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return results, nil
@@ -302,20 +312,50 @@ func (r *publicRatingRepo) CountRatingSubsByRatingIdAndValue(ratingId, value str
 func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error) {
 	var results []entity.RatingSubmisson
 	limit64 := int64(limit)
+	bsonCancelled := bson.D{{Key: "cancelled", Value: false}}
 
-	bsonFilter := bson.D{}
+	bsonUserIdLegacy := bson.D{}
+	bsonSourceTransId := bson.D{}
+	bsonValue := bson.D{}
+
+	if len(filter.UserIdLegacy) > 0 {
+		bsonUserIdLegacy = bson.D{{Key: "user_id_legacy", Value: bson.D{{Key: "$in", Value: filter.UserIdLegacy}}}}
+	}
+	if len(filter.SourceTransID) > 0 {
+		bsonSourceTransId = bson.D{{Key: "source_trans_id", Value: bson.D{{Key: "$in", Value: filter.SourceTransID}}}}
+	}
+	if filter.Value != "" {
+		bsonValue = bson.D{{Key: "value", Value: filter.Value}}
+	}
+
+	var bsonFilter = bson.D{}
 	if filter.LikertFilter.RatingId != "" && len(filter.LikertFilter.Value) != 0 {
 		bsonRatingType := bson.D{{Key: "tagging.rating_id", Value: filter.LikertFilter.RatingId}}
 		bsonLikertVal := bson.D{{Key: "tagging.value", Value: bson.D{{Key: "$in", Value: filter.LikertFilter.Value}}}}
-		// bsonRatingID := bson.D{{Key: "rating_id", Value: bson.D{{Key: "$in", Value: filter.RatingID}}}}
 
 		bsonFilter = bson.D{{Key: "$and", Value: bson.A{
-			// bsonRatingID,
 			bsonRatingType,
 			bsonLikertVal,
+			bsonCancelled,
 		}}}
 	} else {
-		bsonFilter = bson.D{{Key: "rating_id", Value: bson.D{{Key: "$in", Value: filter.RatingID}}}}
+		bsonRatingID := bson.D{{Key: "rating_id", Value: bson.D{{Key: "$in", Value: filter.RatingID}}}}
+		bsonFilter = bson.D{{Key: "$and", Value: bson.A{
+			bsonRatingID,
+			bsonCancelled,
+			bson.D{{Key: "$or",
+				Value: bson.A{
+					bsonUserIdLegacy,
+				}}},
+			bson.D{{Key: "$or",
+				Value: bson.A{
+					bsonSourceTransId,
+				}}},
+			bson.D{{Key: "$or",
+				Value: bson.A{
+					bsonValue,
+				}}},
+		}}}
 	}
 
 	collectionName := "ratingSubCol"
