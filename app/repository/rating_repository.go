@@ -38,6 +38,7 @@ type RatingRepository interface {
 	UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest, id primitive.ObjectID) error
 	DeleteSubmission(id primitive.ObjectID) error
 	GetRatingSubmissionById(id primitive.ObjectID) (*entity.RatingSubmisson, error)
+	CancelRatingSubmissionByIds(ids []primitive.ObjectID, reason string) error
 
 	GetListRatingSubmissions(filter request.RatingSubmissionFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingSubmisson, *base.Pagination, error)
 	GetRatingSubmissionByRatingId(id string) (*entity.RatingSubmisson, error)
@@ -274,6 +275,8 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 				{Key: "created_at", Value: dateNow},
 				{Key: "updated_at", Value: dateNow},
 				{Key: "source_uid", Value: args.SourceUID},
+				{Key: "cancelled", Value: false},
+				{Key: "cancelled_reason", Value: ""},
 				{Key: "tagging", Value: args.Tagging},
 			})
 		} else {
@@ -293,6 +296,8 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 				{Key: "created_at", Value: dateNow},
 				{Key: "updated_at", Value: dateNow},
 				{Key: "source_uid", Value: args.SourceUID},
+				{Key: "cancelled", Value: false},
+				{Key: "cancelled_reason", Value: ""},
 			})
 		}
 	}
@@ -374,6 +379,42 @@ func (r *ratingRepo) GetRatingSubmissionById(id primitive.ObjectID) (*entity.Rat
 		return nil, err
 	}
 	return &ratingSubmission, nil
+}
+
+func (r *ratingRepo) CancelRatingSubmissionByIds(ids []primitive.ObjectID, reason string) error {
+	timeUpdate := time.Now().In(util.Loc)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
+
+	ratingSub := entity.RatingSubmisson{
+		Cancelled:       true,
+		CancelledReason: reason,
+		UpdatedAt:       timeUpdate,
+	}
+
+	filter := bson.D{{Key: "_id", Value: bson.D{{Key: "$in", Value: ids}}}}
+	data := bson.D{{Key: "$set", Value: ratingSub}}
+
+	// transaction
+	errTransaction := r.db.Client().UseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		err := sessionContext.StartTransaction()
+		if err != nil {
+			return err
+		}
+		_, errUpd := r.db.Collection("ratingSubCol").UpdateMany(context.Background(), filter, data)
+		if errUpd != nil {
+			sessionContext.AbortTransaction(sessionContext)
+			return errUpd
+		}
+		if err = sessionContext.CommitTransaction(sessionContext); err != nil {
+			return err
+		}
+		return nil
+	})
+	if errTransaction != nil {
+		return errTransaction
+	}
+
+	return nil
 }
 
 func (r *ratingRepo) GetRatingSubmissionByRatingId(id string) (*entity.RatingSubmisson, error) {

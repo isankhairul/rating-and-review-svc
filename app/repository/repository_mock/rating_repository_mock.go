@@ -246,6 +246,14 @@ func (repository *RatingRepositoryMock) GetRatingSubmissionById(id primitive.Obj
 	sub.UserIDLegacy = &res
 	return &sub, nil
 }
+
+func (repository *RatingRepositoryMock) CancelRatingSubmissionByIds(ids []primitive.ObjectID, reason string) error {
+	if reason == "failed" {
+		return errors.New("failed")
+	}
+	return nil
+}
+
 func (repository *RatingRepositoryMock) FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string, sourceTransId string) (*entity.RatingSubmisson, error) {
 	arguments := repository.Mock.Called(userId, ratingId, sourceTransId)
 	if *userId == "629dce7bf1f26275e0d84826" && ratingId == "629dce7bf1f26275e0d84826" && sourceTransId == "629dce7bf1f26275e0d84826" {

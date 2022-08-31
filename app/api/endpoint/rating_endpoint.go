@@ -27,6 +27,7 @@ type RatingEndpoint struct {
 	DeleteRatingSubmission                  endpoint.Endpoint
 	GetListRatingSubmissionWithUserIdLegacy endpoint.Endpoint
 	UpdateRatingSubDisplayNameByIdLegacy    endpoint.Endpoint
+	CancelRatingSubByIds                    endpoint.Endpoint
 
 	CreateRatingTypeLikert     endpoint.Endpoint
 	GetRatingTypeLikertById    endpoint.Endpoint
@@ -66,6 +67,7 @@ func MakeRatingEndpoints(s service.RatingService) RatingEndpoint {
 		DeleteRatingSubmission:                  makeDeleteRatingSubmission(s),
 		GetListRatingSubmissionWithUserIdLegacy: makeGetListRatingSubmissionWithUserIdLegacy(s),
 		UpdateRatingSubDisplayNameByIdLegacy:    makeUpdatePublicRatingSubDisplayNameByIdLegacy(s),
+		CancelRatingSubByIds:                    makeCancelRatingSubByIds(s),
 
 		CreateRatingTypeLikert:     makeCreateRatingTypeLikert(s),
 		GetRatingTypeLikertById:    makeGetRatingTypeLikertById(s),
@@ -282,6 +284,23 @@ func makeUpdatePublicRatingSubDisplayNameByIdLegacy(s service.RatingService) end
 		}
 
 		msg := s.UpdateRatingSubDisplayNameByIdLegacy(req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
+	}
+}
+
+func makeCancelRatingSubByIds(s service.RatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.CancelRatingById)
+
+		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
+		msg := s.CancelRatingSubmission(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 		}

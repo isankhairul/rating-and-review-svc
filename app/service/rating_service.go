@@ -39,6 +39,7 @@ type RatingService interface {
 	DeleteRatingSubmission(id string) message.Message
 	GetListRatingSubmissionWithUserIdLegacy(input request.GetPublicListRatingSubmissionByUserIdRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message)
 	UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) message.Message
+	CancelRatingSubmission(input request.CancelRatingById) message.Message
 
 	// Rating type likert
 	CreateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) message.Message
@@ -810,6 +811,33 @@ func (s *ratingServiceImpl) UpdateRatingSubDisplayNameByIdLegacy(input request.U
 		return message.ErrSaveData
 	}
 
+	return message.SuccessMsg
+}
+
+// swagger:route PUT /cancel/rating-submissions RatingSubmission ReqCancelRatingSubmission
+// Cancel Rating Submission By Submission Id
+//
+// security:
+// - Bearer: []
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingServiceImpl) CancelRatingSubmission(input request.CancelRatingById) message.Message {
+	ids := []primitive.ObjectID{}
+	reason := input.CancelledReason
+
+	for _, id := range input.RatingSubmissionId {
+		objectId, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			return message.ErrRatingSubmissionNotFound
+		}
+		ids = append(ids, objectId)
+	}
+
+	err := s.ratingRepo.CancelRatingSubmissionByIds(ids, reason)
+	if err != nil {
+		return message.ErrSaveData
+	}
 	return message.SuccessMsg
 }
 
