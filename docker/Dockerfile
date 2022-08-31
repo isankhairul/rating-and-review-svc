@@ -10,10 +10,6 @@ COPY . .
 
 RUN go get
 
-RUN git clone https://github.com/go-swagger/go-swagger && cd go-swagger && go install ./cmd/swagger
-RUN swagger generate spec -o swagger.yaml --scan-models
-RUN rm -rf go-swagger
-
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o /go/bin/rating-reviews-svc
 
 ## Distribution
