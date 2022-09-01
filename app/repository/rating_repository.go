@@ -603,7 +603,6 @@ func (r *ratingRepo) GetRatingsByParams(limit, page, dir int, sort string, filte
 	}
 
 	bsonFilter := bson.D{{"$and",
-
 		bson.A{
 			bsonStatus,
 			bsonSourceType,

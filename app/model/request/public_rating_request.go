@@ -35,15 +35,20 @@ type GetPublicListRatingSubmissionRequest struct {
 	// in: path
 	// required: true
 	SourceUID string `json:"source_uid"`
-	Limit     int    `json:"limit" schema:"limit" binding:"omitempty,numeric,min=1,max=100"`
-	Page      int    `json:"page" schema:"page" binding:"omitempty,numeric,min=1"`
-	Sort      string `json:"sort" schema:"sort" binding:"omitempty"`
-	Dir       string `json:"dir" schema:"dir" binding:"omitempty"`
+	// Filter available {"user_id_legacy": [""], "source_trans_id": [""], "value": ""}
+	Filter string `json:"filter" schema:"filter" binding:"omitempty"`
+	Limit  int    `json:"limit" schema:"limit" binding:"omitempty,numeric,min=1,max=100"`
+	Page   int    `json:"page" schema:"page" binding:"omitempty,numeric,min=1"`
+	Sort   string `json:"sort" schema:"sort" binding:"omitempty"`
+	Dir    string `json:"dir" schema:"dir" binding:"omitempty"`
 }
 
 type FilterRatingSubmission struct {
-	RatingID     []string     `json:"rating_id"`
-	LikertFilter LikertFilter `json:"likert_filter"`
+	RatingID      []string     `json:"rating_id"`
+	LikertFilter  LikertFilter `json:"likert_filter"`
+	UserIdLegacy  []string     `json:"user_id_legacy"`
+	SourceTransID []string     `json:"source_trans_id"`
+	Value         string       `json:"value"`
 }
 
 type LikertFilter struct {

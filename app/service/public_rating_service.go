@@ -262,11 +262,20 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 		}
 	}
 
-	// Get Rating Submission
+	// Unmarshal filter params
 	filterRatingSubs := request.FilterRatingSubmission{}
+	if input.Filter != "" {
+		errMarshal := json.Unmarshal([]byte(input.Filter), &filterRatingSubs)
+		if errMarshal != nil {
+			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+		}
+	}
+	// Set rating id to filter
 	for _, v := range ratings {
 		filterRatingSubs.RatingID = append(filterRatingSubs.RatingID, v.ID.Hex())
 	}
+
+	// Get Rating Submission
 	ratingSubs, pagination, err := s.publicRatingRepo.GetPublicRatingSubmissions(input.Limit, input.Page, dir, input.Sort, filterRatingSubs)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {

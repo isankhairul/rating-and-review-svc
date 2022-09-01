@@ -863,6 +863,12 @@ paths:
         required: true
         type: string
         x-go-name: SourceUID
+      - description: 'Filter available {"user_id_legacy": [""], "source_trans_id":
+          [""], "value": ""}'
+        in: query
+        name: filter
+        type: string
+        x-go-name: Filter
       - format: int64
         in: query
         name: limit
