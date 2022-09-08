@@ -208,7 +208,7 @@ func calculateRatingValue(sourceUID, formula string, ratingSubs []entity.RatingS
 			return result, err
 		}
 
-		result.TotalValue = int(math.Floor(finalCalc.(float64) + 0.4))
+		result.TotalValue = int(math.Floor(finalCalc.(float64) + 0.5))
 	} else {
 		result.TotalValue = totalRatingPoint
 	}
