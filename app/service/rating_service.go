@@ -1184,19 +1184,21 @@ func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*enti
 			return nil, message.FailedMsg
 		}
 	}
-
 	if rating != nil {
 		return nil, message.ErrExistingRatingTypeIdSourceUidAndSourceType
 	}
 
-	// check source exist
-	source, err := s.medicalFacility.CallGetDetailMedicalFacility(input.SourceUid)
-	if err != nil {
-		return nil, message.ErrFailedToCallGetMedicalFacility
-	}
+	// Check Source UID for Hospital
+	if input.SourceType == "hospital" {
+		// check source exist
+		source, err := s.medicalFacility.CallGetDetailMedicalFacility(input.SourceUid)
+		if err != nil {
+			return nil, message.ErrFailedToCallGetMedicalFacility
+		}
 
-	if source.Meta.Code != message.GetMedicalFacilitySuccess.Code {
-		return nil, message.ErrSourceNotExist
+		if source.Meta.Code != message.GetMedicalFacilitySuccess.Code {
+			return nil, message.ErrSourceNotExist
+		}
 	}
 
 	// check rating type exist
@@ -1204,7 +1206,6 @@ func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*enti
 	if err != nil {
 		return nil, message.ErrRatingTypeNotExist
 	}
-
 	ratingTypeNum, err := s.ratingRepo.GetRatingTypeNumByIdAndStatus(ratingTypeId)
 	if err != nil {
 		if !errors.Is(err, mongo.ErrNoDocuments) {
