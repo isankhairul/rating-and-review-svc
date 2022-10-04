@@ -1552,7 +1552,7 @@ func TestCreateRatingFailed1(t *testing.T) {
 		Name:         name + "2",
 		Description:  nil,
 		SourceUid:    callMFFailed,
-		SourceType:   sourceType + "2",
+		SourceType:   "hospital",
 		RatingType:   ratingtypeNum,
 		RatingTypeId: ratingTypeId,
 	}
@@ -1576,7 +1576,7 @@ func TestCreateRatingFailed3(t *testing.T) {
 	req := request.SaveRatingRequest{
 		Name:         name + "3",
 		SourceUid:    callMFSuccess,
-		SourceType:   sourceType + "4",
+		SourceType:   "hospital",
 		RatingType:   ratingtypeNum,
 		RatingTypeId: "testFailed",
 	}
@@ -1599,7 +1599,7 @@ func TestCreateRatingFailed5(t *testing.T) {
 	req := request.SaveRatingRequest{
 		Name:         name + "5",
 		SourceUid:    callMFSuccess,
-		SourceType:   sourceType + "6",
+		SourceType:   "hospital",
 		RatingTypeId: "629ec07e6f3c2761ba2dc461",
 	}
 
@@ -1625,7 +1625,7 @@ func TestCreateRatingFailed6(t *testing.T) {
 	req := request.SaveRatingRequest{
 		Name:         name + "6",
 		SourceUid:    callMFSuccess,
-		SourceType:   sourceType + "7",
+		SourceType:   "hospital",
 		RatingTypeId: "629ec07e6f3c2761ba2dc462",
 	}
 
@@ -1656,6 +1656,7 @@ func TestCreateRatingFailed7(t *testing.T) {
 	req := request.SaveRatingRequest{
 		Name:         name + "7",
 		SourceUid:    callMFSuccess,
+		SourceType:   "hospital",
 		RatingTypeId: ratingTypeId,
 	}
 
