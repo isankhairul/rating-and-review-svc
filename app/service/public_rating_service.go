@@ -11,6 +11,7 @@ import (
 	"go-klikdokter/app/repository"
 	"go-klikdokter/helper/config"
 	"go-klikdokter/helper/message"
+	"go-klikdokter/pkg/util"
 	"math"
 	"strconv"
 	"time"
@@ -303,11 +304,18 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 		}
 		Loc, _ := time.LoadLocation(timezone)
 
+		// Masking Anonym Display Name
+		displayName := ""
+		if v.IsAnonymous {
+			displayName = util.MaskDisplayName(*v.DisplayName)
+		} else {
+			displayName = *v.DisplayName
+		}
 		results = append(results, response.PublicRatingSubmissionResponse{
 			ID:            v.ID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
-			DisplayName:   *v.DisplayName,
+			DisplayName:   displayName,
 			Avatar:        v.Avatar,
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,

@@ -46,6 +46,7 @@ var (
 	idDummy2          = "62c4f30f6d90d90d6594fab8"
 	failedId          = "62c3e57b457ed515928c3690"
 	displayName       = "User Name"
+	anonym            = false
 )
 
 var requestSummary = request.GetPublicListRatingSummaryRequest{
@@ -435,6 +436,7 @@ func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
 			Comment:       &comment,
 			SourceTransID: sourceTransId,
 			LikeCounter:   5,
+			IsAnonymous:   anonym,
 		},
 	}
 	paginationResult := base.Pagination{

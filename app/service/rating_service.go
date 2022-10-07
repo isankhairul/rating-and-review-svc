@@ -443,6 +443,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 				SourceTransID: input.SourceTransID,
 				UserPlatform:  input.UserPlatform,
 				SourceUID:     input.SourceUID,
+				IsAnonymous:   input.IsAnonymous,
 			})
 		} else {
 			haveRatNum = true
@@ -460,6 +461,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 				SourceTransID: input.SourceTransID,
 				UserPlatform:  input.UserPlatform,
 				SourceUID:     input.SourceUID,
+				IsAnonymous:   input.IsAnonymous,
 			})
 		}
 	}
@@ -775,11 +777,18 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 		}
 		Loc, _ := time.LoadLocation(timezone)
 
+		// Masking Anonym Display Name
+		displayName := ""
+		if v.IsAnonymous {
+			displayName = util.MaskDisplayName(*v.DisplayName)
+		} else {
+			displayName = *v.DisplayName
+		}
 		results = append(results, response.PublicRatingSubmissionResponse{
 			ID:            v.ID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
-			DisplayName:   *v.DisplayName,
+			DisplayName:   displayName,
 			Avatar:        v.Avatar,
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,

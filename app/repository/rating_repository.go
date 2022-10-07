@@ -277,6 +277,7 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 				{Key: "source_uid", Value: args.SourceUID},
 				{Key: "cancelled", Value: false},
 				{Key: "cancelled_reason", Value: ""},
+				{Key: "is_anonymous", Value: args.IsAnonymous},
 				{Key: "tagging", Value: args.Tagging},
 			})
 		} else {
@@ -298,6 +299,7 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 				{Key: "source_uid", Value: args.SourceUID},
 				{Key: "cancelled", Value: false},
 				{Key: "cancelled_reason", Value: ""},
+				{Key: "is_anonymous", Value: args.IsAnonymous},
 			})
 		}
 	}
