@@ -22,6 +22,7 @@ type RatingSubmisson struct {
 	UserPlatform    string             `json:"user_platform" bson:"user_platform,omitempty"`
 	Cancelled       bool               `json:"cancelled" bson:"cancelled,omitempty"`
 	CancelledReason string             `json:"cancelled_reason" bson:"cancelled_reason,omitempty"`
+	IsAnonymous     bool               `json:"is_anonymous" bson:"is_anonymous,omitempty"`
 	CreatedAt       time.Time          `json:"-" bson:"created_at,omitempty"`
 	UpdatedAt       time.Time          `json:"-" bson:"updated_at,omitempty"`
 }

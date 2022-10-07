@@ -66,6 +66,9 @@ definitions:
       ip_address:
         type: string
         x-go-name: IPAddress
+      is_anonymous:
+        type: boolean
+        x-go-name: IsAnonymous
       ratings:
         items:
           $ref: '#/definitions/RatingByType'
