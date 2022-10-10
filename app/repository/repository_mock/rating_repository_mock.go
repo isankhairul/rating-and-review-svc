@@ -262,6 +262,7 @@ func (repository *RatingRepositoryMock) FindRatingSubmissionByUserIDAndRatingID(
 	sub := arguments.Get(0).(entity.RatingSubmisson)
 	return &sub, nil
 }
+
 func (repository *RatingRepositoryMock) FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string, sourceTransId string) (*entity.RatingSubmisson, error) {
 	arguments := repository.Mock.Called(userIdLegacy, ratingId, sourceTransId)
 	var res = "success"
@@ -273,6 +274,7 @@ func (repository *RatingRepositoryMock) FindRatingSubmissionByUserIDLegacyAndRat
 	sub := arguments.Get(0).(entity.RatingSubmisson)
 	return &sub, nil
 }
+
 func (repository *RatingRepositoryMock) FindRatingByRatingID(ratingId primitive.ObjectID) (*entity.RatingsCol, error) {
 	arguments := repository.Mock.Called(ratingId)
 	objectId, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84826")
@@ -287,6 +289,13 @@ func (repository *RatingRepositoryMock) FindRatingByRatingID(ratingId primitive.
 	rat := arguments.Get(0).(entity.RatingsCol)
 	return &rat, nil
 }
+
+func (repository *RatingRepositoryMock) FindRatingBySourceUIDAndRatingType(sourceUID, ratingType string) (*entity.RatingsCol, error) {
+	arguments := repository.Mock.Called(sourceUID, ratingType)
+	result := arguments.Get(0).(entity.RatingsCol)
+	return &result, nil
+}
+
 func (repository *RatingRepositoryMock) FindRatingNumericTypeByRatingTypeID(ratingTypeId primitive.ObjectID) (*entity.RatingTypesNumCol, error) {
 	arguments := repository.Mock.Called(ratingTypeId)
 	objectId, _ := primitive.ObjectIDFromHex("629dce7bf1f26275e0d84826")

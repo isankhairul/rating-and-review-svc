@@ -45,6 +45,7 @@ type RatingRepository interface {
 	FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string, sourceTransId string) (*entity.RatingSubmisson, error)
 	FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string, sourceTransId string) (*entity.RatingSubmisson, error)
 	FindRatingByRatingID(ratingId primitive.ObjectID) (*entity.RatingsCol, error)
+	FindRatingBySourceUIDAndRatingType(sourceUID, ratingType string) (*entity.RatingsCol, error)
 	FindRatingNumericTypeByRatingTypeID(ratingTypeId primitive.ObjectID) (*entity.RatingTypesNumCol, error)
 
 	CreateRating(input request.SaveRatingRequest) (*entity.RatingsCol, error)
@@ -460,7 +461,18 @@ func (r *ratingRepo) FindRatingByRatingID(ratingId primitive.ObjectID) (*entity.
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
 	err := ratingColl.FindOne(ctx, bson.M{"_id": ratingId}).Decode(&rating)
 	if err != nil {
+		return nil, err
+	}
+	return &rating, nil
+}
 
+func (r *ratingRepo) FindRatingBySourceUIDAndRatingType(sourceUID, ratingType string) (*entity.RatingsCol, error) {
+	var rating entity.RatingsCol
+
+	ratingColl := r.db.Collection("ratingsCol")
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := ratingColl.FindOne(ctx, bson.M{"source_uid": sourceUID, "rating_type": ratingType}).Decode(&rating)
+	if err != nil {
 		return nil, err
 	}
 	return &rating, nil
@@ -472,7 +484,6 @@ func (r *ratingRepo) FindRatingNumericTypeByRatingTypeID(ratingTypeId primitive.
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
 	err := ratingTypeNumColl.FindOne(ctx, bson.M{"_id": ratingTypeId}).Decode(&ratingTypeNum)
 	if err != nil {
-
 		return nil, err
 	}
 	return &ratingTypeNum, nil
@@ -699,8 +710,8 @@ func (r *ratingRepo) GetRatingTypeNumByIdAndStatus(id primitive.ObjectID) (*enti
 func (r *ratingRepo) GetRatingTypeLikertByIdAndStatus(id primitive.ObjectID) (*entity.RatingTypesLikertCol, error) {
 	var ratingTypeLikert entity.RatingTypesLikertCol
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	bsonFilter := bson.D{{"$and",
-		bson.A{
+	bsonFilter := bson.D{{Key: "$and",
+		Value: bson.A{
 			bsonStatus,
 			bson.M{"_id": id},
 		},
@@ -708,7 +719,6 @@ func (r *ratingRepo) GetRatingTypeLikertByIdAndStatus(id primitive.ObjectID) (*e
 	}
 	err := r.db.Collection("ratingTypesLikertCol").FindOne(ctx, bsonFilter).Decode(&ratingTypeLikert)
 	if err != nil {
-
 		return nil, err
 	}
 	return &ratingTypeLikert, nil

@@ -35,7 +35,8 @@ url:
 source-type: [
   hospital,
   article,
-  doctor
+  doctor,
+  layanan
 ]
 
 route:

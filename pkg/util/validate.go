@@ -6,8 +6,9 @@ import (
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/helper/message"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strconv"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func ValidValue(min int, max int, interval int, scale int) []float64 {
@@ -217,20 +218,18 @@ func IsInclude(arrValue []int, value float64) bool {
 	return false
 }
 
-func ValidateUserIdAndUserIdLegacy(input request.CreateRatingSubmissionRequest, ratingId string, id *string, idLegacy *string, ratingSubmission *entity.RatingSubmisson, err error) bool {
+func ValidateUserIdAndUserIdLegacy(sourceTransId, ratingId string, id *string, idLegacy *string, ratingSubmission *entity.RatingSubmisson, err error) bool {
 	if ratingSubmission != nil {
 		if ratingSubmission.RatingID == ratingId && ratingSubmission.UserID != nil {
-			if *ratingSubmission.UserID == *id && input.SourceTransID == ratingSubmission.SourceTransID {
+			if *ratingSubmission.UserID == *id && sourceTransId == ratingSubmission.SourceTransID {
 				return true
 			}
 		}
-
 		if ratingSubmission.RatingID == ratingId && ratingSubmission.UserIDLegacy != nil {
-			if *ratingSubmission.UserIDLegacy == *idLegacy && input.SourceTransID == ratingSubmission.SourceTransID {
+			if *ratingSubmission.UserIDLegacy == *idLegacy && sourceTransId == ratingSubmission.SourceTransID {
 				return true
 			}
 		}
-
 		if err == nil {
 			return true
 		}

@@ -86,6 +86,7 @@ type CreateRatingSubmissionRequest struct {
 	Avatar        string         `json:"-" bson:"-"`
 	IsAnonymous   bool           `json:"is_anonymous" bson:"is_anonymous"`
 	SourceUID     string         `json:"source_uid" bson:"source_uid"`
+	RatingType    string         `json:"rating_type" bson:"rating_type"`
 }
 
 type SaveRatingSubmission struct {
@@ -120,7 +121,6 @@ type UpdateRatingSubmissionRequest struct {
 
 func (req CreateRatingSubmissionRequest) Validate() error {
 	return validation.ValidateStruct(&req,
-		validation.Field(&req.Ratings, validation.Required.Error(message.ErrReq.Message)),
 		validation.Field(&req.IPAddress, validation.Match(regexp.MustCompile(regexIP)).Error(message.ErrIPFormatReq.Message)),
 		validation.Field(&req.SourceTransID, validation.Required.Error(message.ErrReq.Message)),
 		validation.Field(&req.Comment, validation.NotNil),
