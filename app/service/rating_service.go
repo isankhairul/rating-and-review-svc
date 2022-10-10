@@ -312,6 +312,8 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 	result := []response.PublicCreateRatingSubmissionResponse{}
 	haveRatNum := false
 	haveRatLikert := false
+	isRatingLayanan := false
+	valueLayanan := "1"
 
 	// One of the following user_id and user_id_legacy must be filled
 	if input.UserID == nil || *input.UserID == "" {
@@ -329,149 +331,165 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 		return result, message.ErrDisplayNameRequired
 	}
 
+	// The maximum length of user_agent allowed is 200 characters. Crop at 197 characters with triple dots (...) at the end.
+	if len(strings.TrimSpace(input.UserAgent)) > 200 {
+		return result, message.UserAgentTooLong
+	}
+
 	originalSourceTransID := input.SourceTransID
-	for _, argRatings := range input.Ratings {
+	if len(input.Ratings) == 0 && input.RatingType != "" {
+		// Condition for Layanan Rating
+		isRatingLayanan = true
+		// Get Rating by SourceUID and RatingType
+		rating, err := s.ratingRepo.FindRatingBySourceUIDAndRatingType(input.SourceUID, input.RatingType)
+		if err != nil {
+			return result, message.ErrRatingNotFound
+		}
+		if rating == nil || !*rating.Status {
+			return result, message.ErrRatingNotFound
+		}
+
 		// Concate source_trans_id
-		input.SourceTransID = originalSourceTransID + "||" + argRatings.ID
-
-		// Find rating_type_id by rating_id
-		objectRatingId, err := primitive.ObjectIDFromHex(argRatings.ID)
-		if err != nil {
-			return result, message.ErrRatingNotFound
-		}
-		rating, err := s.ratingRepo.FindRatingByRatingID(objectRatingId)
-		if err != nil {
-			return result, message.ErrRatingNotFound
-		}
-		if rating == nil || *rating.Status == false {
-			return result, message.ErrRatingNotFound
-		}
-
-		// Validate numeric type value
-		objectRatingTypeId, err := primitive.ObjectIDFromHex(rating.RatingTypeId)
-		if err != nil {
-			return result, message.ErrRatingNumericTypeNotFound
-		}
-		var validateMsg message.Message
-
-		ratingNumericType, err := s.ratingRepo.FindRatingNumericTypeByRatingTypeID(objectRatingTypeId)
-		if err != nil || *ratingNumericType.Status == false {
-			validateMsg = message.ErrRatingNumericTypeNotFound
-		} else {
-			value, er := strconv.ParseFloat(*argRatings.Value, 64)
-			if er != nil {
-				return result, message.ErrValueFormatForNumericType
-			}
-			validateMsg = util.ValidateTypeNumeric(ratingNumericType, value)
-		}
-
-		if validateMsg.Code == message.ValidationFailCode {
-			return result, validateMsg
-		}
-
-		// Validate numeric type value
-		if validateMsg == message.ErrRatingNumericTypeNotFound {
-			ratingTypeLikert, err := s.ratingRepo.GetRatingTypeLikertByIdAndStatus(objectRatingTypeId)
-			if err != nil {
-				return result, message.ErrLikertTypeNotFound
-			}
-			if ratingTypeLikert == nil {
-				return result, message.ErrLikertTypeNotFound
-			}
-			strValue := strings.Split(*argRatings.Value, ",")
-			if validateErr, validList := util.ValidateLikertType(ratingTypeLikert, strValue); validateErr != nil {
-				return result, message.Message{
-					Code:    message.ValidationFailCode,
-					Message: "value must be integer and include in " + fmt.Sprintf("%v", validList),
-				}
-			}
-		}
+		input.SourceTransID = originalSourceTransID + "||" + rating.ID.Hex()
 
 		// A submission with a combination of either (rating_id and user_id) OR (rating_id and user_id_legacy) is allowed once
-		if input.UserID != &empty && input.UserIDLegacy != &empty {
-			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID, input.SourceTransID)
-			val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er)
-			if val {
-				return result, message.UserRated
+		userHasSubmitRating := checkUserHaveSubmitRating(*input.UserID, *input.UserIDLegacy, rating.ID.Hex(), input.SourceTransID, s)
+		if userHasSubmitRating != message.SuccessMsg {
+			return result, userHasSubmitRating
+		}
+
+		saveReq = append(saveReq, request.SaveRatingSubmission{
+			RatingID:      rating.ID.Hex(),
+			Value:         &valueLayanan,
+			UserID:        input.UserID,
+			UserIDLegacy:  input.UserIDLegacy,
+			DisplayName:   input.DisplayName,
+			Comment:       input.Comment,
+			Avatar:        input.Avatar,
+			IPAddress:     input.IPAddress,
+			UserAgent:     input.UserAgent,
+			SourceTransID: input.SourceTransID,
+			UserPlatform:  input.UserPlatform,
+			SourceUID:     input.SourceUID,
+			IsAnonymous:   input.IsAnonymous,
+		})
+
+	} else {
+		// Condition for Doctor Rating
+		for _, argRatings := range input.Ratings {
+			// Concate source_trans_id
+			input.SourceTransID = originalSourceTransID + "||" + argRatings.ID
+
+			// Find rating_type_id by rating_id
+			objectRatingId, err := primitive.ObjectIDFromHex(argRatings.ID)
+			if err != nil {
+				return result, message.ErrRatingNotFound
 			}
-			if !val {
-				ratingSubmission, er = s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID, input.SourceTransID)
-				valL := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er)
-				if valL {
-					return result, message.UserRated
+			rating, err := s.ratingRepo.FindRatingByRatingID(objectRatingId)
+			if err != nil {
+				return result, message.ErrRatingNotFound
+			}
+			if rating == nil || !*rating.Status {
+				return result, message.ErrRatingNotFound
+			}
+
+			// Validate Numeric Type Value
+			objectRatingTypeId, err := primitive.ObjectIDFromHex(rating.RatingTypeId)
+			if err != nil {
+				return result, message.ErrRatingNumericTypeNotFound
+			}
+			var validateMsg message.Message
+
+			ratingNumericType, err := s.ratingRepo.FindRatingNumericTypeByRatingTypeID(objectRatingTypeId)
+			if err != nil || !*ratingNumericType.Status {
+				validateMsg = message.ErrRatingNumericTypeNotFound
+			} else {
+				value, er := strconv.ParseFloat(*argRatings.Value, 64)
+				if er != nil {
+					return result, message.ErrValueFormatForNumericType
+				}
+				validateMsg = util.ValidateTypeNumeric(ratingNumericType, value)
+			}
+
+			if validateMsg.Code == message.ValidationFailCode {
+				return result, validateMsg
+			}
+
+			// Validate Likert Type Value
+			if validateMsg == message.ErrRatingNumericTypeNotFound {
+				ratingTypeLikert, err := s.ratingRepo.GetRatingTypeLikertByIdAndStatus(objectRatingTypeId)
+				if err != nil {
+					return result, message.ErrLikertTypeNotFound
+				}
+				if ratingTypeLikert == nil {
+					return result, message.ErrLikertTypeNotFound
+				}
+				strValue := strings.Split(*argRatings.Value, ",")
+				if validateErr, validList := util.ValidateLikertType(ratingTypeLikert, strValue); validateErr != nil {
+					return result, message.Message{
+						Code:    message.ValidationFailCode,
+						Message: "value must be integer and include in " + fmt.Sprintf("%v", validList),
+					}
 				}
 			}
-		}
 
-		if input.UserID == &empty {
-			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(input.UserIDLegacy, argRatings.ID, input.SourceTransID)
-			if val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val {
-				return result, message.UserRated
+			// A submission with a combination of either (rating_id and user_id) OR (rating_id and user_id_legacy) is allowed once
+			userHasSubmitRating := checkUserHaveSubmitRating(*input.UserID, *input.UserIDLegacy, argRatings.ID, input.SourceTransID, s)
+			if userHasSubmitRating != message.SuccessMsg {
+				return result, userHasSubmitRating
 			}
-		}
 
-		if input.UserIDLegacy == &empty {
-			ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(input.UserID, argRatings.ID, input.SourceTransID)
-			if val := util.ValidateUserIdAndUserIdLegacy(input, rating.ID.Hex(), input.UserID, input.UserIDLegacy, ratingSubmission, er); val {
-				return result, message.UserRated
+			if isExisted := isIdExisted(saveReq, argRatings.ID); !isExisted {
+				return result, message.ErrCannotSameRatingId
 			}
-		}
 
-		//The maximum length of user_agent allowed is 200 characters. Crop at 197 characters with triple dots (...) at the end.
-		if len(strings.TrimSpace(input.UserAgent)) > 200 {
-			return result, message.UserAgentTooLong
-		}
-
-		if isExisted := isIdExisted(saveReq, argRatings.ID); !isExisted {
-			return result, message.ErrCannotSameRatingId
-		}
-
-		if ratingNumericType == nil {
-			haveRatLikert = true
-			likertId = argRatings.ID
-			valueLikert = *argRatings.Value
-			saveReq = append(saveReq, request.SaveRatingSubmission{
-				RatingID:      argRatings.ID,
-				Value:         argRatings.Value,
-				UserID:        input.UserID,
-				UserIDLegacy:  input.UserIDLegacy,
-				DisplayName:   input.DisplayName,
-				Comment:       "",
-				Avatar:        input.Avatar,
-				IPAddress:     input.IPAddress,
-				UserAgent:     input.UserAgent,
-				SourceTransID: input.SourceTransID,
-				UserPlatform:  input.UserPlatform,
-				SourceUID:     input.SourceUID,
-				IsAnonymous:   input.IsAnonymous,
-			})
-		} else {
-			haveRatNum = true
-			numId = argRatings.ID
-			saveReq = append(saveReq, request.SaveRatingSubmission{
-				RatingID:      argRatings.ID,
-				Value:         argRatings.Value,
-				UserID:        input.UserID,
-				UserIDLegacy:  input.UserIDLegacy,
-				DisplayName:   input.DisplayName,
-				Comment:       input.Comment,
-				Avatar:        input.Avatar,
-				IPAddress:     input.IPAddress,
-				UserAgent:     input.UserAgent,
-				SourceTransID: input.SourceTransID,
-				UserPlatform:  input.UserPlatform,
-				SourceUID:     input.SourceUID,
-				IsAnonymous:   input.IsAnonymous,
-			})
+			if ratingNumericType == nil {
+				haveRatLikert = true
+				likertId = argRatings.ID
+				valueLikert = *argRatings.Value
+				saveReq = append(saveReq, request.SaveRatingSubmission{
+					RatingID:      argRatings.ID,
+					Value:         argRatings.Value,
+					UserID:        input.UserID,
+					UserIDLegacy:  input.UserIDLegacy,
+					DisplayName:   input.DisplayName,
+					Comment:       "",
+					Avatar:        input.Avatar,
+					IPAddress:     input.IPAddress,
+					UserAgent:     input.UserAgent,
+					SourceTransID: input.SourceTransID,
+					UserPlatform:  input.UserPlatform,
+					SourceUID:     input.SourceUID,
+					IsAnonymous:   input.IsAnonymous,
+				})
+			} else {
+				haveRatNum = true
+				numId = argRatings.ID
+				saveReq = append(saveReq, request.SaveRatingSubmission{
+					RatingID:      argRatings.ID,
+					Value:         argRatings.Value,
+					UserID:        input.UserID,
+					UserIDLegacy:  input.UserIDLegacy,
+					DisplayName:   input.DisplayName,
+					Comment:       input.Comment,
+					Avatar:        input.Avatar,
+					IPAddress:     input.IPAddress,
+					UserAgent:     input.UserAgent,
+					SourceTransID: input.SourceTransID,
+					UserPlatform:  input.UserPlatform,
+					SourceUID:     input.SourceUID,
+					IsAnonymous:   input.IsAnonymous,
+				})
+			}
 		}
 	}
 
 	// Set Tagging for Numeric Rating Sub
-	if haveRatNum && haveRatLikert {
+	if haveRatNum && haveRatLikert && !isRatingLayanan {
 		saveReq = createTagging(saveReq, numId, likertId, valueLikert)
 	}
 
-	if len(saveReq) < 0 {
+	if len(saveReq) == 0 {
 		return result, message.ErrTypeNotFound
 	}
 	ratingSubs, err := s.ratingRepo.CreateRatingSubmission(saveReq)
@@ -498,10 +516,41 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 		data.RatingID = ratingSub.RatingID
 		data.RatingDescription = *rating.Description
 		data.Value = ratingSub.Value
-
 		result = append(result, data)
 	}
 	return result, message.SuccessMsg
+}
+
+func checkUserHaveSubmitRating(userId, userIdLegacy, ratingId, sourceTransId string, s *ratingServiceImpl) message.Message {
+	if userId != "" && userIdLegacy != "" {
+		ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(&userIdLegacy, ratingId, sourceTransId)
+		val := util.ValidateUserIdAndUserIdLegacy(sourceTransId, ratingId, &userId, &userIdLegacy, ratingSubmission, er)
+		if val {
+			return message.UserRated
+		}
+		if !val {
+			ratingSubmission, er = s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(&userId, ratingId, sourceTransId)
+			valL := util.ValidateUserIdAndUserIdLegacy(sourceTransId, ratingId, &userId, &userIdLegacy, ratingSubmission, er)
+			if valL {
+				return message.UserRated
+			}
+		}
+	}
+
+	if userId == "" {
+		ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(&userIdLegacy, ratingId, sourceTransId)
+		if val := util.ValidateUserIdAndUserIdLegacy(sourceTransId, ratingId, &userId, &userIdLegacy, ratingSubmission, er); val {
+			return message.UserRated
+		}
+	}
+
+	if userIdLegacy == "" {
+		ratingSubmission, er := s.ratingRepo.FindRatingSubmissionByUserIDAndRatingID(&userId, ratingId, sourceTransId)
+		if val := util.ValidateUserIdAndUserIdLegacy(sourceTransId, ratingId, &userId, &userIdLegacy, ratingSubmission, er); val {
+			return message.UserRated
+		}
+	}
+	return message.SuccessMsg
 }
 
 func isIdExisted(saveReq []request.SaveRatingSubmission, ratingId string) bool {

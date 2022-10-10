@@ -47,6 +47,6 @@ type UpdateRatingSubDisplayNameRequest struct {
 func (req GetPublicListRatingSubmissionByUserIdRequest) ValidateSourceType() error {
 	sourceType := viper.GetStringSlice("source-type")
 	return validation.ValidateStruct(&req,
-		validation.Field(&req.SourceType, validation.In(sourceType[0], sourceType[1], sourceType[2])),
+		validation.Field(&req.SourceType, validation.In(sourceType[0], sourceType[1], sourceType[2], sourceType[3])),
 	)
 }

@@ -626,9 +626,6 @@ func TestCreateRatingSubmissionFailFindRating(t *testing.T) {
 
 func TestCreateRatingSubmissionFailAgentTooLong(t *testing.T) {
 	valueRate := "1"
-	likertID := "629dce7bf1f26275e0d84820"
-	objectId, _ := primitive.ObjectIDFromHex(id)
-	objectLikertId, _ := primitive.ObjectIDFromHex(likertID)
 	input := request.CreateRatingSubmissionRequest{
 		Ratings: []request.RatingByType{
 			{
@@ -642,47 +639,8 @@ func TestCreateRatingSubmissionFailAgentTooLong(t *testing.T) {
 		DisplayName:   &name,
 		UserAgent:     "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789",
 	}
-	sourceTransIdConcenate := input.SourceTransID + "||" + id
-
-	sub := entity.RatingSubmisson{
-		UserID:        &id,
-		UserIDLegacy:  &id,
-		RatingID:      id,
-		SourceTransID: "string",
-	}
-
-	rating := entity.RatingsCol{
-		ID:             objectLikertId,
-		RatingTypeId:   likertID,
-		CommentAllowed: &Bool,
-		Status:         &Bool,
-	}
-
-	likert := entity.RatingTypesLikertCol{
-		ID:            objectLikertId,
-		Description:   &description,
-		NumStatements: 1,
-		Statement01:   &description,
-	}
-
-	saveReq := []request.SaveRatingSubmission{
-		{
-			UserID:       &id,
-			UserIDLegacy: &id,
-			RatingID:     id,
-		},
-	}
-
-	ratingRepository.Mock.On("FindRatingByRatingID", objectId).Return(rating, nil)
-	ratingRepository.Mock.On("FindRatingSubmissionByUserIDLegacyAndRatingID", &id, id, sourceTransIdConcenate).Return(sub, gorm.ErrRecordNotFound)
-	ratingRepository.Mock.On("FindRatingSubmissionByUserIDAndRatingID", &id, id, id).Return(nil, gorm.ErrRecordNotFound)
-	ratingRepository.Mock.On("FindRatingNumericTypeByRatingTypeID", objectLikertId).Return(nil, nil)
-	ratingRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
-	ratingRepository.Mock.On("CreateRatingSubmission", saveReq).Return(sub, nil)
-
 	_, msg := svc.CreateRatingSubmission(input)
-
-	assert.Equal(t, message.UserRated, msg)
+	assert.Equal(t, message.UserAgentTooLong, msg)
 }
 
 func TestCreateRatingSubmissionFailLikertType(t *testing.T) {
