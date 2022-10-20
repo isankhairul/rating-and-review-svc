@@ -26,4 +26,5 @@ require (
 	gorm.io/driver/postgres v1.3.4
 	gorm.io/driver/sqlite v1.3.1
 	gorm.io/gorm v1.23.6
+	moul.io/http2curl v1.0.0 // indirect
 )

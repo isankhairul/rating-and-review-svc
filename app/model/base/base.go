@@ -1,9 +1,8 @@
 package base
 
 import (
-	"time"
-
 	"go-klikdokter/pkg/util"
+	"time"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
 	"gorm.io/gorm"
@@ -18,10 +17,10 @@ type BaseIDModel struct {
 	// in: int64
 	UID string `gorm:"uniqueIndex" json:"uid"`
 
-	IsDeleted bool   `json:"is_deleted"`
-	CreatedBy string `json:"-" gorm:"type:varchar"`
+	IsDeleted bool      `json:"is_deleted"`
+	CreatedBy string    `json:"-" gorm:"type:varchar"`
 	CreatedAt time.Time `json:"-"`
-	UpdatedBy string `json:"-" gorm:"type:varchar"`
+	UpdatedBy string    `json:"-" gorm:"type:varchar"`
 	UpdatedAt time.Time `json:"-"`
 }
 
