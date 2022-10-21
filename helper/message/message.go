@@ -89,6 +89,7 @@ var SuccessMsg = Message{Code: SuccessCode, Message: "Success"}
 var FailedMsg = Message{Code: ValidationFailCode, Message: "Failed"}
 var RecordNotFound = Message{Code: ValidationFailCode, Message: "Collection tidak ditemukan"}
 var ErrReqParam = Message{Code: ValidationFailCode, Message: "Invalid Request Parameter(s)"}
+var ErrFailedRequestToPayment = Message{Code: ValidationFailCode, Message: "Failed to call request to payment service"}
 
 // msg in api get booking Medical facility
 var GetMedicalFacilitySuccess = Message{Code: 200, Message: "OK"}

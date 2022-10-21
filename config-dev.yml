@@ -18,8 +18,10 @@ server:
   env: dev
   log-output: console
   output-file-path: ./kd-microservice.log
+  output-payment-logging-path: ./var/log/payment/
   config-path: .
   service-name: kd-microservice
+
 
 security:
   jwt:
@@ -69,3 +71,7 @@ util:
 
 image:
   default-avatar: https://asset-cdn.medkomtek.com/assets/images/user-default.png
+
+payment-service:
+  check-order-id: http://api-route.medkomtek.net:84/payment/order/exist
+  update-flag: http://api-route.medkomtek.net:84/payment/transaction/review

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -304,6 +305,7 @@ func (s *ratingServiceImpl) GetRatingTypeNums(input request.GetRatingTypeNumsReq
 //  401: SuccessResponse
 //  200: SuccessResponse
 func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSubmissionRequest) ([]response.PublicCreateRatingSubmissionResponse, message.Message) {
+	logger := log.With(s.logger, "RatingService", "CreateRatingSubmission")
 	var saveReq = make([]request.SaveRatingSubmission, 0)
 	var empty = ""
 	var likertId = ""
@@ -314,6 +316,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 	haveRatLikert := false
 	isRatingLayanan := false
 	valueLayanan := "1"
+	isOrderIdExist := false
 
 	// One of the following user_id and user_id_legacy must be filled
 	if input.UserID == nil || *input.UserID == "" {
@@ -373,7 +376,6 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 			SourceUID:     input.SourceUID,
 			IsAnonymous:   input.IsAnonymous,
 		})
-
 	} else {
 		// Condition for Doctor Rating
 		for _, argRatings := range input.Ratings {
@@ -489,6 +491,24 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 		saveReq = createTagging(saveReq, numId, likertId, valueLikert)
 	}
 
+	// Check order_id exist for layanan
+	if isRatingLayanan {
+		msg, err := util.CheckOrderIdExist(originalSourceTransID)
+		if err != nil {
+			return result, message.ErrFailedRequestToPayment
+		}
+
+		if msg == message.SuccessMsg {
+			isOrderIdExist = true
+		} else {
+			return result, msg
+		}
+	}
+
+	if isOrderIdExist {
+		go UpdateFlagPayment(originalSourceTransID, logger)
+	}
+
 	if len(saveReq) == 0 {
 		return result, message.ErrTypeNotFound
 	}
@@ -519,6 +539,21 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 		result = append(result, data)
 	}
 	return result, message.SuccessMsg
+}
+
+func UpdateFlagPayment(orderId string, logger log.Logger) error {
+	msg, err := util.UpdateFlagPayment(orderId)
+	if err != nil {
+		_ = level.Error(logger).Log("error", err)
+		return err
+	}
+
+	if msg == message.SuccessMsg {
+		return nil
+	} else {
+		_ = level.Error(logger).Log("error", "response code is not 200")
+		return errors.New("response code request is not 200")
+	}
 }
 
 func checkUserHaveSubmitRating(userId, userIdLegacy, ratingId, sourceTransId string, s *ratingServiceImpl) message.Message {
