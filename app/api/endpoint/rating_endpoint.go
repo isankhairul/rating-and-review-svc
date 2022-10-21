@@ -200,9 +200,10 @@ func makeCreateRatingSubmission(s service.RatingService) endpoint.Endpoint {
 
 		// Set value from extract JWT
 		if *req.DisplayName == "" {
-			req.DisplayName = &jwtObj.Fullname
+			name := jwtObj.Fullname.(string)
+			req.DisplayName = &name
 		}
-		req.Avatar = jwtObj.Avatar
+		req.Avatar = jwtObj.Avatar.(string)
 
 		result, msg := s.CreateRatingSubmission(req)
 		if msg.Code != 212000 {
