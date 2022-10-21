@@ -12,9 +12,9 @@ import (
 )
 
 type JWTObj struct {
-	UserIdLegacy string `json:"user_id_legacy"`
-	Fullname     string `json:"fullname"`
-	Avatar       string `json:"avatar"`
+	UserIdLegacy interface{} `json:"user_id_legacy"`
+	Fullname     interface{} `json:"fullname"`
+	Avatar       interface{} `json:"avatar"`
 }
 
 func SetJWTInfoFromContext(ctx context.Context) (JWTObj, message.Message) {
@@ -28,7 +28,7 @@ func SetJWTInfoFromContext(ctx context.Context) (JWTObj, message.Message) {
 
 	if claims, ok := token.Claims.(jwtgo.MapClaims); ok {
 		// Get claim value
-		userIdLegacy := claims["sub"].(float64)
+		userIdLegacy := claims["sub"]
 		fullname := claims["full_name"]
 
 		rawAvatar, ok := claims["avatar"]
@@ -42,7 +42,11 @@ func SetJWTInfoFromContext(ctx context.Context) (JWTObj, message.Message) {
 		}
 
 		// Set value to JWTObj
-		jwtObj.UserIdLegacy = fmt.Sprintf("%.0f", userIdLegacy)
+		if _, ok := userIdLegacy.(float64); ok {
+			jwtObj.UserIdLegacy = fmt.Sprintf("%.0f", userIdLegacy)
+		} else {
+			jwtObj.UserIdLegacy = fmt.Sprintf("%s", userIdLegacy)
+		}
 		jwtObj.Fullname = fmt.Sprintf("%s", fullname)
 		jwtObj.Avatar = avatar
 
