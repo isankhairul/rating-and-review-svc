@@ -28,9 +28,14 @@ func SetJWTInfoFromContext(ctx context.Context) (JWTObj, message.Message) {
 
 	if claims, ok := token.Claims.(jwtgo.MapClaims); ok {
 		// Get claim value
-		userIdLegacy := claims["sub"]
-		fullname := claims["full_name"]
+		var userIdLegacy interface{}
+		if token.Method == jwtgo.SigningMethodRS256 {
+			userIdLegacy = claims["user_id_legacy"]
+		} else {
+			userIdLegacy = claims["sub"]
+		}
 
+		fullname := claims["full_name"]
 		rawAvatar, ok := claims["avatar"]
 		if !ok || rawAvatar == nil {
 			avatar = defaultAvatar
