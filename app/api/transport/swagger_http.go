@@ -13,7 +13,7 @@ func SwaggerHttpHandler(logger log.Logger) http.Handler {
 	pr := mux.NewRouter()
 
 	pr.Handle("/swagger.yaml", http.FileServer(http.Dir("./")))
-	opts := middleware.SwaggerUIOpts{SpecURL: "../../rating-svc/swagger.yaml"}
+	opts := middleware.SwaggerUIOpts{SpecURL: "swagger.yaml"}
 	sh := middleware.SwaggerUI(opts, nil)
 	pr.Handle("/docs", sh)
 

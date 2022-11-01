@@ -226,23 +226,32 @@ func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort s
 	limit64 := int64(limit)
 	bsonSourceUid := bson.D{}
 	bsonSourceType := bson.D{}
+	bsonRatingType := bson.D{}
 
 	if len(filter.SourceUid) > 0 {
 		bsonSourceUid = bson.D{{Key: "source_uid", Value: bson.D{{Key: "$in", Value: filter.SourceUid}}}}
 	}
+
 	if filter.SourceType != "" {
 		if filter.SourceType != "all" {
 			bsonSourceType = bson.D{{Key: "source_type", Value: filter.SourceType}}
 		}
 	}
+
+	if len(filter.RatingType) > 0 {
+		bsonRatingType = bson.D{{Key: "rating_type", Value: bson.D{{Key: "$in", Value: filter.RatingType}}}}
+	}
+
 	var bsonFilter = bson.D{{Key: "$and",
 		Value: bson.A{
 			bsonSourceType,
 			bsonSourceUid,
 			bsonStatus,
+			bsonRatingType,
 		},
 	},
 	}
+
 	collectionName := "ratingsCol"
 	skip := int64(page)*limit64 - limit64
 	cursor, err := r.db.Collection(collectionName).
