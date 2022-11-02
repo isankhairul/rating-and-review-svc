@@ -35,3 +35,4 @@ log
 logs
 vendor
 vendor/*
+config-dev.yml
