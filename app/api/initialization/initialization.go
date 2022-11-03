@@ -44,16 +44,19 @@ func InitRouting(db *mongo.Database, logger log.Logger) *http.ServeMux {
 	// Service registry
 	ratingSvc := registry.RegisterRatingService(db, logger)
 	publicRatingSvc := registry.RegisterPublicRatingService(db, logger)
+	daprSvc := registry.RegisterDaprService(db, logger)
 
 	// Transport initialization
 	swagHttp := transport.SwaggerHttpHandler(log.With(logger, "SwaggerTransportLayer", "HTTP")) //don't delete or change this !!
 	ratingHttp := transport.RatingHttpHandler(ratingSvc, log.With(logger, "RatingTransportLayer", "HTTP"))
 	publicRatingHttp := transport.PublicRatingHttpHandler(publicRatingSvc, log.With(logger, "PublicRatingTransportLayer", "HTTP"))
+	daprHttp := transport.DaprHttpHandler(daprSvc, log.With(logger, "DaprTransportLayer", "HTTP"))
 
 	// Routing path
 	mux := http.NewServeMux()
 	mux.Handle("/", swagHttp) //don't delete or change this!!
 	mux.Handle(_struct.PrefixBase+"/public/", publicRatingHttp)
+	mux.Handle(_struct.PrefixBase+"/dapr/", daprHttp)
 	mux.Handle(_struct.PrefixBase+"/", ratingHttp)
 	mux.HandleFunc("/__kdhealth", func(writer http.ResponseWriter, request *http.Request) { writer.Write([]byte("OK")) })
 	return mux
