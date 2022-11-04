@@ -26,3 +26,9 @@ func RegisterPublicRatingService(db *mongo.Database, logger log.Logger) service.
 		rp.NewPublicRatingRepository(db),
 	)
 }
+
+func RegisterDaprService(db *mongo.Database, logger log.Logger) service.DaprService {
+	return service.NewDaprService(
+		logger,
+	)
+}

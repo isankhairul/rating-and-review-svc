@@ -1,5 +1,14 @@
 basePath: /rating-svc/api/v1
 definitions:
+  BodySubscriberRatingsubcolRequest:
+    properties:
+      data:
+        description: 'in: body'
+        example: Foo Bar
+        type: string
+        x-go-name: Data
+    type: object
+    x-go-package: go-klikdokter/app/model/request/dapr
   BodyUpdateRatingRequest:
     properties:
       comment_allowed:
@@ -150,10 +159,8 @@ definitions:
   DataResponse:
     properties:
       record:
-        type: object
         x-go-name: Record
       records:
-        type: object
         x-go-name: Records
     type: object
     x-go-name: data
@@ -680,7 +687,6 @@ definitions:
         description: |-
           Errors is the response message
           in: string
-        type: object
         x-go-name: Errors
       meta:
         $ref: '#/definitions/MetaResponse'
@@ -738,6 +744,61 @@ paths:
         - '[]'
       tags:
       - RatingSubmission
+  /dapr/publisher:
+    post:
+      description: Publish Event
+      operationId: PublisherRequest
+      parameters:
+      - example: queuing.rnr.ratingsubcol
+        in: formData
+        name: topic
+        type: string
+        x-go-name: Topic
+      - example: '{"comment_allowed":true,"description":"Rating Group for Rumah Sakit
+          RS Pondok Indah Bintaro Jaya","name":"Rumah Sakit - RS Pondok Indah Bintaro
+          Jaya","rating_type":"standard-0.0-to-5.0","rating_type_id":"629dc84ff16b9b21f357a609","source_type":"hospital","source_uid":"2729","status":true}'
+        in: formData
+        name: data
+        type: string
+        x-go-name: Data
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
+      tags:
+      - DAPR
+  /dapr/subscriber/ratingsubcol:
+    post:
+      description: Subsriber for topic queuing.rnr.ratingsubcol
+      operationId: SubscriberRatingsubcolRequest
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/BodySubscriberRatingsubcolRequest'
+        x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
+      tags:
+      - DAPR
   /helpful-rating-submission/:
     post:
       description: Create Helpful Rating Submission

@@ -1,0 +1,77 @@
+#logging settings
+log:
+  filename: ../../kd-microservice.log.log
+  level: DEBUG
+
+#database settings
+database:
+  driver: mongodb
+  hostname: localhost
+  port: 27017
+  username: root
+  password: rootpassword
+  dbname: ratingsNReviewsDB
+  uri: mongodb
+
+server:
+  port: 5600
+  env: dev
+  log-output: console
+  output-file-path: ./kd-microservice.log
+  config-path: .
+  service-name: kd-microservice
+
+security:
+  jwt:
+    secret: adPcd+mrzpsZEkKxsOhgcw==
+    token-validity-in-second: 86400
+    token-validity-in-second-for-remember-me: 2592000
+
+url:
+  base-url-s3: 
+
+cache:
+  redis:
+    host: localhost
+    user:
+    password:
+    port: 6379
+
+#Access Control SETTING
+access-control:
+  allow-origin: "*"
+  allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+  allow-credentials: "true"
+  allow-headers: "Origin, Content-Type, Authorization"
+  request-headers: "Origin, Content-Type, Authorization"
+
+#source type available
+source-type: [
+  hospital,
+  article,
+  doctor
+]
+
+#route
+route:
+  site: "/rating-svc"
+  apiprefix: "/api/v1"
+
+thumbor:
+  base_url: https://img-cdn.medkomtek-stg.com 
+  format_image: smart/filters:quality(75):strip_icc():format(webp)
+  secret:
+  size_large_screen: "48x48"
+
+util:
+  timezone: Asia/Jakarta
+
+image:
+  default-avatar: https://asset-cdn.medkomtek.com/assets/images/user-default.png
+
+dapr:
+  host: "http://localhost"
+  port: "3500"
+  version: "v1.0"
+  pubsub-name: "kafka-pubsub-noauth"
+  topic-ratingsubcol: "queuing.rnr.ratingsubcol"
