@@ -488,8 +488,17 @@ func decodeUpdateRatingFormulaById(ctx context.Context, r *http.Request) (rqst i
 
 func decodeGetRatingBySourceTypeAndActor(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
 	var req request.GetRatingBySourceTypeAndActorRequest
+
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+	if err = schema.NewDecoder().Decode(&req, r.Form); err != nil {
+		return nil, err
+	}
+
 	req.SourceType = mux.Vars(r)["source_type"]
 	req.SourceUID = mux.Vars(r)["source_uid"]
+
 	return req, nil
 }
 

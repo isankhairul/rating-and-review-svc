@@ -1750,8 +1750,12 @@ func getScore(score []float64) (float64, float64) {
 //  200: SuccessResponse
 func (s *ratingServiceImpl) GetRatingBySourceTypeAndActor(input request.GetRatingBySourceTypeAndActorRequest) (*response.RatingBySourceTypeAndActorResponse, message.Message) {
 	result := response.RatingBySourceTypeAndActorResponse{}
+	filter := request.GetRatingBySourceTypeAndActorFilter{}
+
+	_ = json.Unmarshal([]byte(input.Filter), &filter)
+
 	// Get Ratings By Type and Actor UID
-	ratings, err := s.publicRatingRepo.GetRatingsBySourceTypeAndActor(input.SourceType, input.SourceUID)
+	ratings, err := s.publicRatingRepo.GetRatingsBySourceTypeAndActor(input.SourceType, input.SourceUID, filter)
 	if err != nil {
 		return nil, message.FailedMsg
 	}
