@@ -64,6 +64,13 @@ type GetRatingBySourceTypeAndActorRequest struct {
 	// in: path
 	// required: true
 	SourceUID string `json:"source_uid"`
+
+	// Filter available {"rating_type": ["rating_like_dislike", "list_doctor_likert_for_positif_reviews", "list_doctor_likert_for_negative_reviews"]}
+	Filter string `json:"filter" schema:"filter" binding:"omitempty"`
+}
+
+type GetRatingBySourceTypeAndActorFilter struct {
+	RatingType []string `json:"rating_type"`
 }
 
 func (r *GetPublicListRatingSummaryRequest) MakeDefaultValueIfEmpty() {

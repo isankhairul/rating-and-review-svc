@@ -22,7 +22,7 @@ type publicRatingRepo struct {
 }
 
 type PublicRatingRepository interface {
-	GetRatingsBySourceTypeAndActor(sourceType, sourceUID string) ([]entity.RatingsCol, error)
+	GetRatingsBySourceTypeAndActor(sourceType, sourceUID string, filter request.GetRatingBySourceTypeAndActorFilter) ([]entity.RatingsCol, error)
 	GetRatingTypeLikertById(id primitive.ObjectID) (*entity.RatingTypesLikertCol, error)
 	GetRatingTypeNumById(id primitive.ObjectID) (*entity.RatingTypesNumCol, error)
 	CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) (*entity.RatingSubHelpfulCol, error)
@@ -42,23 +42,35 @@ func NewPublicRatingRepository(db *mongo.Database) PublicRatingRepository {
 	return &publicRatingRepo{db}
 }
 
-func (r *publicRatingRepo) GetRatingsBySourceTypeAndActor(sourceType, sourceUID string) ([]entity.RatingsCol, error) {
+func (r *publicRatingRepo) GetRatingsBySourceTypeAndActor(sourceType, sourceUID string, filter request.GetRatingBySourceTypeAndActorFilter) ([]entity.RatingsCol, error) {
 	var results []entity.RatingsCol
 
 	bsonSourceType := bson.D{{Key: "source_type", Value: sourceType}}
 	bsonSourceUid := bson.D{{Key: "source_uid", Value: sourceUID}}
 	bsonStatus := bson.D{{Key: "status", Value: true}}
+	bsonRatingType := bson.D{}
+
+	if len(filter.RatingType) > 0 {
+		bsonRatingType = bson.D{{Key: "rating_type", Value: bson.D{{Key: "$in", Value: filter.RatingType}}}}
+	}
 
 	bsonFilter := bson.D{{Key: "$and",
 		Value: bson.A{
 			bsonStatus,
 			bsonSourceType,
 			bsonSourceUid,
+			bsonRatingType,
 		}},
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	cursor, err := r.db.Collection(entity.RatingsCol{}.CollectionName()).Find(ctx, bsonFilter)
+
+	// sort desc by rating_type
+	cursor, err := r.db.Collection(entity.RatingsCol{}.CollectionName()).
+		Find(ctx, bsonFilter,
+			&options.FindOptions{
+				Sort: bson.D{bson.E{Key: "rating_type", Value: -1}},
+			})
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return results, nil

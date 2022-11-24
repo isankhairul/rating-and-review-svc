@@ -899,6 +899,12 @@ paths:
         required: true
         type: string
         x-go-name: SourceUID
+      - description: 'Filter available {"rating_type": ["rating_like_dislike", "list_doctor_likert_for_positif_reviews",
+          "list_doctor_likert_for_negative_reviews"]}'
+        in: query
+        name: filter
+        type: string
+        x-go-name: Filter
       responses:
         "200":
           description: SuccessResponse
