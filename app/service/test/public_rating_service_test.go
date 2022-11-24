@@ -101,7 +101,9 @@ func TestGetRatingBySourceTypeAndSourceUID(t *testing.T) {
 		Statement01:   &statement01,
 		Statement02:   &statement02,
 	}
-	publicRatingRepository.Mock.On("GetRatingsBySourceTypeAndActor", req.SourceType, req.SourceUID).Return(resultRatings, nil).Once()
+	filter := request.GetRatingBySourceTypeAndActorFilter{}
+
+	publicRatingRepository.Mock.On("GetRatingsBySourceTypeAndActor", req.SourceType, req.SourceUID, filter).Return(resultRatings, nil).Once()
 	publicRatingRepository.Mock.On("GetRatingTypeLikertById", ratingTypeId).Return(resultRatingType, nil).Once()
 
 	_, msg := svc.GetRatingBySourceTypeAndActor(req)
@@ -114,7 +116,8 @@ func TestGetRatingBySourceTypeAndSourceUIDErrNoDataRating(t *testing.T) {
 		SourceUID:  "894",
 	}
 	resultRatings := []entity.RatingsCol{}
-	publicRatingRepository.Mock.On("GetRatingsBySourceTypeAndActor", req.SourceType, req.SourceUID).Return(resultRatings, nil)
+	filter := request.GetRatingBySourceTypeAndActorFilter{}
+	publicRatingRepository.Mock.On("GetRatingsBySourceTypeAndActor", req.SourceType, req.SourceUID, filter).Return(resultRatings, nil)
 
 	_, msg := svc.GetRatingBySourceTypeAndActor(req)
 	assert.Equal(t, message.ErrNoData, msg)

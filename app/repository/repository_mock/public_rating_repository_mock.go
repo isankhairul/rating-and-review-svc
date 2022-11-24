@@ -15,8 +15,8 @@ type PublicRatingRepositoryMock struct {
 	Mock mock.Mock
 }
 
-func (repository *PublicRatingRepositoryMock) GetRatingsBySourceTypeAndActor(sourceType, sourceUID string) ([]entity.RatingsCol, error) {
-	arguments := repository.Mock.Called(sourceType, sourceUID)
+func (repository *PublicRatingRepositoryMock) GetRatingsBySourceTypeAndActor(sourceType, sourceUID string, filter request.GetRatingBySourceTypeAndActorFilter) ([]entity.RatingsCol, error) {
+	arguments := repository.Mock.Called(sourceType, sourceUID, filter)
 
 	return arguments.Get(0).([]entity.RatingsCol), nil
 }
