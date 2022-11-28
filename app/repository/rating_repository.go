@@ -280,6 +280,7 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 				{Key: "cancelled_reason", Value: ""},
 				{Key: "is_anonymous", Value: args.IsAnonymous},
 				{Key: "tagging", Value: args.Tagging},
+				{Key: "source_type", Value: args.SourceType},
 			})
 		} else {
 			docs = append(docs, bson.D{
@@ -301,6 +302,7 @@ func (r *ratingRepo) CreateRatingSubmission(input []request.SaveRatingSubmission
 				{Key: "cancelled", Value: false},
 				{Key: "cancelled_reason", Value: ""},
 				{Key: "is_anonymous", Value: args.IsAnonymous},
+				{Key: "source_type", Value: args.SourceType},
 			})
 		}
 	}

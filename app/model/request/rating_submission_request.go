@@ -101,6 +101,7 @@ type SaveRatingSubmission struct {
 	UserAgent     string     `json:"user_agent" bson:"user_agent"`
 	SourceTransID string     `json:"source_trans_id" bson:"source_trans_id"`
 	SourceUID     string     `json:"source_uid" bson:"source_uid"`
+	SourceType    string     `json:"source_uid" bson:"source_type"`
 	UserPlatform  string     `json:"user_platform" bson:"user_platform"`
 	Tagging       TaggingObj `json:"tagging" bson:"tagging"`
 	IsAnonymous   bool       `json:"is_anonymous" bson:"is_anonymous"`

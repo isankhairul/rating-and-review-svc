@@ -314,7 +314,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 	result := []response.PublicCreateRatingSubmissionResponse{}
 	haveRatNum := false
 	haveRatLikert := false
-	isRatingLayanan := false
+	isAllRating := false
 	valueLayanan := "1"
 	isOrderIdExist := false
 
@@ -341,8 +341,8 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 
 	originalSourceTransID := input.SourceTransID
 	if len(input.Ratings) == 0 && input.RatingType != "" {
-		// Condition for Layanan Rating
-		isRatingLayanan = true
+		// Condition for All Rating (not doctor)
+		isAllRating = true
 		// Get Rating by SourceUID and RatingType
 		rating, err := s.ratingRepo.FindRatingBySourceUIDAndRatingType(input.SourceUID, input.RatingType)
 		if err != nil {
@@ -375,6 +375,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 			UserPlatform:  input.UserPlatform,
 			SourceUID:     input.SourceUID,
 			IsAnonymous:   input.IsAnonymous,
+			SourceType: getSourceTypeByRatingType(input.RatingType),
 		})
 	} else {
 		// Condition for Doctor Rating
@@ -487,12 +488,12 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 	}
 
 	// Set Tagging for Numeric Rating Sub
-	if haveRatNum && haveRatLikert && !isRatingLayanan {
+	if haveRatNum && haveRatLikert && !isAllRating {
 		saveReq = createTagging(saveReq, numId, likertId, valueLikert)
 	}
 
 	// Check order_id exist for layanan
-	if isRatingLayanan {
+	if isAllRating {
 		msg, err := util.CheckOrderIdExist(originalSourceTransID)
 		if err != nil {
 			return result, message.ErrFailedRequestToPayment
@@ -539,6 +540,15 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 		result = append(result, data)
 	}
 	return result, message.SuccessMsg
+}
+
+func getSourceTypeByRatingType(ratingType string) string {
+	sourceType := "doctor"
+	if ratingType == "review_for_layanan" {
+		sourceType = "layanan"
+	}
+
+	return sourceType
 }
 
 func UpdateFlagPayment(orderId string, logger log.Logger) error {
