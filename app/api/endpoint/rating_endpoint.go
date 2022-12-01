@@ -205,6 +205,10 @@ func makeCreateRatingSubmission(s service.RatingService) endpoint.Endpoint {
 		}
 		req.Avatar = jwtObj.Avatar.(string)
 
+		// set user_id_legacy from token jwt
+		userIdLegacy := fmt.Sprintf("%v", jwtObj.UserIdLegacy)
+		req.UserIDLegacy = &userIdLegacy
+
 		result, msg := s.CreateRatingSubmission(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
@@ -261,6 +265,8 @@ func makeGetListRatingSubmissionWithUserIdLegacy(s service.RatingService) endpoi
 			msg := message.ErrUserNotFound
 			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 		}
+		// set user_id_legacy from token jwt
+		req.UserIdLegacy = fmt.Sprintf("%v", jwtObj.UserIdLegacy)
 
 		result, pagination, msg := s.GetListRatingSubmissionWithUserIdLegacy(req)
 		if msg.Code != 212000 {
@@ -283,6 +289,9 @@ func makeUpdatePublicRatingSubDisplayNameByIdLegacy(s service.RatingService) end
 			msg := message.ErrUserNotFound
 			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 		}
+
+		// set user_id_legacy from token jwt
+		req.UserIdLegacy = fmt.Sprintf("%v", jwtObj.UserIdLegacy)
 
 		msg := s.UpdateRatingSubDisplayNameByIdLegacy(req)
 		if msg.Code != 212000 {
@@ -644,6 +653,9 @@ func makeCreateRatingSubHelpful(s service.RatingService) endpoint.Endpoint {
 			msg := message.ErrUserNotFound
 			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 		}
+
+		// set user_id_legacy from token jwt
+		req.UserIDLegacy = fmt.Sprintf("%v", jwtObj.UserIdLegacy)
 
 		result, msg := s.CreateRatingSubHelpful(req)
 		if msg.Code != 212000 {
