@@ -2,11 +2,12 @@ package service
 
 import (
 	"fmt"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	request_dapr "go-klikdokter/app/model/request/dapr"
 	helper_dapr "go-klikdokter/helper/dapr"
 	"go-klikdokter/helper/message"
+
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 type DaprService interface {

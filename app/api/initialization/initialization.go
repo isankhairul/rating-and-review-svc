@@ -1,14 +1,15 @@
 package initialization
 
 import (
-	"github.com/gorilla/mux"
 	"go-klikdokter/app/api/transport"
-	"go-klikdokter/app/api/transport/public"
+	publictransport "go-klikdokter/app/api/transport/public"
 	"go-klikdokter/app/registry"
 	"go-klikdokter/helper/_struct"
 	"go-klikdokter/helper/config"
 	"go-klikdokter/helper/database"
 	"net/http"
+
+	"github.com/gorilla/mux"
 
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -63,6 +64,7 @@ func GlobalHttpHandler(logger log.Logger, db *mongo.Database) http.Handler {
 	//publicRatingMpSvc := registry.RegisterPublicRatingMpService(db, logger)
 	daprSvc := registry.RegisterDaprService(db, logger)
 	//ratingMpSvc := registry.RegisterRatingMpService(db, logger)
+	updloadImgSvc := registry.RegisterUploadService(db, logger)
 
 	pr := mux.NewRouter()
 
@@ -71,12 +73,14 @@ func GlobalHttpHandler(logger log.Logger, db *mongo.Database) http.Handler {
 	//publicRatingMpHttp := publictransport.PublicRatingMpHttpHandler(publicRatingMpSvc, log.With(logger, "PublicRatingMpTransportLayer", "HTTP"))
 	publicRatingHttp := publictransport.PublicRatingHttpHandler(publicRatingSvc, log.With(logger, "PublicRatingTransportLayer", "HTTP"), db)
 	daprHttp := transport.DaprHttpHandler(daprSvc, log.With(logger, "DaprTransportLayer", "HTTP"))
+	uploadHttp := transport.UploadHttpHandler(updloadImgSvc, log.With(logger, "UploadTransportLayer", "HTTP"))
 
 	//pr.PathPrefix(_struct.PrefixBase + "/public/rating-submissions-mp").Handler(publicRatingMpHttp)
 	//pr.PathPrefix(_struct.PrefixBase + "/public/ratings-summary-mp").Handler(publicRatingMpHttp)
 	pr.PathPrefix(_struct.PrefixBase + "/public/rating-submissions").Handler(publicRatingHttp)
 	pr.PathPrefix(_struct.PrefixBase + "/public/ratings-summary").Handler(publicRatingHttp)
-	pr.PathPrefix(_struct.PrefixBase + "/dapr").Handler(daprHttp)
+	pr.PathPrefix(_struct.PrefixBase + "/dapr").Handler(daprHttp)	
+	pr.PathPrefix(_struct.PrefixBase+"/upload/").Handler(uploadHttp) // for upload images
 	//pr.PathPrefix(_struct.PrefixBase + "/rating-submissions-mp").Handler(ratingMpHttp)
 	//pr.PathPrefix(_struct.PrefixBase + "/ratings-summary-mp").Handler(ratingMpHttp)
 	pr.PathPrefix(_struct.PrefixBase + "/").Handler(ratingHttp)

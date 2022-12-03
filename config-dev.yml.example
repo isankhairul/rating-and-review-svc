@@ -96,3 +96,6 @@ dapr:
 
 media-service:
   image-house-keeping: https://publishing-adm-api.medkomtek-stg.com/media-svc/api/v1/images
+  media-category-uid: "UQu0sOBXuE8IxGC7poMwi"
+  url: "https://publishing-adm-api.medkomtek-stg.com/media-svc/api/v1/image/uploads"
+  jwt-key: "TESTING"

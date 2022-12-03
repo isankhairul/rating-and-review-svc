@@ -7,6 +7,9 @@ require (
 	github.com/go-kit/kit v0.12.0
 	github.com/go-kit/log v0.2.0
 	github.com/go-openapi/runtime v0.21.0
+	github.com/gojek/heimdall v5.0.2+incompatible
+	github.com/gojektech/heimdall v5.0.2+incompatible // indirect
+	github.com/gojektech/valkyrie v0.0.0-20190210220504-8f62c1e7ba45 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.8.0

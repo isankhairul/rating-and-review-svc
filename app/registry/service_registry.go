@@ -4,7 +4,7 @@ import (
 	rp "go-klikdokter/app/repository"
 	publicrepository "go-klikdokter/app/repository/public"
 	"go-klikdokter/app/service"
-	"go-klikdokter/app/service/public"
+	publicservice "go-klikdokter/app/service/public"
 	"go-klikdokter/pkg/util"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -47,5 +47,11 @@ func RegisterPublicRatingMpService(db *mongo.Database, logger log.Logger) public
 		logger,
 		rp.NewRatingMpRepository(db),
 		publicrepository.NewPublicRatingMpRepository(db),
+	)
+}
+
+func RegisterUploadService(db *mongo.Database, logger log.Logger) service.UploadService {
+	return service.NewUploadService(
+		logger,
 	)
 }
