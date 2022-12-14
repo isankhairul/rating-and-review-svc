@@ -70,6 +70,10 @@ util:
 image:
   default-avatar: https://asset-cdn.medkomtek.com/assets/images/user-default.png
 
+payment-service:
+      check-order-id: http://api/xist
+      update-flag: http://api/payment/review
+
 dapr:
   host: "http://localhost"
   port: "3500"

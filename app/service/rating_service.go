@@ -375,7 +375,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 			UserPlatform:  input.UserPlatform,
 			SourceUID:     input.SourceUID,
 			IsAnonymous:   input.IsAnonymous,
-			SourceType: getSourceTypeByRatingType(input.RatingType),
+			SourceType: rating.SourceType,
 		})
 	} else {
 		// Condition for Doctor Rating
@@ -494,7 +494,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 
 	// Check order_id exist for layanan
 	if isAllRating {
-		msg, err := util.CheckOrderIdExist(originalSourceTransID)
+		msg, err := util.CheckOrderIdExist(originalSourceTransID, logger)
 		if err != nil {
 			return result, message.ErrFailedRequestToPayment
 		}
@@ -552,7 +552,7 @@ func getSourceTypeByRatingType(ratingType string) string {
 }
 
 func UpdateFlagPayment(orderId string, logger log.Logger) error {
-	msg, err := util.UpdateFlagPayment(orderId)
+	msg, err := util.UpdateFlagPayment(orderId, logger)
 	if err != nil {
 		_ = level.Error(logger).Log("error", err)
 		return err
