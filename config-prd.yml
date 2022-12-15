@@ -17,6 +17,7 @@ server:
   env: prd
   log-output: console
   output-file-path: ./kd-microservice.log
+  output-logging-path: ./storage/log
   config-path: .
   service-name: kd-microservice
 
@@ -36,7 +37,19 @@ source-type: [
   hospital,
   article,
   doctor,
-  layanan
+  layanan,
+  product,
+  store
+]
+
+source-type-mp: [
+  "product",
+  "store"
+]
+
+rating-type-mp: [
+  product,
+  store
 ]
 
 route:
@@ -52,3 +65,6 @@ thumbor:
 
 util:
   timezone: Asia/Jakarta
+
+media-service:
+  image-house-keeping: https://publishing-adm-api.medkomtek-stg.com/media-svc/api/v1/images

@@ -55,6 +55,20 @@ func NewMongo() (*mongo.Database, error) {
 		return nil, err
 	}
 
+	// for mp
+	err = CreateIndex(client, "ratingsMpCol", "name", true)
+	if err != nil {
+		return nil, err
+	}
+	err = CreateIndex(client, "ratingSubMpCol", "source_trans_id", true)
+	if err != nil {
+		return nil, err
+	}
+	err = CreateIndex(client, "ratingSubMpCol", "rating_id", false)
+	if err != nil {
+		return nil, err
+	}
+
 	return client.Database(config.GetConfigString(viper.GetString("database.dbname"))), nil
 }
 

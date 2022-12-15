@@ -1,12 +1,12 @@
-package repository_mock
+package public_repository_mock
 
 import (
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
-
-	"github.com/stretchr/testify/mock"
+	"go-klikdokter/app/model/request/public"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -15,7 +15,7 @@ type PublicRatingRepositoryMock struct {
 	Mock mock.Mock
 }
 
-func (repository *PublicRatingRepositoryMock) GetRatingsBySourceTypeAndActor(sourceType, sourceUID string, filter request.GetRatingBySourceTypeAndActorFilter) ([]entity.RatingsCol, error) {
+func (repository *PublicRatingRepositoryMock) GetRatingsBySourceTypeAndActor(sourceType, sourceUID string, filter publicrequest.GetRatingBySourceTypeAndActorFilter) ([]entity.RatingsCol, error) {
 	arguments := repository.Mock.Called(sourceType, sourceUID, filter)
 
 	return arguments.Get(0).([]entity.RatingsCol), nil
@@ -74,7 +74,7 @@ func (repository *PublicRatingRepositoryMock) UpdateCounterRatingSubmission(id p
 	return nil
 }
 
-func (repository *PublicRatingRepositoryMock) GetPublicRatingsByParams(limit, page, dir int, sort string, filter request.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error) {
+func (repository *PublicRatingRepositoryMock) GetPublicRatingsByParams(limit, page, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error) {
 	if sort == "failed" {
 		return nil, nil, errors.New("Errors")
 	}
@@ -99,7 +99,7 @@ func (repository *PublicRatingRepositoryMock) CountRatingSubsByRatingIdAndValue(
 	return int64(arguments.Int(0)), nil
 }
 
-func (repository *PublicRatingRepositoryMock) GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error) {
+func (repository *PublicRatingRepositoryMock) GetPublicRatingSubmissions(limit, page, dir int, sort string, filter publicrequest.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error) {
 	if sort == "failed" {
 		return nil, nil, errors.New("Errors")
 	}

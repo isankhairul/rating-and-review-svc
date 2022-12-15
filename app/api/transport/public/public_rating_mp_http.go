@@ -1,38 +1,38 @@
-package transport
+package publictransport
 
 import (
 	"context"
-	"go-klikdokter/app/api/endpoint"
+	"github.com/gorilla/schema"
+	publicendpoint "go-klikdokter/app/api/endpoint/public"
 	"go-klikdokter/app/model/base/encoder"
-	"go-klikdokter/app/model/request"
-	"go-klikdokter/app/service"
+	publicrequest "go-klikdokter/app/model/request/public"
+	"go-klikdokter/app/service/public"
 	"go-klikdokter/helper/_struct"
 	"net/http"
 
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
 )
 
-func PublicRatingHttpHandler(s service.PublicRatingService, logger log.Logger) http.Handler {
+func PublicRatingMpHttpHandler(s publicservice.PublicRatingMpService, logger log.Logger) http.Handler {
 	pr := mux.NewRouter()
 
-	ep := endpoint.MakePublicRatingEndpoints(s)
+	ep := publicendpoint.MakePublicRatingMpEndpoints(s)
 	options := []httptransport.ServerOption{
 		httptransport.ServerErrorLogger(logger),
 		httptransport.ServerErrorEncoder(encoder.EncodeError),
 	}
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/public/ratings-summary/{source_type}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/public/ratings-summary-mp/{source_type}").Handler(httptransport.NewServer(
 		ep.GetListRatingSummaryBySourceType,
-		decodeGetRatingSummaryBySourceType,
+		decodeGetRatingSummaryMpBySourceType,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
 
-	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/public/rating-submissions/{source_type}/{source_uid}").Handler(httptransport.NewServer(
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/public/rating-submissions-mp/{source_type}/{source_uid}").Handler(httptransport.NewServer(
 		ep.GetListRatingSubmissionBySourceTypeAndUID,
-		decodeGetRatingSubmissionBySourceTypeAndUID,
+		decodeGetRatingSubmissionMpBySourceTypeAndUID,
 		encoder.EncodeResponseHTTP,
 		options...,
 	))
@@ -40,8 +40,8 @@ func PublicRatingHttpHandler(s service.PublicRatingService, logger log.Logger) h
 	return pr
 }
 
-func decodeGetRatingSummaryBySourceType(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
-	var params request.GetPublicListRatingSummaryRequest
+func decodeGetRatingSummaryMpBySourceType(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var params publicrequest.GetPublicListRatingSummaryRequest
 	if err := r.ParseForm(); err != nil {
 		return nil, err
 	}
@@ -52,8 +52,8 @@ func decodeGetRatingSummaryBySourceType(ctx context.Context, r *http.Request) (r
 	return params, nil
 }
 
-func decodeGetRatingSubmissionBySourceTypeAndUID(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
-	var params request.GetPublicListRatingSubmissionRequest
+func decodeGetRatingSubmissionMpBySourceTypeAndUID(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var params publicrequest.GetPublicListRatingSubmissionRequest
 	if err := r.ParseForm(); err != nil {
 		return nil, err
 	}

@@ -1,30 +1,30 @@
-package endpoint
+package publicendpoint
 
 import (
 	"context"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/base/encoder"
-	"go-klikdokter/app/model/request"
-	"go-klikdokter/app/service"
+	"go-klikdokter/app/model/request/public"
+	"go-klikdokter/app/service/public"
 
 	"github.com/go-kit/kit/endpoint"
 )
 
-type PublicRatingEndpoint struct {
+type PublicRatingMpEndpoint struct {
 	GetListRatingSubmissionBySourceTypeAndUID endpoint.Endpoint
 	GetListRatingSummaryBySourceType          endpoint.Endpoint
 }
 
-func MakePublicRatingEndpoints(s service.PublicRatingService) PublicRatingEndpoint {
-	return PublicRatingEndpoint{
-		GetListRatingSummaryBySourceType:          makeGetListRatingSummaryBySourceType(s),
-		GetListRatingSubmissionBySourceTypeAndUID: makeGetListRatingSubmissionBySourceTypeAndUID(s),
+func MakePublicRatingMpEndpoints(s publicservice.PublicRatingMpService) PublicRatingMpEndpoint {
+	return PublicRatingMpEndpoint{
+		GetListRatingSummaryBySourceType:          makeGetListRatingSummaryMpBySourceType(s),
+		GetListRatingSubmissionBySourceTypeAndUID: makeGetListRatingSubmissionMpBySourceTypeAndUID(s),
 	}
 }
 
-func makeGetListRatingSummaryBySourceType(s service.PublicRatingService) endpoint.Endpoint {
+func makeGetListRatingSummaryMpBySourceType(s publicservice.PublicRatingMpService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
-		req := rqst.(request.GetPublicListRatingSummaryRequest)
+		req := rqst.(publicrequest.GetPublicListRatingSummaryRequest)
 		result, pagination, msg := s.GetListRatingSummaryBySourceType(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil
@@ -33,9 +33,9 @@ func makeGetListRatingSummaryBySourceType(s service.PublicRatingService) endpoin
 	}
 }
 
-func makeGetListRatingSubmissionBySourceTypeAndUID(s service.PublicRatingService) endpoint.Endpoint {
+func makeGetListRatingSubmissionMpBySourceTypeAndUID(s publicservice.PublicRatingMpService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
-		req := rqst.(request.GetPublicListRatingSubmissionRequest)
+		req := rqst.(publicrequest.GetPublicListRatingSubmissionRequest)
 		result, pagination, msg := s.GetListRatingSubmissionBySourceTypeAndUID(req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil

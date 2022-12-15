@@ -1,8 +1,10 @@
 package request
 
 import (
+	"fmt"
 	validation "github.com/itgelo/ozzo-validation/v4"
 	"github.com/spf13/viper"
+	"strings"
 )
 
 // swagger:parameters CreateRatingRequest
@@ -79,9 +81,13 @@ type DeleteRatingRequest struct {
 
 func (req SaveRatingRequest) Validate() error {
 	sourceType := viper.GetStringSlice("source-type")
+	interfaceAllSource := make([]interface{}, len(sourceType))
+	for i, v := range sourceType {
+		interfaceAllSource[i] = v
+	}
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.Name, validation.Required),
-		validation.Field(&req.SourceType, validation.Required, validation.In(sourceType[0], sourceType[1], sourceType[2], sourceType[3])),
+		validation.Field(&req.SourceType, validation.Required, validation.In(interfaceAllSource...).Error(fmt.Sprintf("source_type should be %s", strings.Join(sourceType, ",")))),
 		validation.Field(&req.SourceUid, validation.Required),
 		validation.Field(&req.RatingTypeId, validation.Required),
 		validation.Field(&req.RatingType, validation.Required),
@@ -90,8 +96,12 @@ func (req SaveRatingRequest) Validate() error {
 
 func (req BodyUpdateRatingRequest) Validate() error {
 	sourceType := viper.GetStringSlice("source-type")
+	interfaceAllSource := make([]interface{}, len(sourceType))
+	for i, v := range sourceType {
+		interfaceAllSource[i] = v
+	}
 	return validation.ValidateStruct(&req,
-		validation.Field(&req.SourceType, validation.In(sourceType[0], sourceType[1], sourceType[2], sourceType[3])),
+		validation.Field(&req.SourceType, validation.Required, validation.In(interfaceAllSource...).Error(fmt.Sprintf("source_type should be %s", strings.Join(sourceType, ",")))),
 	)
 }
 

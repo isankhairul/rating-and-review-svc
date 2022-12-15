@@ -7,8 +7,11 @@ import (
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
+	"go-klikdokter/app/model/request/public"
 	"go-klikdokter/app/model/response"
+	"go-klikdokter/app/model/response/public"
 	"go-klikdokter/app/repository"
+	repository2 "go-klikdokter/app/repository/public"
 	"go-klikdokter/helper/config"
 	"go-klikdokter/helper/message"
 	"go-klikdokter/pkg/util"
@@ -33,12 +36,12 @@ type RatingService interface {
 	GetRatingTypeNums(input request.GetRatingTypeNumsRequest) ([]entity.RatingTypesNumCol, *base.Pagination, message.Message)
 
 	// Rating submission
-	CreateRatingSubmission(input request.CreateRatingSubmissionRequest) ([]response.PublicCreateRatingSubmissionResponse, message.Message)
+	CreateRatingSubmission(input request.CreateRatingSubmissionRequest) ([]publicresponse.PublicCreateRatingSubmissionResponse, message.Message)
 	UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest) message.Message
 	GetRatingSubmission(id string) (*response.RatingSubmissonResponse, message.Message)
 	GetListRatingSubmissions(input request.ListRatingSubmissionRequest) ([]response.RatingSubmissonResponse, *base.Pagination, message.Message)
 	DeleteRatingSubmission(id string) message.Message
-	GetListRatingSubmissionWithUserIdLegacy(input request.GetPublicListRatingSubmissionByUserIdRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message)
+	GetListRatingSubmissionWithUserIdLegacy(input request.GetPublicListRatingSubmissionByUserIdRequest) ([]publicresponse.PublicRatingSubmissionResponse, *base.Pagination, message.Message)
 	UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) message.Message
 	CancelRatingSubmission(input request.CancelRatingById) message.Message
 
@@ -56,7 +59,7 @@ type RatingService interface {
 	DeleteRating(id string) message.Message
 	GetListRatings(input request.GetListRatingsRequest) ([]entity.RatingsCol, *base.Pagination, message.Message)
 	GetListRatingSummary(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryResponse, message.Message)
-	GetRatingBySourceTypeAndActor(input request.GetRatingBySourceTypeAndActorRequest) (*response.RatingBySourceTypeAndActorResponse, message.Message)
+	GetRatingBySourceTypeAndActor(input publicrequest.GetRatingBySourceTypeAndActorRequest) (*publicresponse.RatingBySourceTypeAndActorResponse, message.Message)
 
 	// Rating Formula
 	CreateRatingFormula(input request.SaveRatingFormula) (*entity.RatingFormulaCol, message.Message)
@@ -72,14 +75,14 @@ type RatingService interface {
 type ratingServiceImpl struct {
 	logger           log.Logger
 	ratingRepo       repository.RatingRepository
-	publicRatingRepo repository.PublicRatingRepository
+	publicRatingRepo repository2.PublicRatingRepository
 	medicalFacility  util.MedicalFacilitySvc
 }
 
 func NewRatingService(
 	lg log.Logger,
 	rr repository.RatingRepository,
-	prr repository.PublicRatingRepository,
+	prr repository2.PublicRatingRepository,
 	mf util.MedicalFacilitySvc,
 ) RatingService {
 	return &ratingServiceImpl{lg, rr, prr, mf}
@@ -304,14 +307,14 @@ func (s *ratingServiceImpl) GetRatingTypeNums(input request.GetRatingTypeNumsReq
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
-func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSubmissionRequest) ([]response.PublicCreateRatingSubmissionResponse, message.Message) {
+func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSubmissionRequest) ([]publicresponse.PublicCreateRatingSubmissionResponse, message.Message) {
 	logger := log.With(s.logger, "RatingService", "CreateRatingSubmission")
 	var saveReq = make([]request.SaveRatingSubmission, 0)
 	var empty = ""
 	var likertId = ""
 	var valueLikert = ""
 	var numId = ""
-	result := []response.PublicCreateRatingSubmissionResponse{}
+	result := []publicresponse.PublicCreateRatingSubmissionResponse{}
 	haveRatNum := false
 	haveRatLikert := false
 	isAllRating := false
@@ -375,7 +378,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 			UserPlatform:  input.UserPlatform,
 			SourceUID:     input.SourceUID,
 			IsAnonymous:   input.IsAnonymous,
-			SourceType: rating.SourceType,
+			SourceType:    rating.SourceType,
 		})
 	} else {
 		// Condition for Doctor Rating
@@ -519,7 +522,7 @@ func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSub
 	}
 
 	for _, arg := range *ratingSubs {
-		data := response.PublicCreateRatingSubmissionResponse{}
+		data := publicresponse.PublicCreateRatingSubmissionResponse{}
 		ratingSub, err := s.ratingRepo.GetRatingSubmissionById(arg.ID)
 		if err != nil {
 			return result, message.FailedMsg
@@ -783,8 +786,8 @@ func (s *ratingServiceImpl) DeleteRatingSubmission(id string) message.Message {
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
-func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input request.GetPublicListRatingSubmissionByUserIdRequest) ([]response.PublicRatingSubmissionResponse, *base.Pagination, message.Message) {
-	results := []response.PublicRatingSubmissionResponse{}
+func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input request.GetPublicListRatingSubmissionByUserIdRequest) ([]publicresponse.PublicRatingSubmissionResponse, *base.Pagination, message.Message) {
+	results := []publicresponse.PublicRatingSubmissionResponse{}
 	timezone := config.GetConfigString(viper.GetString("util.timezone"))
 	avatarDefault := config.GetConfigString(viper.GetString("image.default-avatar"))
 	var dir int
@@ -822,7 +825,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 	}
 
 	// Get Rating Submission
-	filterRatingSubs := request.FilterRatingSubmission{}
+	filterRatingSubs := publicrequest.FilterRatingSubmission{}
 	if input.Filter != "" {
 		errMarshal := json.Unmarshal([]byte(input.Filter), &filterRatingSubs)
 		if errMarshal != nil {
@@ -878,7 +881,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 		} else {
 			displayName = *v.DisplayName
 		}
-		results = append(results, response.PublicRatingSubmissionResponse{
+		results = append(results, publicresponse.PublicRatingSubmissionResponse{
 			ID:            v.ID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
@@ -1758,9 +1761,9 @@ func getScore(score []float64) (float64, float64) {
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
-func (s *ratingServiceImpl) GetRatingBySourceTypeAndActor(input request.GetRatingBySourceTypeAndActorRequest) (*response.RatingBySourceTypeAndActorResponse, message.Message) {
-	result := response.RatingBySourceTypeAndActorResponse{}
-	filter := request.GetRatingBySourceTypeAndActorFilter{}
+func (s *ratingServiceImpl) GetRatingBySourceTypeAndActor(input publicrequest.GetRatingBySourceTypeAndActorRequest) (*publicresponse.RatingBySourceTypeAndActorResponse, message.Message) {
+	result := publicresponse.RatingBySourceTypeAndActorResponse{}
+	filter := publicrequest.GetRatingBySourceTypeAndActorFilter{}
 
 	_ = json.Unmarshal([]byte(input.Filter), &filter)
 
@@ -1788,7 +1791,7 @@ func (s *ratingServiceImpl) GetRatingBySourceTypeAndActor(input request.GetRatin
 			return nil, message.FailedMsg
 		}
 		if likert != nil {
-			likertResp := response.MapRatingLikertToRatingNumericResp(*likert, v.ID.Hex())
+			likertResp := publicresponse.MapRatingLikertToRatingNumericResp(*likert, v.ID.Hex())
 			result.Ratings = append(result.Ratings, likertResp)
 		} else {
 			numeric, err := s.publicRatingRepo.GetRatingTypeNumById(ratingTypeId)
@@ -1798,7 +1801,7 @@ func (s *ratingServiceImpl) GetRatingBySourceTypeAndActor(input request.GetRatin
 			if numeric == nil {
 				return nil, message.ErrRatingTypeNotExist
 			}
-			numericResp := response.MapRatingNumericToRatingNumericResp(*numeric, v.ID.Hex())
+			numericResp := publicresponse.MapRatingNumericToRatingNumericResp(*numeric, v.ID.Hex())
 			result.Ratings = append(result.Ratings, numericResp)
 		}
 	}

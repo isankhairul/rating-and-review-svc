@@ -3,12 +3,19 @@ package endpoint
 import (
 	"context"
 	"fmt"
+	"github.com/go-kit/kit/auth/jwt"
+	"github.com/go-kit/log"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/base/encoder"
 	"go-klikdokter/app/model/request"
+	"go-klikdokter/app/model/request/public"
+	"go-klikdokter/app/repository"
 	"go-klikdokter/app/service"
 	"go-klikdokter/helper/global"
 	"go-klikdokter/helper/message"
+	"go-klikdokter/pkg/util"
+	"go.mongodb.org/mongo-driver/mongo"
+	"strings"
 
 	"github.com/go-kit/kit/endpoint"
 )
@@ -52,7 +59,7 @@ type RatingEndpoint struct {
 	CreateRatingSubHelpful endpoint.Endpoint
 }
 
-func MakeRatingEndpoints(s service.RatingService) RatingEndpoint {
+func MakeRatingEndpoints(s service.RatingService, logger log.Logger, db *mongo.Database) RatingEndpoint {
 	return RatingEndpoint{
 		CreateRatingTypeNum:     makeCreateRatingTypeNum(s),
 		UpdateRatingById:        makeUpdateRatingById(s),
@@ -60,7 +67,7 @@ func MakeRatingEndpoints(s service.RatingService) RatingEndpoint {
 		DeleteRatingTypeNumById: makeDeleteRatingTypeNumById(s),
 		GetRatingTypeNums:       makeGetRatingTypeNums(s),
 
-		CreateRatingSubmission:                  makeCreateRatingSubmission(s),
+		CreateRatingSubmission:                  makeCreateRatingSubmission(s, logger, db),
 		UpdateRatingSubmission:                  makeUpdateRatingSubmission(s),
 		GetRatingSubmission:                     makeGetRatingSubmission(s),
 		GetListRatingSubmission:                 makeGetListRatingSubmissions(s),
@@ -75,12 +82,12 @@ func MakeRatingEndpoints(s service.RatingService) RatingEndpoint {
 		DeleteRatingTypeLikertById: makeDeleteRatingTypeLikertById(s),
 		GetRatingTypeLikerts:       makeRatingTypeLikerts(s),
 
-		CreateRating:                  makeCreateRating(s),
+		CreateRating:                  makeCreateRating(s, logger, db),
 		ShowRating:                    makeShowRating(s),
 		UpdateRating:                  makeUpdateRating(s),
 		DeleteRating:                  makeDeleteRatingById(s),
 		GetRatings:                    makeGetListRatings(s),
-		GetListRatingSummary:          makGetListRatingSummary(s),
+		GetListRatingSummary:          makGetListRatingSummary(s, logger, db),
 		GetRatingBySourceTypeAndActor: makeGetRatingBySourceTypeAndActor(s),
 
 		CreateRatingFormula:     makeCreateRatingFormula(s),
@@ -183,7 +190,7 @@ func makeGetRatingTypeNums(s service.RatingService) endpoint.Endpoint {
 	}
 }
 
-func makeCreateRatingSubmission(s service.RatingService) endpoint.Endpoint {
+func makeCreateRatingSubmission(s service.RatingService, logger log.Logger, db *mongo.Database) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.CreateRatingSubmissionRequest)
 
@@ -208,8 +215,18 @@ func makeCreateRatingSubmission(s service.RatingService) endpoint.Endpoint {
 		// set user_id_legacy from token jwt
 		userIdLegacy := fmt.Sprintf("%v", jwtObj.UserIdLegacy)
 		req.UserIDLegacy = &userIdLegacy
+		req.Token = fmt.Sprint(ctx.Value(jwt.JWTContextKey))
 
-		result, msg := s.CreateRatingSubmission(req)
+		var result interface{}
+		var msg message.Message
+
+		if util.StringInSlice(strings.ToLower(req.RatingType), []string{"rating_for_product", "rating_for_store"}) {
+			ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
+			result, msg = ratingMp.CreateRatingSubmissionMp(req)
+		} else {
+			result, msg = s.CreateRatingSubmission(req)
+		}
+
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
 		}
@@ -443,7 +460,7 @@ func makeRatingTypeLikerts(s service.RatingService) endpoint.Endpoint {
 	}
 }
 
-func makeCreateRating(s service.RatingService) endpoint.Endpoint {
+func makeCreateRating(s service.RatingService, logger log.Logger, db *mongo.Database) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.SaveRatingRequest)
 
@@ -451,8 +468,14 @@ func makeCreateRating(s service.RatingService) endpoint.Endpoint {
 		if jwtMsg.Code != message.SuccessMsg.Code {
 			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
 		}
+		var msg message.Message
 
-		_, msg := s.CreateRating(req)
+		if util.StringInSlice(strings.ToLower(req.SourceType), []string{"product", "store"}) {
+			ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
+			_, msg = ratingMp.CreateRating(req)
+		} else {
+			_, msg = s.CreateRating(req)
+		}
 
 		return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 	}
@@ -519,7 +542,7 @@ func makeGetListRatings(s service.RatingService) endpoint.Endpoint {
 	}
 }
 
-func makGetListRatingSummary(s service.RatingService) endpoint.Endpoint {
+func makGetListRatingSummary(s service.RatingService, logger log.Logger, db *mongo.Database) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.GetListRatingSummaryRequest)
 
@@ -528,7 +551,16 @@ func makGetListRatingSummary(s service.RatingService) endpoint.Endpoint {
 			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
 		}
 
-		result, msg := s.GetListRatingSummary(req)
+		var msg message.Message
+		var result interface{}
+
+		if util.StringInSlice(strings.ToLower(req.SourceType), []string{"product", "store"}) {
+			ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
+			result, _, msg = ratingMp.GetListRatingSummaryBySourceType(req)
+		} else {
+			result, msg = s.GetListRatingSummary(req)
+		}
+
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 		}
@@ -539,7 +571,7 @@ func makGetListRatingSummary(s service.RatingService) endpoint.Endpoint {
 
 func makeGetRatingBySourceTypeAndActor(s service.RatingService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
-		req := rqst.(request.GetRatingBySourceTypeAndActorRequest)
+		req := rqst.(publicrequest.GetRatingBySourceTypeAndActorRequest)
 
 		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
 		if jwtMsg.Code != message.SuccessMsg.Code {

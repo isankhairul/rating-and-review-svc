@@ -6,8 +6,10 @@ import (
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
+	"go-klikdokter/app/repository/public/public_repository_mock"
 	"go-klikdokter/app/repository/repository_mock"
 	"go-klikdokter/app/service"
+	publicservice "go-klikdokter/app/service/public"
 	"go-klikdokter/helper/global"
 	"go-klikdokter/helper/message"
 	"go-klikdokter/pkg/util"
@@ -28,6 +30,8 @@ var logger log.Logger
 
 var ratingRepository = &repository_mock.RatingRepositoryMock{Mock: mock.Mock{}}
 var medicalFacility = &mocks.MedicalFacilitySvc{Mock: mock.Mock{}}
+var publicRatingRepository = &public_repository_mock.PublicRatingRepositoryMock{Mock: mock.Mock{}}
+var publicRatingService = publicservice.NewPublicRatingService(logger, ratingRepository, publicRatingRepository)
 var svc = service.NewRatingService(logger, ratingRepository, publicRatingRepository, medicalFacility)
 
 func init() {

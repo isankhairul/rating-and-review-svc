@@ -15,6 +15,7 @@ type JWTObj struct {
 	UserIdLegacy interface{} `json:"user_id_legacy"`
 	Fullname     interface{} `json:"fullname"`
 	Avatar       interface{} `json:"avatar"`
+	Token        string      `json:"token""`
 }
 
 func SetJWTInfoFromContext(ctx context.Context) (JWTObj, message.Message) {

@@ -18,6 +18,7 @@ server:
   env: dev
   log-output: console
   output-file-path: ./kd-microservice.log
+  output-logging-path: ./storage/log
   config-path: .
   service-name: kd-microservice
 
@@ -50,7 +51,19 @@ source-type: [
   hospital,
   article,
   doctor,
-  layanan
+  layanan,
+  product,
+  store
+]
+
+source-type-mp: [
+  "product",
+  "store"
+]
+
+rating-type-mp: [
+  product,
+  store
 ]
 
 #route
@@ -80,3 +93,6 @@ dapr:
   version: "v1.0"
   pubsub-name: "kafka-pubsub-noauth"
   topic-ratingsubcol: "queuing.rnr.ratingsubcol"
+
+media-service:
+  image-house-keeping: https://publishing-adm-api.medkomtek-stg.com/media-svc/api/v1/images

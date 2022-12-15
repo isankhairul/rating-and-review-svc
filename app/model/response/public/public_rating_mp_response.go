@@ -1,4 +1,4 @@
-package response
+package publicresponse
 
 import (
 	"go-klikdokter/app/model/entity"
@@ -7,7 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type PublicRatingSummaryResponse struct {
+type PublicRatingSummaryMpResponse struct {
 	ID            primitive.ObjectID `json:"id"`
 	Name          string             `json:"name,omitempty"`
 	Description   *string            `json:"description,omitempty"`
@@ -18,18 +18,7 @@ type PublicRatingSummaryResponse struct {
 	RatingSummary interface{}        `json:"rating_summary,omitempty"`
 }
 
-type RatingSummaryNumeric struct {
-	SourceUID     string `json:"source_uid"`
-	TotalValue    int    `json:"total_value"`
-	TotalReviewer int    `json:"total_reviewer"`
-}
-
-type RatingSummaryLikert struct {
-	SourceUID string        `json:"source_uid"`
-	ValueList []interface{} `json:"value_list"`
-}
-
-type PublicRatingSubmissionResponse struct {
+type PublicRatingSubmissionMpResponse struct {
 	ID            primitive.ObjectID `json:"id"`
 	UserID        *string            `json:"user_id,omitempty"`
 	UserIDLegacy  *string            `json:"user_id_legacy,omitempty"`
@@ -41,23 +30,25 @@ type PublicRatingSubmissionResponse struct {
 	RatingType    string             `json:"rating_type"`
 	Value         string             `json:"value"`
 	LikeByMe      bool               `json:"like_by_me"`
+	MediaPath     []string           `json:"media_path"`
+	IsWithMedia   bool               `json:"is_with_media"`
 	CreatedAt     time.Time          `json:"created_at"`
 }
 
-type PublicCreateRatingSubmissionResponse struct {
+type PublicCreateRatingSubmissionMpResponse struct {
 	ID                primitive.ObjectID `json:"id"`
 	RatingID          string             `json:"rating_id,omitempty"`
 	RatingDescription string             `json:"rating_decription,omitempty"`
 	Value             string             `json:"value,omitempty"`
 }
 
-type RatingBySourceTypeAndActorResponse struct {
+type RatingBySourceTypeAndActorMpResponse struct {
 	SourceUID  string        `json:"source_uid"`
 	SourceType string        `json:"source_type"`
 	Ratings    []interface{} `json:"ratings"`
 }
 
-type PublicRatingNumericResponse struct {
+type PublicRatingNumericMpResponse struct {
 	Type              string `json:"type"`
 	RatingId          string `json:"rating_id"`
 	RatingTypeId      string `json:"rating_type_id"`
@@ -67,7 +58,7 @@ type PublicRatingNumericResponse struct {
 	RatingMaxScore    int    `json:"rating_max_score"`
 }
 
-type PublicRatingLikertResponse struct {
+type PublicRatingLikertMpResponse struct {
 	Type                string  `json:"type"`
 	RatingId            string  `json:"rating_id"`
 	RatingTypeId        string  `json:"rating_type_id"`
@@ -86,7 +77,7 @@ type PublicRatingLikertResponse struct {
 	RatingStatement10   *string `json:"rating_statement_10,omitempty"`
 }
 
-func MapRatingNumericToRatingNumericResp(data entity.RatingTypesNumCol, ratingId string) *PublicRatingNumericResponse {
+func MapRatingNumericToRatingNumericMpResp(data entity.RatingTypesNumCol, ratingId string) *PublicRatingNumericResponse {
 	return &PublicRatingNumericResponse{
 		Type:              "numeric",
 		RatingId:          ratingId,
@@ -98,7 +89,7 @@ func MapRatingNumericToRatingNumericResp(data entity.RatingTypesNumCol, ratingId
 	}
 }
 
-func MapRatingLikertToRatingNumericResp(data entity.RatingTypesLikertCol, ratingId string) *PublicRatingLikertResponse {
+func MapRatingLikertToRatingNumericMpResp(data entity.RatingTypesLikertCol, ratingId string) *PublicRatingLikertResponse {
 	result := PublicRatingLikertResponse{}
 	result.Type = "likert"
 	result.RatingId = ratingId
@@ -166,4 +157,15 @@ func MapRatingLikertToRatingNumericResp(data entity.RatingTypesLikertCol, rating
 		result.RatingStatement10 = nil
 	}
 	return &result
+}
+
+type RatingSummaryMpNumeric struct {
+	SourceUID     string  `json:"source_uid"`
+	TotalValue    float64 `json:"total_value"`
+	TotalReviewer int64   `json:"total_reviewer"`
+}
+
+type PublicSumCountRatingSummaryMp struct {
+	Sum   int64 `json:"sum"`
+	Count int64 `json:"count"`
 }

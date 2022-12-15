@@ -237,6 +237,25 @@ func ValidateUserIdAndUserIdLegacy(sourceTransId, ratingId string, id *string, i
 	return false
 }
 
+func ValidateUserIdAndUserIdLegacyMp(sourceTransId, ratingId string, id *string, idLegacy *string, ratingSubmission *entity.RatingSubmissionMp, err error) bool {
+	if ratingSubmission != nil {
+		if ratingSubmission.RatingID == ratingId && ratingSubmission.UserID != nil {
+			if *ratingSubmission.UserID == *id && sourceTransId == ratingSubmission.SourceTransID {
+				return true
+			}
+		}
+		if ratingSubmission.RatingID == ratingId && ratingSubmission.UserIDLegacy != nil {
+			if *ratingSubmission.UserIDLegacy == *idLegacy && sourceTransId == ratingSubmission.SourceTransID {
+				return true
+			}
+		}
+		if err == nil {
+			return true
+		}
+	}
+	return false
+}
+
 func ValidateUserIdAndUserIdLegacyForUpdate(input request.UpdateRatingSubmissionRequest, subId primitive.ObjectID, sourceTransId string, id *string, idLegacy *string, ratingSubmission *entity.RatingSubmisson, err error) bool {
 	if ratingSubmission != nil {
 		if ratingSubmission.ID == subId {

@@ -6,8 +6,10 @@ import (
 	"go-klikdokter/app/api/endpoint"
 	"go-klikdokter/app/model/base/encoder"
 	"go-klikdokter/app/model/request"
+	"go-klikdokter/app/model/request/public"
 	"go-klikdokter/app/service"
 	"go-klikdokter/helper/_struct"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 
 	"github.com/gorilla/schema"
@@ -18,10 +20,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func RatingHttpHandler(s service.RatingService, logger log.Logger) http.Handler {
+func RatingHttpHandler(s service.RatingService, logger log.Logger, db *mongo.Database) http.Handler {
 	pr := mux.NewRouter()
 
-	ep := endpoint.MakeRatingEndpoints(s)
+	ep := endpoint.MakeRatingEndpoints(s, logger, db)
 	options := []httptransport.ServerOption{
 		httptransport.ServerErrorLogger(logger),
 		httptransport.ServerErrorEncoder(encoder.EncodeError),
@@ -487,7 +489,7 @@ func decodeUpdateRatingFormulaById(ctx context.Context, r *http.Request) (rqst i
 }
 
 func decodeGetRatingBySourceTypeAndActor(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
-	var req request.GetRatingBySourceTypeAndActorRequest
+	var req publicrequest.GetRatingBySourceTypeAndActorRequest
 
 	if err := r.ParseForm(); err != nil {
 		return nil, err

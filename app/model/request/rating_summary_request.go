@@ -2,6 +2,7 @@ package request
 
 // swagger:parameters GetListRatingSummaryRequest
 type GetListRatingSummaryRequest struct {
+	// Filter available {"source_uid": [], "rating_type": []}
 	Filter string `json:"filter" schema:"filter" binding:"omitempty"`
 	Limit  int    `json:"limit" schema:"limit" binding:"omitempty,numeric,min=1,max=100"`
 	Page   int    `json:"page" schema:"page" binding:"omitempty,numeric,min=1"`

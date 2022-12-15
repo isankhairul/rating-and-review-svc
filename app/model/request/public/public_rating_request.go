@@ -1,8 +1,10 @@
-package request
+package publicrequest
 
 import (
+	"fmt"
 	validation "github.com/itgelo/ozzo-validation/v4"
 	"github.com/spf13/viper"
+	"strings"
 )
 
 // swagger:parameters GetPublicListRatingSummaryRequest
@@ -87,7 +89,11 @@ func (r *GetPublicListRatingSummaryRequest) MakeDefaultValueIfEmpty() {
 
 func (req GetPublicListRatingSubmissionRequest) ValidateSourceType() error {
 	sourceType := viper.GetStringSlice("source-type")
+	interfaceAllSource := make([]interface{}, len(sourceType))
+	for i, v := range sourceType {
+		interfaceAllSource[i] = v
+	}
 	return validation.ValidateStruct(&req,
-		validation.Field(&req.SourceType, validation.In(sourceType[0], sourceType[1], sourceType[2], sourceType[3])),
+		validation.Field(&req.SourceType, validation.Required, validation.In(interfaceAllSource...).Error(fmt.Sprintf("source_type should be %s", strings.Join(sourceType, ",")))),
 	)
 }

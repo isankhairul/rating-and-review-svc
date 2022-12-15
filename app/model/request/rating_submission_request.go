@@ -87,6 +87,9 @@ type CreateRatingSubmissionRequest struct {
 	IsAnonymous   bool           `json:"is_anonymous" bson:"is_anonymous"`
 	SourceUID     string         `json:"source_uid" bson:"source_uid"`
 	RatingType    string         `json:"rating_type" bson:"rating_type"`
+	Value         string         `json:"value" bson:"value"`
+	MediaPath     []MediaPathObj `json:"media_path" bson:"media_path"`
+	Token         string         `json:"-"`
 }
 
 type SaveRatingSubmission struct {
@@ -101,10 +104,12 @@ type SaveRatingSubmission struct {
 	UserAgent     string     `json:"user_agent" bson:"user_agent"`
 	SourceTransID string     `json:"source_trans_id" bson:"source_trans_id"`
 	SourceUID     string     `json:"source_uid" bson:"source_uid"`
-	SourceType    string     `json:"source_uid" bson:"source_type"`
+	SourceType    string     `json:"source_type" bson:"source_type"`
 	UserPlatform  string     `json:"user_platform" bson:"user_platform"`
 	Tagging       TaggingObj `json:"tagging" bson:"tagging"`
 	IsAnonymous   bool       `json:"is_anonymous" bson:"is_anonymous"`
+	MediaPath     []string   `json:"media_path" bson:"media_path"`
+	IsWithMedia   bool       `json:"is_with_media" bson:"is_with_media"`
 }
 
 type TaggingObj struct {

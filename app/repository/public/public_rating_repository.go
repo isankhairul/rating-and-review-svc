@@ -1,4 +1,4 @@
-package repository
+package publicrepository
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
+	"go-klikdokter/app/model/request/public"
 	"go-klikdokter/pkg/util"
 	"math"
 	"reflect"
@@ -22,17 +23,17 @@ type publicRatingRepo struct {
 }
 
 type PublicRatingRepository interface {
-	GetRatingsBySourceTypeAndActor(sourceType, sourceUID string, filter request.GetRatingBySourceTypeAndActorFilter) ([]entity.RatingsCol, error)
+	GetRatingsBySourceTypeAndActor(sourceType, sourceUID string, filter publicrequest.GetRatingBySourceTypeAndActorFilter) ([]entity.RatingsCol, error)
 	GetRatingTypeLikertById(id primitive.ObjectID) (*entity.RatingTypesLikertCol, error)
 	GetRatingTypeNumById(id primitive.ObjectID) (*entity.RatingTypesNumCol, error)
 	CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) (*entity.RatingSubHelpfulCol, error)
 	UpdateStatusRatingSubHelpful(id primitive.ObjectID, currentStatus bool) error
 	GetRatingSubHelpfulByRatingSubAndActor(ratingSubId, userIdLegacy string) (*entity.RatingSubHelpfulCol, error)
 	UpdateCounterRatingSubmission(id primitive.ObjectID, currentCounter int64) error
-	GetPublicRatingsByParams(limit, page, dir int, sort string, filter request.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error)
+	GetPublicRatingsByParams(limit, page, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error)
 	GetRatingSubsByRatingId(ratingId string) ([]entity.RatingSubmisson, error)
 	CountRatingSubsByRatingIdAndValue(ratingId, value string) (int64, error)
-	GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error)
+	GetPublicRatingSubmissions(limit, page, dir int, sort string, filter publicrequest.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error)
 	GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId, sourceType string) (*entity.RatingFormulaCol, error)
 	UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) error
 	GetListRatingBySourceTypeAndUID(sourceType, sourceUID string) ([]entity.RatingsCol, error)
@@ -42,7 +43,9 @@ func NewPublicRatingRepository(db *mongo.Database) PublicRatingRepository {
 	return &publicRatingRepo{db}
 }
 
-func (r *publicRatingRepo) GetRatingsBySourceTypeAndActor(sourceType, sourceUID string, filter request.GetRatingBySourceTypeAndActorFilter) ([]entity.RatingsCol, error) {
+var bsonStatus = bson.D{{"status", true}}
+
+func (r *publicRatingRepo) GetRatingsBySourceTypeAndActor(sourceType, sourceUID string, filter publicrequest.GetRatingBySourceTypeAndActorFilter) ([]entity.RatingsCol, error) {
 	var results []entity.RatingsCol
 
 	bsonSourceType := bson.D{{Key: "source_type", Value: sourceType}}
@@ -233,7 +236,7 @@ func countRatingSubHelpful(r *publicRatingRepo, ratingSubId string) (int64, erro
 	return counter, nil
 }
 
-func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort string, filter request.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error) {
+func (r *publicRatingRepo) GetPublicRatingsByParams(limit, page, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error) {
 	var results []entity.RatingsCol
 	limit64 := int64(limit)
 	bsonSourceUid := bson.D{}
@@ -330,7 +333,7 @@ func (r *publicRatingRepo) CountRatingSubsByRatingIdAndValue(ratingId, value str
 	return counter, nil
 }
 
-func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort string, filter request.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error) {
+func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort string, filter publicrequest.FilterRatingSubmission) ([]entity.RatingSubmisson, *base.Pagination, error) {
 	var results []entity.RatingSubmisson
 	limit64 := int64(limit)
 	bsonCancelled := bson.D{{Key: "cancelled", Value: false}}

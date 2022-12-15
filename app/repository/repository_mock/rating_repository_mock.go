@@ -291,9 +291,25 @@ func (repository *RatingRepositoryMock) FindRatingByRatingID(ratingId primitive.
 }
 
 func (repository *RatingRepositoryMock) FindRatingBySourceUIDAndRatingType(sourceUID, ratingType string) (*entity.RatingsCol, error) {
-	arguments := repository.Mock.Called(sourceUID, ratingType)
-	result := arguments.Get(0).(entity.RatingsCol)
-	return &result, nil
+	ret := repository.Mock.Called(sourceUID, ratingType)
+
+	var r0 *entity.RatingsCol
+	if rf, ok := ret.Get(0).(func(string, string) *entity.RatingsCol); ok {
+		r0 = rf(sourceUID, ratingType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.RatingsCol)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(sourceUID, ratingType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 func (repository *RatingRepositoryMock) FindRatingNumericTypeByRatingTypeID(ratingTypeId primitive.ObjectID) (*entity.RatingTypesNumCol, error) {

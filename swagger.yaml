@@ -64,6 +64,42 @@ definitions:
         x-go-name: UserIDLegacy
     type: object
     x-go-package: go-klikdokter/app/model/request
+  CreateRatingSubmissionMpRequest:
+    properties:
+      comment:
+        type: string
+        x-go-name: Comment
+      ip_address:
+        type: string
+        x-go-name: IPAddress
+      is_anonymous:
+        type: boolean
+        x-go-name: IsAnonymous
+      media_path:
+        items:
+          $ref: '#/definitions/MediaPathObj'
+        type: array
+        x-go-name: MediaPath
+      rating_type:
+        type: string
+        x-go-name: RatingType
+      source_trans_id:
+        type: string
+        x-go-name: SourceTransID
+      source_uid:
+        type: string
+        x-go-name: SourceUID
+      user_agent:
+        type: string
+        x-go-name: UserAgent
+      user_platform:
+        type: string
+        x-go-name: UserPlatform
+      value:
+        type: string
+        x-go-name: Value
+    type: object
+    x-go-package: go-klikdokter/app/model/request
   CreateRatingSubmissionRequest:
     properties:
       comment:
@@ -78,6 +114,11 @@ definitions:
       is_anonymous:
         type: boolean
         x-go-name: IsAnonymous
+      media_path:
+        items:
+          $ref: '#/definitions/MediaPathObj'
+        type: array
+        x-go-name: MediaPath
       rating_type:
         type: string
         x-go-name: RatingType
@@ -104,6 +145,9 @@ definitions:
       user_platform:
         type: string
         x-go-name: UserPlatform
+      value:
+        type: string
+        x-go-name: Value
     type: object
     x-go-package: go-klikdokter/app/model/request
   CreateRatingTypeNumRequest:
@@ -215,6 +259,16 @@ definitions:
         x-go-name: Type
     type: object
     x-go-package: go-klikdokter/app/model/request
+  MediaPathObj:
+    properties:
+      media_path:
+        type: string
+        x-go-name: MediaPath
+      uid:
+        type: string
+        x-go-name: UID
+    type: object
+    x-go-package: go-klikdokter/app/model/request
   MetaResponse:
     properties:
       code:
@@ -302,7 +356,7 @@ definitions:
         type: string
         x-go-name: UpdatedAt
     type: object
-    x-go-name: RatingsCol
+    x-go-name: RatingsMpCol
     x-go-package: go-klikdokter/app/model/entity
   RatingByType:
     properties:
@@ -1752,7 +1806,8 @@ paths:
       description: Get list Rating Summary
       operationId: GetListRatingSummaryRequest
       parameters:
-      - in: query
+      - description: 'Filter available {"source_uid": [], "rating_type": []}'
+        in: query
         name: filter
         type: string
         x-go-name: Filter

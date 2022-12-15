@@ -1,13 +1,17 @@
-package test
+package publictest
 
 import (
 	"errors"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
+	publicrequest "go-klikdokter/app/model/request/public"
+	"go-klikdokter/app/repository/public/public_repository_mock"
 	"go-klikdokter/app/repository/repository_mock"
 	"go-klikdokter/app/service"
+	"go-klikdokter/app/service/public"
 	"go-klikdokter/helper/message"
+	"go-klikdokter/pkg/util/mocks"
 	"os"
 	"testing"
 
@@ -19,8 +23,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var publicRatingRepository = &repository_mock.PublicRatingRepositoryMock{Mock: mock.Mock{}}
-var publicRatingService = service.NewPublicRatingService(logger, ratingRepository, publicRatingRepository)
+var logger log.Logger
+var ratingRepository = &repository_mock.RatingRepositoryMock{Mock: mock.Mock{}}
+var publicRatingRepository = &public_repository_mock.PublicRatingRepositoryMock{Mock: mock.Mock{}}
+var publicRatingService = publicservice.NewPublicRatingService(logger, ratingRepository, publicRatingRepository)
+var medicalFacility = &mocks.MedicalFacilitySvc{Mock: mock.Mock{}}
+var svc = service.NewRatingService(logger, ratingRepository, publicRatingRepository, medicalFacility)
 
 func init() {
 	{
@@ -33,6 +41,7 @@ func init() {
 
 var (
 	userId            = "2210"
+	description       = "alo"
 	comment           = "Comment Test"
 	ipaddress         = "138.199.20.50"
 	useragent         = "Chrome/{Chrome Rev} Mobile Safari/{WebKit Rev}"
@@ -47,9 +56,10 @@ var (
 	failedId          = "62c3e57b457ed515928c3690"
 	displayName       = "User Name"
 	anonym            = false
+	ratingId          = "629ec07e6f3c2761ba2dc433"
 )
 
-var requestSummary = request.GetPublicListRatingSummaryRequest{
+var requestSummary = publicrequest.GetPublicListRatingSummaryRequest{
 	SourceType: "doctor",
 	Sort:       "",
 	Dir:        "desc",
@@ -57,7 +67,7 @@ var requestSummary = request.GetPublicListRatingSummaryRequest{
 	Limit:      50,
 }
 
-var requestSubmission = request.GetPublicListRatingSubmissionRequest{
+var requestSubmission = publicrequest.GetPublicListRatingSubmissionRequest{
 	SourceType: "doctor",
 	SourceUID:  "895",
 	Sort:       "created_at",
@@ -66,14 +76,14 @@ var requestSubmission = request.GetPublicListRatingSubmissionRequest{
 	Limit:      50,
 }
 
-var filterSummary = request.FilterRatingSummary{
+var filterSummary = publicrequest.FilterRatingSummary{
 	SourceType: requestSummary.SourceType,
 	SourceUid:  []string(nil),
 	RatingType: []string(nil),
 }
 
 func TestGetRatingBySourceTypeAndSourceUID(t *testing.T) {
-	req := request.GetRatingBySourceTypeAndActorRequest{
+	req := publicrequest.GetRatingBySourceTypeAndActorRequest{
 		SourceType: "doctor",
 		SourceUID:  "894",
 	}
@@ -101,7 +111,7 @@ func TestGetRatingBySourceTypeAndSourceUID(t *testing.T) {
 		Statement01:   &statement01,
 		Statement02:   &statement02,
 	}
-	filter := request.GetRatingBySourceTypeAndActorFilter{}
+	filter := publicrequest.GetRatingBySourceTypeAndActorFilter{}
 
 	publicRatingRepository.Mock.On("GetRatingsBySourceTypeAndActor", req.SourceType, req.SourceUID, filter).Return(resultRatings, nil).Once()
 	publicRatingRepository.Mock.On("GetRatingTypeLikertById", ratingTypeId).Return(resultRatingType, nil).Once()
@@ -111,12 +121,12 @@ func TestGetRatingBySourceTypeAndSourceUID(t *testing.T) {
 }
 
 func TestGetRatingBySourceTypeAndSourceUIDErrNoDataRating(t *testing.T) {
-	req := request.GetRatingBySourceTypeAndActorRequest{
+	req := publicrequest.GetRatingBySourceTypeAndActorRequest{
 		SourceType: "doctor",
 		SourceUID:  "894",
 	}
 	resultRatings := []entity.RatingsCol{}
-	filter := request.GetRatingBySourceTypeAndActorFilter{}
+	filter := publicrequest.GetRatingBySourceTypeAndActorFilter{}
 	publicRatingRepository.Mock.On("GetRatingsBySourceTypeAndActor", req.SourceType, req.SourceUID, filter).Return(resultRatings, nil)
 
 	_, msg := svc.GetRatingBySourceTypeAndActor(req)
@@ -312,7 +322,7 @@ func TestGetRatingSummaryBySourceTypeErrEmptyRating(t *testing.T) {
 }
 
 func TestGetRatingSummaryBySourceTypeFailedGetRating(t *testing.T) {
-	var request = request.GetPublicListRatingSummaryRequest{
+	var request = publicrequest.GetPublicListRatingSummaryRequest{
 		SourceType: "doctor",
 		Sort:       "failed",
 		Dir:        "desc",
@@ -405,7 +415,7 @@ func TestGetRatingSubmissionBySourceTypeAndUID(t *testing.T) {
 	idDummy1, _ := primitive.ObjectIDFromHex(idDummy1)
 	idDummy2, _ := primitive.ObjectIDFromHex(idDummy2)
 
-	var filterSubmission = request.FilterRatingSubmission{
+	var filterSubmission = publicrequest.FilterRatingSubmission{
 		RatingID: []string{idDummy1.Hex(), idDummy2.Hex()},
 	}
 
@@ -463,7 +473,7 @@ func TestGetRatingSubmissionBySourceTypeAndUIDEmptyList(t *testing.T) {
 	idDummy1, _ := primitive.ObjectIDFromHex(idDummy1)
 	idDummy2, _ := primitive.ObjectIDFromHex(idDummy2)
 
-	var filterSubmission = request.FilterRatingSubmission{
+	var filterSubmission = publicrequest.FilterRatingSubmission{
 		RatingID: []string{idDummy1.Hex(), idDummy2.Hex()},
 	}
 
