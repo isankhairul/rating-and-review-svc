@@ -22,7 +22,7 @@ import (
 )
 
 type UploadService interface {
-	UploadImage(ctx context.Context ,input upload_request.UploadImageRequest) (*response.UploadResponse, message.Message, interface{})
+	UploadImage(ctx context.Context ,input upload_request.UploadImageRequest) (response.UploadResponse, message.Message, interface{})
 }
 
 type uploadServiceImpl struct {
@@ -35,7 +35,7 @@ func NewUploadService(
 	return &uploadServiceImpl{lg}
 }
 
-// swagger:operation POST /updalo/images Image ReqUploadForm
+// swagger:operation POST /upload/images Image ReqUploadForm
 //
 // Upload Image Rating
 //
@@ -57,45 +57,59 @@ func NewUploadService(
 //             records:
 //               $ref: '#/definitions/UploadResponse'
 //           type: object
-func (updSvc *uploadServiceImpl) UploadImage(ctx context.Context, input upload_request.UploadImageRequest) (*response.UploadResponse, message.Message, interface{}) {
-	var result  *response.UploadResponse
-    //new  multipart writer.
+func (updSvc *uploadServiceImpl) UploadImage(ctx context.Context, input upload_request.UploadImageRequest) (response.UploadResponse, message.Message, interface{}) {
+	result  := response.UploadResponse{}
+	var messages message.Message
+	errMsg := make(map[string]interface{})
+    //new  multipart writer
     body := &bytes.Buffer{}
     writer := multipart.NewWriter(body)
+
     fw, _ := writer.CreateFormField("name")
     io.Copy(fw, strings.NewReader(input.FileName))
+
 	mediaCategoryUid := viper.GetString("media-service.media-category-uid")
     fw, _ = writer.CreateFormField("media_category_uid")
     io.Copy(fw, strings.NewReader(mediaCategoryUid))
 
-    fileReader := bytes.NewReader(input.Image)
-    /**/
-    // fileReader = bytes.NewReader(files)
+    fileReader := bytes.NewReader(input.Image)    
     mimetype := input.MimeType
 	fw, _ = CreateCustomFormFile(writer, input.FileName, mimetype)
 	io.Copy(fw, fileReader)
-    /**/
 
     writer.Close()
+
 	correlationId := fmt.Sprint(ctx.Value(middleware.CorrelationIdContextKey))
 	logger := log.With(updSvc.logger, "MediaService", fmt.Sprint("performRequest-", correlationId))
 	var queryParams map[string] string
 	token, _ := global.GenerateJwt()
-	fmt.Println("token", token)
 	headers := map[string]string{
 		"X-Correlation-ID": correlationId,
 		"Authorization":    fmt.Sprint("Bearer ", token),
 	}
+
 	urlMediaService := viper.GetString("media-service.url")
-	rspStatusCode, data, _ := httphelper.PerformRequestMultipartWithLog(logger, "POST", urlMediaService, body.Bytes(), queryParams, headers, writer)
-    //bodyString := string(data)
+	rspStatusCode, data, err := httphelper.PerformRequestMultipartWithLog(logger, "POST", urlMediaService, body.Bytes(), queryParams, headers, writer)
+
+	if err != nil {
+		errMsg["image"] = "Failed to Upload Image"
+		return result, message.ErrUploadMedia, nil	
+	}
+    
     var ResponseMedia response.ResponseHttpMedia
 	json.Unmarshal(data, &ResponseMedia)
+	
 	if rspStatusCode == 200 {
-		result.UID = ResponseMedia.Data.Record.Uid
-		result.MediaPath= ResponseMedia.Data.Record.ImageFiles[0].MediaPath
+		result.UID = &ResponseMedia.Data.Record.Uid
+		result.MediaPath = &ResponseMedia.Data.Record.ImageFiles[0].MediaPath
+		messages = message.SuccessMsg
+	} else {
+		result.UID = nil
+		result.MediaPath= nil
+		errMsg["image"] = "Failed to Upload Image"
+		messages = message.ErrUploadMedia
 	}
-	return nil, message.SuccessMsg, nil
+	return result, messages, errMsg
 }
 
 var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")

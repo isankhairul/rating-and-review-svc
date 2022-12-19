@@ -2,8 +2,8 @@ package response
 
 // swagger:model UploadResponse
 type UploadResponse struct {
-	UID string	`json:"uid"`
-	MediaPath string `json:"media_path"`
+	UID *string	`json:"uid,omitempty"`
+	MediaPath *string `json:"media_path,omitempty"`
 }
 
 type ResponseHttpMedia struct {

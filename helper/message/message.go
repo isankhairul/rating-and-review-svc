@@ -94,3 +94,6 @@ var ErrFailedRequestToPayment = Message{Code: ValidationFailCode, Message: "Fail
 // msg in api get booking Medical facility
 var GetMedicalFacilitySuccess = Message{Code: 200, Message: "OK"}
 var GetMedicalFacilityNotFound = Message{Code: 400, Message: "Data tidak ditemukan"}
+
+//error code upload media
+var ErrUploadMedia = Message{Code: 109400, Message: "Upload Failed"}

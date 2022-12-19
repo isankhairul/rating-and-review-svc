@@ -203,8 +203,10 @@ definitions:
   DataResponse:
     properties:
       record:
+        type: object
         x-go-name: Record
       records:
+        type: object
         x-go-name: Records
     type: object
     x-go-name: data
@@ -286,6 +288,30 @@ definitions:
         x-go-name: Message
     type: object
     x-go-name: metaResponse
+    x-go-package: go-klikdokter/app/model/base
+  MetaResponseCtx:
+    properties:
+      code:
+        description: |-
+          Code is the response code
+          in: int
+        format: int64
+        type: integer
+        x-go-name: Code
+      correlation_id:
+        description: |-
+          CorrelationId is the response correlation_id
+          in: string
+        type: string
+        x-go-name: CorrelationId
+      message:
+        description: |-
+          Message is the response message
+          in: string
+        type: string
+        x-go-name: Message
+    type: object
+    x-go-name: metaResponseWithCorrelationID
     x-go-package: go-klikdokter/app/model/base
   ObjectID:
     items:
@@ -741,6 +767,7 @@ definitions:
         description: |-
           Errors is the response message
           in: string
+        type: object
         x-go-name: Errors
       meta:
         $ref: '#/definitions/MetaResponse'
@@ -769,6 +796,16 @@ definitions:
         x-go-name: Value
     type: object
     x-go-package: go-klikdokter/app/model/request
+  UploadResponse:
+    properties:
+      media_path:
+        type: string
+        x-go-name: MediaPath
+      uid:
+        type: string
+        x-go-name: UID
+    type: object
+    x-go-package: go-klikdokter/app/model/response
 info:
   title: 'KD Boilerplate Go kit:'
   version: "1.0"
@@ -1845,6 +1882,42 @@ paths:
         - '[]'
       tags:
       - Ratings
+  /upload/images:
+    post:
+      consumes:
+      - multipart/form-data
+      description: This will create a new image
+      operationId: ReqUploadForm
+      parameters:
+      - description: Image file
+        in: formData
+        name: Image
+        type: file
+      - description: Source
+        in: formData
+        name: SourceType
+        type: string
+      - description: Source UID
+        in: formData
+        name: SourceUID
+        type: string
+      responses:
+        "200":
+          description: Success Response.
+          schema:
+            properties:
+              data:
+                properties:
+                  records:
+                    $ref: '#/definitions/UploadResponse'
+                type: object
+              meta:
+                $ref: '#/definitions/MetaResponseWithCtx'
+      security:
+      - Bearer: []
+      summary: Upload Image Rating
+      tags:
+      - Image
 produces:
 - application/json
 schemes:

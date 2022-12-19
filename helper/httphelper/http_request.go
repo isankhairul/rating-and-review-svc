@@ -2,15 +2,12 @@ package httphelper
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"strings"
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
-	"github.com/google/uuid"
 	"moul.io/http2curl"
 )
 
@@ -24,7 +21,6 @@ type HttpRequest interface {
 }
 
 func PerformRequestMultipartWithLog(logger log.Logger, method, url string, body []byte, queryParams, headers map[string]string, writer *multipart.Writer) (int, []byte, error) {
-	fmt.Println("tester =" , url)
 	client := NewClient()
 	// method, url, body
 	req, _ := http.NewRequest(method, url, bytes.NewBuffer(body))
@@ -41,11 +37,7 @@ func PerformRequestMultipartWithLog(logger log.Logger, method, url string, body 
 		q.Add(key, val)
 	}
 
-	// Log Request
-	reqId := (strings.Split(uuid.NewString(), "-"))[0]
-
 	http2curl.GetCurlCommand(req)
-	// level.Info(logger).Log(fmt.Sprint(reqId, "cURL"), command)
 
 	// Start Request
 	resp, err := client.Do(req)
@@ -63,6 +55,6 @@ func PerformRequestMultipartWithLog(logger log.Logger, method, url string, body 
 	}
 
 	//Log Response
-	level.Info(logger).Log(fmt.Sprint(reqId, "Resp", resp.StatusCode))
+	level.Info(logger).Log("type","[Media-Svc]", "respBody", string(data))
 	return resp.StatusCode, data, nil
 }

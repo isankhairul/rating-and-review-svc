@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"time"
 
+	"go-klikdokter/app/middleware"
+
 	"github.com/go-kit/kit/auth/jwt"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
@@ -32,8 +34,8 @@ func UploadHttpHandler(s service.UploadService, logger log.Logger) http.Handler 
 	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "/upload/images").Handler(httptransport.NewServer(
 		ep.MakeUploadImage,
 		decodeUploadImage,
-		encoder.EncodeResponseHTTP,
-		options...,
+		encoder.EncodeResponseHTTPWithCorrelationID,
+		append(options, httptransport.ServerBefore(middleware.CorrelationIdToContext()))...,
 	))
 
 	return pr

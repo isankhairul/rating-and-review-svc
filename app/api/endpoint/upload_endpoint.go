@@ -24,10 +24,10 @@ func MakeUploadImageEndpoint(s service.UploadService, logger log.Logger) UploadI
 func makeUploadImage(s service.UploadService, logger log.Logger) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.UploadImageRequest)
-		result, msg, _ := s.UploadImage(ctx, req)
+		result, msg, errMsg := s.UploadImage(ctx, req)
 		if msg.Code == 4000 {
-			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
+			return base.SetHttpResponseWithCorrelationID(ctx, msg.Code, msg.Message, nil, nil, errMsg), nil
 		}
-		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
+		return base.SetHttpResponseWithCorrelationID(ctx, msg.Code, msg.Message, result, nil, errMsg), nil
 	}
 }

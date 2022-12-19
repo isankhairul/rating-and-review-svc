@@ -23,10 +23,10 @@ type responseHttp struct {
 }
 
 // swagger:model SuccessResponse
-type responseHttpWithCtx struct {
+type responseHttpWithCorrelationID struct {
 	// Meta is With API response information
 	// in: MetaResponse
-	Meta metaResponseWithCtx `json:"meta"`
+	Meta metaResponseWithCorrelationID `json:"meta"`
 	// Pagination of the paginate respons
 	// in: PaginationResponse
 	Pagination *Pagination `json:"pagination,omitempty"`
@@ -49,7 +49,7 @@ type metaResponse struct {
 }
 
 // swagger:model MetaResponseCtx
-type metaResponseWithCtx struct {
+type metaResponseWithCorrelationID struct {
 	// CorrelationId is the response correlation_id
 	//in: string
 	CorrelationId string `json:"correlation_id"`
@@ -88,7 +88,7 @@ func SetHttpResponse(code int, message string, result interface{}, paging *Pagin
 	}
 }
 
-func SetHttpResponseWithCtx(ctx context.Context,code int, message string, result interface{}, paging *Pagination, errMsg interface{}) interface{} {
+func SetHttpResponseWithCorrelationID(ctx context.Context,code int, message string, result interface{}, paging *Pagination, errMsg interface{}) interface{} {
 	dt := data{}
 	isSlice := reflect.ValueOf(result).Kind() == reflect.Slice
 	if isSlice {
@@ -99,19 +99,29 @@ func SetHttpResponseWithCtx(ctx context.Context,code int, message string, result
 		dt.Record = result
 	}
 
-	return responseHttpWithCtx{
-		Meta: metaResponseWithCtx{
+	return responseHttpWithCorrelationID{
+		Meta: metaResponseWithCorrelationID{
 			CorrelationId: fmt.Sprint(ctx.Value(CorrelationIdContextKey)),
 			Code:    code,
 			Message: message,
 		},
 		Pagination: paging,
 		Data:       dt,
+		Errors: errMsg,
 	}
 }
 
 func GetHttpResponse(resp interface{}) *responseHttp {
 	result, ok := resp.(responseHttp)
+
+	if ok {
+		return &result
+	}
+	return nil
+}
+
+func GetHttpResponseWithCorrelataionID(resp interface{}) *responseHttpWithCorrelationID {
+	result, ok := resp.(responseHttpWithCorrelationID)
 
 	if ok {
 		return &result
