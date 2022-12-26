@@ -382,7 +382,7 @@ definitions:
         type: string
         x-go-name: UpdatedAt
     type: object
-    x-go-name: RatingsMpCol
+    x-go-name: RatingsCol
     x-go-package: go-klikdokter/app/model/entity
   RatingByType:
     properties:
@@ -770,11 +770,11 @@ definitions:
         type: object
         x-go-name: Errors
       meta:
-        $ref: '#/definitions/MetaResponse'
+        $ref: '#/definitions/MetaResponseCtx'
       pagination:
         $ref: '#/definitions/PaginationResponse'
     type: object
-    x-go-name: responseHttp
+    x-go-name: responseHttpWithCorrelationID
     x-go-package: go-klikdokter/app/model/base
   UpdateRatingSubDisplayNameRequest:
     properties:
@@ -1912,7 +1912,7 @@ paths:
                     $ref: '#/definitions/UploadResponse'
                 type: object
               meta:
-                $ref: '#/definitions/MetaResponseWithCtx'
+                $ref: '#/definitions/metaResponseWithCorrelationID'
       security:
       - Bearer: []
       summary: Upload Image Rating

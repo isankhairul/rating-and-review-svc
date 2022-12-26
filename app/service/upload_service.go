@@ -53,7 +53,7 @@ func NewUploadService(
 //     schema:
 //       properties:
 //         meta:
-//          $ref: '#/definitions/MetaResponseWithCtx'
+//          $ref: '#/definitions/metaResponseWithCorrelationID'
 //         data:
 //           properties:
 //             records:
