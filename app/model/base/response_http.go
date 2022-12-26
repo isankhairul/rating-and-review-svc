@@ -48,7 +48,7 @@ type metaResponse struct {
 	Message string `json:"message"`
 }
 
-// swagger:model MetaResponseCtx
+// swagger:model metaResponseWithCorrelationID
 type metaResponseWithCorrelationID struct {
 	// CorrelationId is the response correlation_id
 	//in: string
