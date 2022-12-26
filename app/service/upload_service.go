@@ -18,6 +18,8 @@ import (
 	"strings"
 
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	resty "github.com/go-resty/resty/v2"
 	"github.com/spf13/viper"
 )
 
@@ -61,12 +63,63 @@ func (updSvc *uploadServiceImpl) UploadImage(ctx context.Context, input upload_r
 	result  := response.UploadResponse{}
 	var messages message.Message
 	errMsg := make(map[string]interface{})
+
+	client := resty.New()
+    
+	correlationId := fmt.Sprint(ctx.Value(middleware.CorrelationIdContextKey))
+	logger := log.With(updSvc.logger, "MediaService", fmt.Sprint("performRequest-", correlationId))
+	token, _ := global.GenerateJwt()
+
+	urlMediaService := viper.GetString("media-service.url")
+	mapFormData := map[string]string{
+		"name" : input.FileName,
+		"source_type" : "rnr",
+		"media_category_uid" : viper.GetString("media-service.media-category-uid"),
+		"description" : "direct upload from rnr",
+	}
+	resp, err := client.R().
+		SetHeader("Authorization", "Bearer " + token).
+		SetHeader("X-Correlation-ID", correlationId).
+		SetFileReader("image", input.FileName, bytes.NewReader(input.Image)).
+		SetFormData(mapFormData).
+		Post(urlMediaService)
+	level.Info(logger).Log("type","[Media-Svc]", "respStatus", resp.StatusCode() ,"respBody", string(resp.Body()))
+	if err != nil {
+		errMsg["image"] = "Failed to Upload Image"
+		return result, message.ErrUploadMedia, nil	
+	}
+    
+	rspStatusCode := resp.StatusCode()
+
+    var ResponseMedia response.ResponseHttpMedia
+	json.Unmarshal(resp.Body(), &ResponseMedia)
+	
+	if rspStatusCode == 200 {
+		result.UID = &ResponseMedia.Data.Record.Uid
+		result.MediaPath = &ResponseMedia.Data.Record.ImageFiles[0].MediaPath
+		messages = message.SuccessMsg
+	} else {
+		result.UID = nil
+		result.MediaPath= nil
+		errMsg["image"] = "Failed to Upload Image"
+		messages = message.ErrUploadMedia
+	}
+	return result, messages, errMsg
+}
+
+func (updSvc *uploadServiceImpl) UploadImageOld(ctx context.Context, input upload_request.UploadImageRequest) (response.UploadResponse, message.Message, interface{}) {
+	result  := response.UploadResponse{}
+	var messages message.Message
+	errMsg := make(map[string]interface{})
     //new  multipart writer
     body := &bytes.Buffer{}
     writer := multipart.NewWriter(body)
 
     fw, _ := writer.CreateFormField("name")
     io.Copy(fw, strings.NewReader(input.FileName))
+
+	fw, _ = writer.CreateFormField("source_type")
+    io.Copy(fw, strings.NewReader("rnr"))
 
 	mediaCategoryUid := viper.GetString("media-service.media-category-uid")
     fw, _ = writer.CreateFormField("media_category_uid")
