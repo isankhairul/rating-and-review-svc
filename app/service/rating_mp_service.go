@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-kit/log"
-	"github.com/vjeantet/govaluate"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
@@ -15,11 +13,14 @@ import (
 	"go-klikdokter/app/repository"
 	"go-klikdokter/helper/message"
 	"go-klikdokter/pkg/util"
-	"go-klikdokter/pkg/util/media"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	util_media "go-klikdokter/pkg/util/media"
 	"strconv"
 	"strings"
+
+	"github.com/go-kit/log"
+	"github.com/vjeantet/govaluate"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type RatingMpService interface {
@@ -305,18 +306,17 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 	if userHasSubmitRating != message.SuccessMsg {
 		return result, userHasSubmitRating
 	}
-
 	// process media_path
 	var mediaPath []string
-	for _, mp := range input.MediaPath {
-		if mp.MediaPath != "" {
-			mediaPath = append(mediaPath, mp.MediaPath)
-		}
-	}
 	var isWithMedia bool
-	if len(mediaPath) > 0 {
+	if len(input.MediaPath) > 0 {
+		for _, mp := range input.MediaPath {
+			if mp.MediaPath != "" {
+				mediaPath = append(mediaPath, mp.MediaPath)
+			}
+		}
 		isWithMedia = true
-	}
+	}	
 	// end process media_path
 
 	saveReq = append(saveReq, request.SaveRatingSubmissionMp{
@@ -339,10 +339,20 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		OrderNumber:   originalSourceTransID,
 	})
 
-	//trigger image house keeping
-	go util_media.ImageHouseKeeping(s.logger, input.MediaPath, input.Token)
+	if len(saveReq) == 0 {
+		return result, message.ErrTypeNotFound
+	}
 
+	ratingSubs, err := s.ratingMpRepo.CreateRatingSubmission(saveReq)
+	if err != nil {
+		return result, message.ErrSaveData
+	}
+
+	//trigger image house keeping
+	
+	go util_media.ImageHouseKeeping(s.logger, input.MediaPath)
 	/*
+	Ask Yandi API untuk update product dari store yg udah di rating ya
 		// waiting because payment-svc not ready
 		//Check order_id exist for product & store
 		var isOrderIdExist bool
@@ -362,34 +372,17 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		}
 	*/
 
-	if len(saveReq) == 0 {
-		return result, message.ErrTypeNotFound
-	}
-	ratingSubs, err := s.ratingMpRepo.CreateRatingSubmission(saveReq)
-	if err != nil {
-		return result, message.ErrSaveData
-	}
-
 	for _, arg := range *ratingSubs {
 		data := response.CreateRatingSubmissionMpResponse{}
 		ratingSub, err := s.ratingMpRepo.GetRatingSubmissionById(arg.ID)
 		if err != nil {
 			return result, message.FailedMsg
 		}
-		ratingID, err := primitive.ObjectIDFromHex(ratingSub.RatingID)
-		if err != nil {
-			return result, message.FailedMsg
-		}
-		rating, err := s.ratingMpRepo.GetRatingById(ratingID)
-		if err != nil {
-			return result, message.FailedMsg
-		}
-
 		data.ID = ratingSub.ID
 		data.RatingID = ratingSub.RatingID
 		data.RatingDescription = *rating.Description
 		data.Value = ratingSub.Value
-		data.MediaPath = ratingSub.MediaPath
+		// data.MediaPath = ratingSub.MediaPath
 		data.IsWithMedia = ratingSub.IsWithMedia
 		data.OrderNumber = ratingSub.OrderNumber
 		result = append(result, data)

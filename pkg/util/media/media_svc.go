@@ -3,12 +3,13 @@ package util_media
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	"github.com/spf13/viper"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/helper/httputil"
 	"net/http"
+
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	"github.com/spf13/viper"
 )
 
 type Response struct {
@@ -17,10 +18,11 @@ type Response struct {
 	Data    interface{} `json:"data"`
 }
 
-func ImageHouseKeeping(logg log.Logger, mediaPath []request.MediaPathObj, token string) ([]map[string]interface{}, error) {
+func ImageHouseKeeping(logg log.Logger, mediaPath []request.MediaPathObj) ([]map[string]interface{}, error) {
 	logger := log.With(logg, "media-svc", "ImageHouseKeeping")
 	response := []map[string]interface{}{}
 	var error error
+	token := "" // tolong generate token yang sama kayak di upload service
 
 	if len(mediaPath) > 0 {
 		for _, mp := range mediaPath {

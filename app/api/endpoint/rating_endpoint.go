@@ -3,19 +3,19 @@ package endpoint
 import (
 	"context"
 	"fmt"
-	"github.com/go-kit/kit/auth/jwt"
-	"github.com/go-kit/log"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/base/encoder"
 	"go-klikdokter/app/model/request"
-	"go-klikdokter/app/model/request/public"
+	publicrequest "go-klikdokter/app/model/request/public"
 	"go-klikdokter/app/repository"
 	"go-klikdokter/app/service"
 	"go-klikdokter/helper/global"
 	"go-klikdokter/helper/message"
 	"go-klikdokter/pkg/util"
-	"go.mongodb.org/mongo-driver/mongo"
 	"strings"
+
+	"github.com/go-kit/log"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/go-kit/kit/endpoint"
 )
@@ -215,8 +215,7 @@ func makeCreateRatingSubmission(s service.RatingService, logger log.Logger, db *
 		// set user_id_legacy from token jwt
 		userIdLegacy := fmt.Sprintf("%v", jwtObj.UserIdLegacy)
 		req.UserIDLegacy = &userIdLegacy
-		req.Token = fmt.Sprint(ctx.Value(jwt.JWTContextKey))
-
+		
 		var result interface{}
 		var msg message.Message
 

@@ -89,7 +89,6 @@ type CreateRatingSubmissionRequest struct {
 	RatingType    string         `json:"rating_type" bson:"rating_type"`
 	Value         string         `json:"value" bson:"value"`
 	MediaPath     []MediaPathObj `json:"media_path" bson:"media_path"`
-	Token         string         `json:"-"`
 }
 
 type SaveRatingSubmission struct {
@@ -130,6 +129,8 @@ func (req CreateRatingSubmissionRequest) Validate() error {
 		validation.Field(&req.IPAddress, validation.Match(regexp.MustCompile(regexIP)).Error(message.ErrIPFormatReq.Message)),
 		validation.Field(&req.SourceTransID, validation.Required.Error(message.ErrReq.Message)),
 		validation.Field(&req.Comment, validation.NotNil),
+		validation.Field(&req.UserIDLegacy, validation.Required.Error(message.ErrReq.Message)),
+		validation.Field(&req.DisplayName, validation.Required.Error(message.ErrReq.Message)),
 	)
 }
 
