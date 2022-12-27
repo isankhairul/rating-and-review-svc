@@ -37,7 +37,7 @@ type GetPublicListRatingSubmissionRequest struct {
 	// in: path
 	// required: true
 	SourceUID string `json:"source_uid"`
-	// Filter available {"user_id_legacy": [""], "source_trans_id": [""], "value": ""}
+	// Filter available {"user_id_legacy": [""], "source_trans_id": [""], "value": "", "is_with_media": true}
 	Filter string `json:"filter" schema:"filter" binding:"omitempty"`
 	Limit  int    `json:"limit" schema:"limit" binding:"omitempty,numeric,min=1,max=100"`
 	Page   int    `json:"page" schema:"page" binding:"omitempty,numeric,min=1"`

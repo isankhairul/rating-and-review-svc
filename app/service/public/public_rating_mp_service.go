@@ -127,6 +127,11 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 		} else {
 			displayName = *v.DisplayName
 		}
+		// update media_path from null to empty array
+		if v.MediaPath == nil {
+			v.MediaPath = []string{}
+		}
+
 		results = append(results, publicresponse.PublicRatingSubmissionMpResponse{
 			ID:            v.ID,
 			UserID:        v.UserID,

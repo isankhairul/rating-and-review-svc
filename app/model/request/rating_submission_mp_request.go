@@ -122,6 +122,8 @@ type SaveRatingSubmissionMp struct {
 	IsAnonymous   bool       `json:"is_anonymous" bson:"is_anonymous"`
 	MediaPath     []string   `json:"media_path" bson:"media_path"`
 	IsWithMedia   bool       `json:"is_with_media" bson:"is_with_media"`
+	ReplyComment  string     `json:"reply_comment"`
+	ReplyBy       string     `json:"reply_by"`
 }
 
 func (req CreateRatingSubmissionMpRequest) Validate() error {

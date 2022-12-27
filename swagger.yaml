@@ -203,10 +203,8 @@ definitions:
   DataResponse:
     properties:
       record:
-        type: object
         x-go-name: Record
       records:
-        type: object
         x-go-name: Records
     type: object
     x-go-name: data
@@ -288,30 +286,6 @@ definitions:
         x-go-name: Message
     type: object
     x-go-name: metaResponse
-    x-go-package: go-klikdokter/app/model/base
-  MetaResponseCtx:
-    properties:
-      code:
-        description: |-
-          Code is the response code
-          in: int
-        format: int64
-        type: integer
-        x-go-name: Code
-      correlation_id:
-        description: |-
-          CorrelationId is the response correlation_id
-          in: string
-        type: string
-        x-go-name: CorrelationId
-      message:
-        description: |-
-          Message is the response message
-          in: string
-        type: string
-        x-go-name: Message
-    type: object
-    x-go-name: metaResponseWithCorrelationID
     x-go-package: go-klikdokter/app/model/base
   ObjectID:
     items:
@@ -767,14 +741,13 @@ definitions:
         description: |-
           Errors is the response message
           in: string
-        type: object
         x-go-name: Errors
       meta:
-        $ref: '#/definitions/MetaResponseCtx'
+        $ref: '#/definitions/MetaResponse'
       pagination:
         $ref: '#/definitions/PaginationResponse'
     type: object
-    x-go-name: responseHttpWithCorrelationID
+    x-go-name: responseHttp
     x-go-package: go-klikdokter/app/model/base
   UpdateRatingSubDisplayNameRequest:
     properties:
@@ -806,6 +779,29 @@ definitions:
         x-go-name: UID
     type: object
     x-go-package: go-klikdokter/app/model/response
+  metaResponseWithCorrelationID:
+    properties:
+      code:
+        description: |-
+          Code is the response code
+          in: int
+        format: int64
+        type: integer
+        x-go-name: Code
+      correlation_id:
+        description: |-
+          CorrelationId is the response correlation_id
+          in: string
+        type: string
+        x-go-name: CorrelationId
+      message:
+        description: |-
+          Message is the response message
+          in: string
+        type: string
+        x-go-name: Message
+    type: object
+    x-go-package: go-klikdokter/app/model/base
 info:
   title: 'KD Boilerplate Go kit:'
   version: "1.0"
@@ -1028,7 +1024,7 @@ paths:
         type: string
         x-go-name: SourceUID
       - description: 'Filter available {"user_id_legacy": [""], "source_trans_id":
-          [""], "value": ""}'
+          [""], "value": "", "is_with_media": true}'
         in: query
         name: filter
         type: string
