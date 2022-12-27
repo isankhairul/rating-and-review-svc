@@ -336,6 +336,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		SourceType:    rating.SourceType,
 		MediaPath:     mediaPath,
 		IsWithMedia:   isWithMedia,
+		OrderNumber:   originalSourceTransID,
 	})
 
 	//trigger image house keeping
@@ -390,6 +391,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		data.Value = ratingSub.Value
 		data.MediaPath = ratingSub.MediaPath
 		data.IsWithMedia = ratingSub.IsWithMedia
+		data.OrderNumber = ratingSub.OrderNumber
 		result = append(result, data)
 	}
 	return result, message.SuccessMsg

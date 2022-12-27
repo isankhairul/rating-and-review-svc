@@ -20,6 +20,7 @@ type CreateRatingSubmissionMpResponse struct {
 	Value             string             `json:"value,omitempty"`
 	MediaPath         []string           `json:"media_path"`
 	IsWithMedia       bool               `json:"is_with_media"`
+	OrderNumber       string             `json:"order_number"`
 }
 
 type RatingSummaryMpResponse struct {

@@ -124,6 +124,7 @@ type SaveRatingSubmissionMp struct {
 	IsWithMedia   bool       `json:"is_with_media" bson:"is_with_media"`
 	ReplyComment  string     `json:"reply_comment"`
 	ReplyBy       string     `json:"reply_by"`
+	OrderNumber   string     `json:"order_number"`
 }
 
 func (req CreateRatingSubmissionMpRequest) Validate() error {

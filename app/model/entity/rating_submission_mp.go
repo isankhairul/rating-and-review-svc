@@ -27,6 +27,7 @@ type RatingSubmissionMp struct {
 	IsAnonymous     bool               `json:"is_anonymous" bson:"is_anonymous,omitempty"`
 	MediaPath       []string           `json:"media_path" bson:"media_path,omitempty"`
 	IsWithMedia     bool               `json:"is_with_media" bson:"is_with_media,omitempty"`
+	OrderNumber     string             `json:"order_number" bson:"order_number"`
 	CreatedAt       time.Time          `json:"-" bson:"created_at,omitempty"`
 	UpdatedAt       time.Time          `json:"-" bson:"updated_at,omitempty"`
 }
