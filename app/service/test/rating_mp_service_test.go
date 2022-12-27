@@ -22,12 +22,13 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 	objectLikertId, _ := primitive.ObjectIDFromHex(likertID)
 	objectId, _ := primitive.ObjectIDFromHex(id)
 	value := "80"
+	orderNumber := "8888888"
 
 	input := request.CreateRatingSubmissionRequest{
 		UserID:        &id,
 		UserIDLegacy:  &id,
 		DisplayName:   &name,
-		SourceTransID: "8888888||kjkjkbjgjjh",
+		SourceTransID: orderNumber,
 		SourceUID:     "9YUHJHHJKH99OJKJKJKJKJKJK",
 		RatingType:    "rating_for_product",
 		Value:         value,
@@ -38,8 +39,9 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 		UserID:        &id,
 		UserIDLegacy:  &id,
 		RatingID:      id,
-		SourceTransID: "8888888||kjkjkbjgjjh||629dce7bf1f26275e0d84826||629dce7bf1f26275e0d84826",
+		SourceTransID: orderNumber + "||629dce7bf1f26275e0d84826||629dce7bf1f26275e0d84826",
 		Value:         value,
+		OrderNumber:   orderNumber,
 	}
 	arrSub := []entity.RatingSubmissionMp{sub}
 
@@ -56,9 +58,10 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 			UserIDLegacy:  &id,
 			RatingID:      id,
 			DisplayName:   &name,
-			SourceTransID: "8888888||kjkjkbjgjjh||629dce7bf1f26275e0d84826||629dce7bf1f26275e0d84826",
+			SourceTransID: orderNumber + "||629dce7bf1f26275e0d84826||629dce7bf1f26275e0d84826",
 			SourceUID:     "9YUHJHHJKH99OJKJKJKJKJKJK",
 			Value:         &value,
+			OrderNumber:   orderNumber,
 		},
 	}
 
