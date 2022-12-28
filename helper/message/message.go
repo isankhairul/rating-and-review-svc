@@ -1,13 +1,14 @@
 package message
 
 var (
-	JSONParseFailCode  = 412001
-	ValidationFailCode = 412002
-	UnauthorizedCode   = 412001
-	FailConnectCode    = 512003
-	TimeOutCode        = 512005
-	SuccessCode        = 212000
-	DataNotFoundCode   = 212004
+	JSONParseFailCode   = 412001
+	ValidationFailCode  = 412002
+	UnauthorizedCode    = 412001
+	FailConnectCode     = 512003
+	TimeOutCode         = 512005
+	SuccessCode         = 212000
+	DataNotFoundCode    = 212004
+	ErrDataNotFoundCode = 412003
 )
 
 // Message wrapper.
@@ -16,7 +17,7 @@ type Message struct {
 	Message string `json:"message"`
 }
 
-var TelErrUserNotFound = Message{Code: DataNotFoundCode, Message: "Not found"}
+var TelErrUserNotFound = Message{Code: ErrDataNotFoundCode, Message: "Not found"}
 var ErrDataExists = Message{Code: ValidationFailCode, Message: "Data already exists"}
 var ErrBadRouting = Message{Code: FailConnectCode, Message: "Inconsistent mapping between route and handler"}
 var ErrInternalError = Message{Code: ValidationFailCode, Message: "Error has been occured while processing request"}
@@ -26,7 +27,7 @@ var ErrInvalidHeader = Message{Code: 34005, Message: "Invalid header"}
 var ErrDB = Message{Code: FailConnectCode, Message: "Error has been occured while processing database request"}
 var ErrLTNumState = Message{Code: ValidationFailCode, Message: "Error Num of Statements less Than required Num Statements"}
 var ErrGTNumState = Message{Code: ValidationFailCode, Message: "Error Num of Statements greater than  required Num Statements"}
-var ErrNoData = Message{Code: DataNotFoundCode, Message: "Data is not found"}
+var ErrNoData = Message{Code: ErrDataNotFoundCode, Message: "Data is not found"}
 var ErrSaveData = Message{Code: ValidationFailCode, Message: "Data cannot be saved, please check your request"}
 var ErrMatchNumState = Message{Code: ValidationFailCode, Message: "Error num_statements does not match number of valid statements"}
 var ErrReq = Message{Code: ValidationFailCode, Message: "Required field"}
@@ -40,9 +41,9 @@ var UserAgentTooLong = Message{Code: ValidationFailCode, Message: "The maximum l
 var ErrIPFormatReq = Message{Code: ValidationFailCode, Message: "Wrong IP format"}
 var UserUIDRequired = Message{Code: ValidationFailCode, Message: "One of the following display_name, user_id and user_id_legacy must be filled"}
 var UserRated = Message{Code: ValidationFailCode, Message: "Duplicate submissions by the same user id, rating id and source_trans_id is not allowed"}
-var ErrRatingNotFound = Message{Code: DataNotFoundCode, Message: "Rating not found"}
-var ErrRatingNumericTypeNotFound = Message{Code: DataNotFoundCode, Message: "Rating Numeric Type Not Found"}
-var RatingSubmissionNotFound = Message{Code: DataNotFoundCode, Message: "Rating submission not found"}
+var ErrRatingNotFound = Message{Code: ErrDataNotFoundCode, Message: "Rating not found"}
+var ErrRatingNumericTypeNotFound = Message{Code: ErrDataNotFoundCode, Message: "Rating Numeric Type Not Found"}
+var RatingSubmissionNotFound = Message{Code: ErrDataNotFoundCode, Message: "Rating submission not found"}
 var WrongScoreFilter = Message{Code: ValidationFailCode, Message: "Wrong score filter format"}
 var WrongFilter = Message{Code: ValidationFailCode, Message: "Wrong filter"}
 var ErrValueFormatForNumericType = Message{Code: ValidationFailCode, Message: "Wrong value format for numeric type"}
@@ -54,7 +55,7 @@ var ErrSourceNotExist = Message{Code: ValidationFailCode, Message: "Source not e
 var ErrFailedToCallGetMedicalFacility = Message{Code: ValidationFailCode, Message: "Failed to call get medical facility"}
 var ErrThisRatingTypeIsInUse = Message{Code: ValidationFailCode, Message: "This rating type is in use and has submission"}
 var ErrUnmarshalFilterListRatingRequest = Message{Code: ValidationFailCode, Message: "Error can not unmarshal filter param"}
-var ErrDataNotFound = Message{Code: DataNotFoundCode, Message: "Data not found"}
+var ErrDataNotFound = Message{Code: ErrDataNotFoundCode, Message: "Data not found"}
 var ErrRatingHasRatingSubmission = Message{Code: ValidationFailCode, Message: "Rating has rating submission"}
 var ErrMinScoreReq = Message{Code: ValidationFailCode, Message: "Min Score required field"}
 var ErrMaxScoreReq = Message{Code: ValidationFailCode, Message: "Max Score required field"}

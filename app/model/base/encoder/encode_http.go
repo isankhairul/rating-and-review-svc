@@ -45,7 +45,7 @@ func EncodeResponseHTTP(ctx context.Context, w http.ResponseWriter, resp interfa
 	switch code {
 	case message.UnauthorizedCode:
 		w.WriteHeader(http.StatusUnauthorized)
-	case message.JSONParseFailCode, message.ErrTypeReq.Code, message.ValidationFailCode:
+	case message.JSONParseFailCode, message.ErrTypeReq.Code, message.ValidationFailCode, message.ErrDataNotFoundCode:
 		w.WriteHeader(http.StatusBadRequest)
 	case message.SuccessCode, message.DataNotFoundCode:
 		w.WriteHeader(http.StatusOK)
