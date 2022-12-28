@@ -12,6 +12,7 @@ import (
 	publicresponse "go-klikdokter/app/model/response/public"
 	"go-klikdokter/app/repository"
 	"go-klikdokter/helper/message"
+	"go-klikdokter/helper/thumbor"
 	"go-klikdokter/pkg/util"
 	util_media "go-klikdokter/pkg/util/media"
 	"strconv"
@@ -316,7 +317,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 			}
 		}
 		isWithMedia = true
-	}	
+	}
 	// end process media_path
 
 	saveReq = append(saveReq, request.SaveRatingSubmissionMp{
@@ -348,29 +349,16 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		return result, message.ErrSaveData
 	}
 
-	//trigger image house keeping
-	
-	go util_media.ImageHouseKeeping(s.logger, input.MediaPath)
-	/*
-	Ask Yandi API untuk update product dari store yg udah di rating ya
-		// waiting because payment-svc not ready
-		//Check order_id exist for product & store
-		var isOrderIdExist bool
-		msg, err := util.CheckOrderIdExist(originalSourceTransID)
-		if err != nil {
-			return result, message.ErrFailedRequestToPayment
-		}
+	go func() {
+		//trigger image house keeping
+		util_media.ImageHouseKeeping(s.logger, input.MediaPath)
 
-		if msg == message.SuccessMsg {
-			isOrderIdExist = true
-		} else {
-			return result, msg
+		// send review for product & store to payment svc
+		if ratingSubs != nil && len(*ratingSubs) > 0 {
+			ratingSub := *ratingSubs
+			util.UpdateReviewProductStore(originalSourceTransID, rating.SourceType, input.SourceUID, ratingSub[0].ID.Hex(), s.logger)
 		}
-
-		if isOrderIdExist {
-			go UpdateFlagPayment(originalSourceTransID, logger)
-		}
-	*/
+	}()
 
 	for _, arg := range *ratingSubs {
 		data := response.CreateRatingSubmissionMpResponse{}
@@ -462,6 +450,12 @@ func (s *ratingMpServiceImpl) GetListRatingSubmissionsMp(input request.ListRatin
 			args.Comment = &commentEmpty
 		}
 		if filScore := filterScoreSubmissionMp(args, filter.Score); filScore {
+			// create thumbor response
+			mediaImages := []string{}
+			for _, value := range args.MediaPath {
+				mediaImages = append(mediaImages, thumbor.GetNewThumborImagesOriginal(value))
+			}
+
 			results = append(results, response.RatingSubmissionMpResponse{
 				RatingID:      args.RatingID,
 				UserID:        args.UserID,
@@ -470,10 +464,12 @@ func (s *ratingMpServiceImpl) GetListRatingSubmissionsMp(input request.ListRatin
 				Value:         args.Value,
 				SourceTransID: args.SourceTransID,
 				MediaPath:     args.MediaPath,
+				MediaImages:   mediaImages,
 				IsWithMedia:   args.IsWithMedia,
 			})
 		}
 	}
+
 	if len(filter.Score) > 0 && pagination != nil {
 		pagination.Records = int64(len(results))
 		pagination.TotalRecords = int64(len(results))

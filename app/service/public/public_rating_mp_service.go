@@ -15,6 +15,7 @@ import (
 	publicrepository "go-klikdokter/app/repository/public"
 	"go-klikdokter/helper/config"
 	"go-klikdokter/helper/message"
+	"go-klikdokter/helper/thumbor"
 	"go-klikdokter/pkg/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -132,6 +133,12 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 			v.MediaPath = []string{}
 		}
 
+		// create thumbor response
+		mediaImages := []string{}
+		for _, value := range v.MediaPath {
+			mediaImages = append(mediaImages, thumbor.GetNewThumborImagesOriginal(value))
+		}
+
 		results = append(results, publicresponse.PublicRatingSubmissionMpResponse{
 			ID:            v.ID,
 			UserID:        v.UserID,
@@ -146,8 +153,10 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 			LikeByMe:      false,
 			MediaPath:     v.MediaPath,
 			IsWithMedia:   v.IsWithMedia,
+			MediaImages:   mediaImages,
 			CreatedAt:     v.CreatedAt.In(Loc),
 		})
+
 	}
 	return results, pagination, message.SuccessMsg
 }

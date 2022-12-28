@@ -3,7 +3,9 @@ package util
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"go-klikdokter/helper/global"
 	"go-klikdokter/helper/message"
 	"io/ioutil"
 	"net/http"
@@ -49,7 +51,7 @@ func CheckOrderIdExist(orderId string, Logger log.Logger) (message.Message, erro
 	res, err := client.Do(req)
 	if err != nil {
 		//LoggerHttpClient(errorLog, fmt.Sprintf("%v", err))
-		_ = level.Error(Logger).Log("type", "[Payment Service]", "RQ", string(jsonData), "RS", err.Error(), "Curl", command)		
+		_ = level.Error(Logger).Log("type", "[Payment Service]", "RQ", string(jsonData), "RS", err.Error(), "Curl", command)
 		return message.ErrFailedRequestToPayment, err
 	}
 
@@ -117,6 +119,53 @@ func UpdateFlagPayment(orderId string, Logger log.Logger) (message.Message, erro
 
 	// Log Response
 	// LoggerHttpClient(responseLog, string(body))
+	_ = level.Debug(Logger).Log("type", "[Payment Service]", "RQ", string(jsonData), "RS", string(body), "Curl", command)
+	if res.StatusCode == 200 {
+		return message.SuccessMsg, nil
+	} else {
+		msg := "Error Payment Service Response Status Code is " + strconv.Itoa(res.StatusCode)
+		return message.Message{Code: 412002, Message: msg}, nil
+	}
+}
+
+func UpdateReviewProductStore(orderNo string, sourceType string, sourceUID string, ratingSubID string, Logger log.Logger) (message.Message, error) {
+	if Logger == nil {
+		return message.FailedMsg, errors.New("logger is nil")
+	}
+	parameters := make(map[string]interface{})
+	token, _ := global.GenerateJwt()
+	parameters["order_no"] = orderNo
+	parameters["type"] = sourceType
+	parameters["source_uid"] = sourceUID
+	parameters["rating_submission_id"] = ratingSubID
+	jsonData, _ := json.Marshal(parameters)
+
+	url := viper.GetString("payment-service.review-product-store")
+	client := &http.Client{}
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	command, _ := http2curl.GetCurlCommand(req)
+	if err != nil {
+		_ = level.Error(Logger).Log("type", "[Payment Service]", "RQ", string(jsonData), "RS", err.Error(), "Curl", command)
+		return message.ErrFailedRequestToPayment, err
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		// LoggerHttpClient(errorLog, fmt.Sprintf("%v", err))
+		_ = level.Error(Logger).Log("type", "[Payment Service]", "RQ", string(jsonData), "RS", err.Error(), "Curl", command)
+		return message.ErrFailedRequestToPayment, err
+	}
+
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		_ = level.Error(Logger).Log("type", "[Payment Service]", "RQ", string(jsonData), "RS", err.Error(), "Curl", command)
+		return message.ErrFailedRequestToPayment, err
+	}
+
+	// Log Response
 	_ = level.Debug(Logger).Log("type", "[Payment Service]", "RQ", string(jsonData), "RS", string(body), "Curl", command)
 	if res.StatusCode == 200 {
 		return message.SuccessMsg, nil

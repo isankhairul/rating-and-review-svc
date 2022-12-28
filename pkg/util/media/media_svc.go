@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-klikdokter/app/model/request"
+	"go-klikdokter/helper/global"
 	"go-klikdokter/helper/httputil"
 	"net/http"
 
@@ -22,7 +23,7 @@ func ImageHouseKeeping(logg log.Logger, mediaPath []request.MediaPathObj) ([]map
 	logger := log.With(logg, "media-svc", "ImageHouseKeeping")
 	response := []map[string]interface{}{}
 	var error error
-	token := "" // tolong generate token yang sama kayak di upload service
+	token, _ := global.GenerateJwt()
 
 	if len(mediaPath) > 0 {
 		for _, mp := range mediaPath {

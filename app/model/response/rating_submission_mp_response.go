@@ -10,6 +10,7 @@ type RatingSubmissionMpResponse struct {
 	Value         string   `json:"value" bson:"value"`
 	SourceTransID string   `json:"source_trans_id" bson:"source_trans_id"`
 	MediaPath     []string `json:"media_path" bson:"media_path"`
+	MediaImages   []string `json:"media_images" bson:"media_images"`
 	IsWithMedia   bool     `json:"is_with_media" bson:"is_with_media"`
 }
 
@@ -19,8 +20,8 @@ type CreateRatingSubmissionMpResponse struct {
 	RatingDescription string             `json:"rating_decription,omitempty"`
 	Value             string             `json:"value,omitempty"`
 	// MediaPath         []string           `json:"media_path"`
-	IsWithMedia       bool               `json:"is_with_media"`
-	OrderNumber       string             `json:"order_number"`
+	IsWithMedia bool   `json:"is_with_media"`
+	OrderNumber string `json:"order_number"`
 }
 
 type RatingSummaryMpResponse struct {

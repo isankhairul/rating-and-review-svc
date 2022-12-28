@@ -33,3 +33,13 @@ func GetNewThumborImages(mediaPath string) string {
 
 	return result
 }
+
+func GetNewThumborImagesOriginal(mediaPath string) string {
+	newMediaPath, _ := url.Parse(mediaPath)
+	formatImage := config.GetConfigString(viper.GetString("thumbor.format_image"))
+	sizeOriginal := config.GetConfigString(viper.GetString("thumbor.size_ar_original"))
+	mediaPathThumbor := fmt.Sprintf("%s/%s/%s", sizeOriginal, formatImage, newMediaPath)
+	result := GetThumborUrl(mediaPathThumbor)
+
+	return result
+}
