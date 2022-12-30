@@ -102,7 +102,7 @@ func main() {
 	_struct.PrefixBase = viper.GetString("route.site") + viper.GetString("route.apiprefix")
 
 	mux := initialization.InitRouting(db, logger)
-	http.Handle("/", accessControl(mux))
+	http.Handle("/", mux)
 
 	errs := make(chan error, 2)
 
