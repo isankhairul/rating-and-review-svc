@@ -1,8 +1,10 @@
 package request
 
 import (
+	"fmt"
 	"go-klikdokter/helper/message"
 	"regexp"
+	"strings"
 	"time"
 
 	validation "github.com/itgelo/ozzo-validation/v4"
@@ -131,6 +133,24 @@ func (req CreateRatingSubmissionRequest) Validate() error {
 		validation.Field(&req.Comment, validation.NotNil),
 		validation.Field(&req.UserIDLegacy, validation.Required.Error(message.ErrReq.Message)),
 		validation.Field(&req.DisplayName, validation.Required.Error(message.ErrReq.Message)),
+	)
+}
+
+func (req CreateRatingSubmissionRequest) ValidateMp() error {
+	arrAllowedValueRatingProduct := []string{"1", "2", "3", "4", "5"}
+	arrAllowedValueRatingStore := []string{"1", "2", "3"}
+
+	return validation.ValidateStruct(&req,
+		validation.Field(&req.Value, validation.Required.Error(message.ErrReq.Message)),
+		validation.Field(&req.SourceUID, validation.Required.Error(message.ErrReq.Message)),
+		validation.Field(&req.SourceTransID, validation.Required.Error(message.ErrReq.Message)),
+		validation.Field(&req.SourceTransID, validation.Required.Error(message.ErrReq.Message)),
+		validation.Field(&req.IPAddress, validation.Match(regexp.MustCompile(regexIP)).Error(message.ErrIPFormatReq.Message)),
+		validation.Field(&req.Comment, validation.NotNil),
+		validation.Field(&req.Value, validation.When(req.RatingType == "rating_for_product",
+			validation.In(sliceStringToSliceInterface(arrAllowedValueRatingProduct)...).Error(fmt.Sprintf("value should be %s", strings.Join(arrAllowedValueRatingProduct, ","))))),
+		validation.Field(&req.Value, validation.When(req.RatingType == "rating_for_store",
+			validation.In(sliceStringToSliceInterface(arrAllowedValueRatingStore)...).Error(fmt.Sprintf("value should be %s", strings.Join(arrAllowedValueRatingStore, ","))))),
 	)
 }
 

@@ -128,7 +128,7 @@ type SaveRatingSubmissionMp struct {
 }
 
 func (req CreateRatingSubmissionMpRequest) Validate() error {
-	arrAllowedValueRatingProduct := []string{"20", "40", "60", "80", "100"}
+	arrAllowedValueRatingProduct := []string{"1", "2", "3", "4", "5"}
 	arrAllowedValueRatingStore := []string{"1", "2", "3"}
 
 	return validation.ValidateStruct(&req,

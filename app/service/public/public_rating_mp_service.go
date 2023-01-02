@@ -192,30 +192,40 @@ func (s *publicRatingMpServiceImpl) GetListRatingSummaryBySourceType(input publi
 	}
 
 	for _, args := range ratings {
-		ratingTypeId, err := primitive.ObjectIDFromHex(args.RatingTypeId)
-		if err != nil {
-			return nil, nil, message.FailedMsg
-		}
-		ratingTypeLikert, err := s.ratingMpRepo.GetRatingTypeLikertByIdAndStatus(ratingTypeId)
-		if err != nil {
-			if err != mongo.ErrNoDocuments {
+		/*
+			ratingTypeId, err := primitive.ObjectIDFromHex(args.RatingTypeId)
+			if err != nil {
 				return nil, nil, message.FailedMsg
 			}
-		}
+				ratingTypeLikert, err := s.ratingMpRepo.GetRatingTypeLikertByIdAndStatus(ratingTypeId)
+				if err != nil {
+					if err != mongo.ErrNoDocuments {
+						return nil, nil, message.FailedMsg
+					}
+				}
+		*/
 
-		if ratingTypeLikert == nil {
-			data, err := s.summaryRatingNumeric(args, input.SourceType)
-			if err != nil {
-				return nil, nil, message.ErrFailedSummaryRatingNumeric
-			}
-			results = append(results, *data)
-		} else {
-			data, err := s.summaryRatingLikert(args, *ratingTypeLikert)
-			if err != nil {
-				return nil, nil, message.ErrFailedSummaryRatingNumeric
-			}
-			results = append(results, *data)
+		data, err := s.summaryRatingNumeric(args, input.SourceType)
+		if err != nil {
+			return nil, nil, message.ErrFailedSummaryRatingNumeric
 		}
+		results = append(results, *data)
+
+		/*
+			if ratingTypeLikert == nil {
+				data, err := s.summaryRatingNumeric(args, input.SourceType)
+				if err != nil {
+					return nil, nil, message.ErrFailedSummaryRatingNumeric
+				}
+				results = append(results, *data)
+			} else {
+				data, err := s.summaryRatingLikert(args, *ratingTypeLikert)
+				if err != nil {
+					return nil, nil, message.ErrFailedSummaryRatingNumeric
+				}
+				results = append(results, *data)
+			}
+		*/
 	}
 	return results, pagination, message.SuccessMsg
 }
@@ -306,7 +316,7 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 	result := publicresponse.RatingSummaryMpNumeric{}
 	result.SourceUID = sourceUID
 	result.TotalReviewer = sumCountRatingSubs.Count
-	result.TotalValue = 0
+	result.TotalValue = "0"
 
 	if formula != "" {
 		expression, err := govaluate.NewEvaluableExpression(formula)
@@ -321,11 +331,12 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 		if err != nil {
 			return result, err
 		}
-		totalValue, err := strconv.ParseFloat(fmt.Sprintf("%.1f", finalCalc.(float64)), 64)
-		if err != nil {
-			return result, err
-		}
-		result.TotalValue = totalValue
+
+		//totalValue, err := strconv.ParseFloat(fmt.Sprintf("%.1f", finalCalc.(float64)), 64)
+		//if err != nil {
+		//	return result, err
+		//}
+		result.TotalValue = fmt.Sprintf("%.1f", finalCalc)
 	}
 
 	return result, nil

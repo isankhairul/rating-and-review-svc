@@ -258,7 +258,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 	//isOrderIdExist := false
 
 	// validation input
-	if err := input.Validate(); err != nil {
+	if err := input.ValidateMp(); err != nil {
 		return result, message.Message{
 			Code:    message.ValidationFailCode,
 			Message: err.Error(),
@@ -674,7 +674,7 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 	result := publicresponse.RatingSummaryMpNumeric{}
 	result.SourceUID = sourceUID
 	result.TotalReviewer = sumCountRatingSubs.Count
-	result.TotalValue = 0
+	result.TotalValue = "0"
 
 	if formula != "" {
 		expression, err := govaluate.NewEvaluableExpression(formula)
@@ -689,11 +689,11 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 		if err != nil {
 			return result, err
 		}
-		totalValue, err := strconv.ParseFloat(fmt.Sprintf("%.1f", finalCalc.(float64)), 64)
-		if err != nil {
-			return result, err
-		}
-		result.TotalValue = totalValue
+		//totalValue, err := strconv.ParseFloat(fmt.Sprintf("%.1f", finalCalc.(float64)), 64)
+		//if err != nil {
+		//	return result, err
+		//}
+		result.TotalValue = fmt.Sprintf("%.1f", finalCalc)
 	}
 
 	return result, nil
