@@ -21,7 +21,7 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 	likertID := "629dce7bf1f26275e0d84820"
 	objectLikertId, _ := primitive.ObjectIDFromHex(likertID)
 	objectId, _ := primitive.ObjectIDFromHex(id)
-	value := "80"
+	value := "4"
 	orderNumber := "8888888"
 
 	input := request.CreateRatingSubmissionRequest{

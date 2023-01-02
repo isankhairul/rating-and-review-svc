@@ -77,7 +77,7 @@ func decodeCreateRatingSubmissionMp(ctx context.Context, r *http.Request) (rqst 
 		return nil, err
 	}
 
-	err = req.Validate()
+	err = req.ValidateMp()
 
 	if err != nil {
 		return nil, err
