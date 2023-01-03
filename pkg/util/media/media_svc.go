@@ -19,7 +19,7 @@ type Response struct {
 	Data    interface{} `json:"data"`
 }
 
-func ImageHouseKeeping(logg log.Logger, mediaPath []request.MediaPathObj) ([]map[string]interface{}, error) {
+func ImageHouseKeeping(logg log.Logger, mediaPath []request.MediaPathObj, ratingSubsID string) ([]map[string]interface{}, error) {
 	logger := log.With(logg, "media-svc", "ImageHouseKeeping")
 	response := []map[string]interface{}{}
 	var error error
@@ -29,11 +29,11 @@ func ImageHouseKeeping(logg log.Logger, mediaPath []request.MediaPathObj) ([]map
 		for _, mp := range mediaPath {
 			param := map[string]string{
 				"source_type": "rnr",
-				"source_uid":  mp.UID,
+				"source_uid":  ratingSubsID,
 			}
 			jsonData, _ := json.Marshal(param)
 
-			url := viper.GetString("media-service.image-house-keeping") + "/" + mp.UID
+			url := viper.GetString("media-service.url-image-house-keeping") + "/" + mp.UID
 			httpRequest := httputil.NewHttpRequest()
 			headers := map[string]string{
 				"Content-Type":  "application/json",

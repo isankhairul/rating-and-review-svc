@@ -31,6 +31,7 @@ type RatingMpRepository interface {
 	GetListRatingSubmissions(filter request.RatingSubmissionMpFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingSubmissionMp, *base.Pagination, error)
 	FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string, sourceTransId string) (*entity.RatingSubmissionMp, error)
 	FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string, sourceTransId string) (*entity.RatingSubmissionMp, error)
+	FindRatingSubmissionBySourceTransID(sourceTransId string) (*entity.RatingSubmissionMp, error)
 	GetPublicRatingsByParams(limit, page, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]entity.RatingsMpCol, *base.Pagination, error)
 	GetSumCountRatingSubsByRatingId(ratingId string) (*publicresponse.PublicSumCountRatingSummaryMp, error)
 	CountRatingSubsByRatingIdAndValue(ratingId, value string) (int64, error)
@@ -90,7 +91,7 @@ func (r *ratingMpRepo) CreateRatingSubmission(input []request.SaveRatingSubmissi
 	for _, args := range input {
 		dateNow := time.Now().In(util.Loc)
 		docs = append(docs, bson.D{
-			{Key: "rating_id", Value: args.RatingID},
+			// {Key: "rating_id", Value: args.RatingID},
 			{Key: "user_id", Value: args.UserID},
 			{Key: "user_id_legacy", Value: args.UserIDLegacy},
 			{Key: "display_name", Value: args.DisplayName},
@@ -256,6 +257,18 @@ func (r *ratingMpRepo) FindRatingSubmissionByUserIDAndRatingID(userId *string, r
 	ratingSubmissionColl := r.db.Collection(entity.RatingSubmissionMp{}.CollectionName())
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
 	err := ratingSubmissionColl.FindOne(ctx, bson.M{"user_id": &userId, "rating_id": ratingId, "source_trans_id": sourceTransId}).Decode(&ratingSubmission)
+	if err != nil {
+
+		return nil, err
+	}
+	return &ratingSubmission, nil
+}
+
+func (r *ratingMpRepo) FindRatingSubmissionBySourceTransID(sourceTransId string) (*entity.RatingSubmissionMp, error) {
+	var ratingSubmission entity.RatingSubmissionMp
+	ratingSubmissionColl := r.db.Collection(entity.RatingSubmissionMp{}.CollectionName())
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := ratingSubmissionColl.FindOne(ctx, bson.M{"source_trans_id": sourceTransId}).Decode(&ratingSubmission)
 	if err != nil {
 
 		return nil, err

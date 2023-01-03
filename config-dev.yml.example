@@ -88,9 +88,9 @@ image:
   default-avatar: https://asset-cdn.medkomtek.com/assets/images/user-default.png
 
 payment-service:
-      check-order-id: http://api/xist
-      update-flag: http://api/payment/review
-      review-product-store: https://core-api.medkomtek-stg.com/payment-svc/api/v3/review/
+  check-order-id: http://api/xist
+  update-flag: http://api/payment/review
+  review-product-store: https://core-api.medkomtek-stg.com/payment-svc/api/v3/review/
 
 dapr:
   host: "http://localhost"
@@ -100,7 +100,7 @@ dapr:
   topic-ratingsubcol: "queuing.rnr.ratingsubcol"
 
 media-service:
-  image-house-keeping: https://publishing-adm-api.medkomtek-stg.com/media-svc/api/v1/images
+  url-image-house-keeping: https://publishing-adm-api.medkomtek-stg.com/media-svc/api/v1/images
   media-category-uid: "UQu0sOBXuE8IxGC7poMwi"
   url: "https://publishing-adm-api.medkomtek-stg.com/media-svc/api/v1/image/uploads"
   jwt-key: "TESTING"

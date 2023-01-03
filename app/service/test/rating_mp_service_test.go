@@ -1,17 +1,18 @@
 package test
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/repository/repository_mock"
 	"go-klikdokter/app/service"
 	"go-klikdokter/helper/message"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
-	"testing"
 )
 
 var ratingMpRepository = &repository_mock.RatingMpRepository{Mock: mock.Mock{}}
@@ -56,7 +57,7 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 		{
 			UserID:        &id,
 			UserIDLegacy:  &id,
-			RatingID:      id,
+			// RatingID:      id,
 			DisplayName:   &name,
 			SourceTransID: orderNumber + "||629dce7bf1f26275e0d84826||629dce7bf1f26275e0d84826",
 			SourceUID:     "9YUHJHHJKH99OJKJKJKJKJKJK",

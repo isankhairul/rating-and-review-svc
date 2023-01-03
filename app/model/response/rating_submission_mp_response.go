@@ -15,13 +15,6 @@ type RatingSubmissionMpResponse struct {
 }
 
 type CreateRatingSubmissionMpResponse struct {
-	ID                primitive.ObjectID `json:"id"`
-	RatingID          string             `json:"rating_id,omitempty"`
-	RatingDescription string             `json:"rating_decription,omitempty"`
-	Value             string             `json:"value,omitempty"`
-	// MediaPath         []string           `json:"media_path"`
-	IsWithMedia bool   `json:"is_with_media"`
-	OrderNumber string `json:"order_number"`
 }
 
 type RatingSummaryMpResponse struct {

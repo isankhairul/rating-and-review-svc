@@ -2,11 +2,12 @@ package request
 
 import (
 	"fmt"
-	validation "github.com/itgelo/ozzo-validation/v4"
 	"go-klikdokter/helper/message"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"regexp"
 	"strings"
+
+	validation "github.com/itgelo/ozzo-validation/v4"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // swagger:parameters ListRatingSubmissionMpRequest
@@ -105,7 +106,7 @@ type RatingSummaryMpResponse struct {
 }
 
 type SaveRatingSubmissionMp struct {
-	RatingID      string     `json:"rating_id" bson:"rating_id"`
+	// RatingID      string     `json:"rating_id" bson:"rating_id"`
 	UserID        *string    `json:"user_id" bson:"user_id"`
 	UserIDLegacy  *string    `json:"user_id_legacy" bson:"user_id_legacy"`
 	DisplayName   *string    `json:"display_name" bson:"display_name"`

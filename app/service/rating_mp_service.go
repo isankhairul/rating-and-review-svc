@@ -11,6 +11,7 @@ import (
 	"go-klikdokter/app/model/response"
 	publicresponse "go-klikdokter/app/model/response/public"
 	"go-klikdokter/app/repository"
+	global "go-klikdokter/helper/global"
 	"go-klikdokter/helper/message"
 	"go-klikdokter/helper/thumbor"
 	"go-klikdokter/pkg/util"
@@ -252,7 +253,6 @@ func (s *ratingMpServiceImpl) GetListRatings(input request.GetListRatingsRequest
 func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatingSubmissionRequest) ([]response.CreateRatingSubmissionMpResponse, message.Message) {
 	//logger := log.With(s.logger, "RatingService", "CreateRatingSubmission")
 	var saveReq = make([]request.SaveRatingSubmissionMp, 0)
-	var empty = ""
 
 	result := []response.CreateRatingSubmissionMpResponse{}
 	//isOrderIdExist := false
@@ -264,18 +264,10 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 			Message: err.Error(),
 		}
 	}
-
-	// One of the following user_id and user_id_legacy must be filled
-	if input.UserID == nil || *input.UserID == "" {
-		input.UserID = &empty
-	}
-	if input.UserIDLegacy == nil || *input.UserIDLegacy == "" {
-		input.UserIDLegacy = &empty
-	}
-	if input.UserID == &empty && input.UserIDLegacy == &empty {
-		return result, message.UserUIDRequired
-	}
-
+	//set source type
+	sourceType := global.GetSourceTypeByRatingType(input.RatingType)
+	// set user_id as user_id_legacy must be filled
+	input.UserID = input.UserIDLegacy
 	// Validate displayname
 	if input.DisplayName == nil || *input.DisplayName == "" {
 		return result, message.ErrDisplayNameRequired
@@ -287,25 +279,22 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 	}
 
 	originalSourceTransID := input.SourceTransID
-	// Get Rating by SourceUID and RatingType
-	rating, err := s.ratingMpRepo.FindRatingBySourceUIDAndRatingType(input.SourceUID, input.RatingType)
-	if err != nil {
-		return result, message.ErrRatingNotFound
-	}
-	if rating == nil || !*rating.Status {
-		return result, message.ErrRatingNotFound
-	}
+	// // Get Rating by SourceUID and RatingType
+	// rating, err := s.ratingMpRepo.FindRatingBySourceUIDAndRatingType(input.SourceUID, input.RatingType)
+	// if err != nil {
+	// 	return result, message.ErrRatingNotFound
+	// }
+	// if rating == nil || !*rating.Status {
+	// 	return result, message.ErrRatingNotFound
+	// }
 
-	// Concate source_trans_id
-	input.SourceTransID = originalSourceTransID + "||" + rating.ID.Hex()
-	if input.UserIDLegacy != nil {
-		input.SourceTransID = originalSourceTransID + "||" + rating.ID.Hex() + "||" + *input.UserIDLegacy
-	}
+	// Concate source_trans_id, source_type, source_uid, user_id
+	input.SourceTransID = originalSourceTransID + "||" + sourceType + "||" + input.SourceUID + "||" + *input.UserID
 
 	// A submission with a combination of either (rating_id and user_id) OR (rating_id and user_id_legacy) is allowed once
-	userHasSubmitRating := checkUserHaveSubmitRatingMp(*input.UserID, *input.UserIDLegacy, rating.ID.Hex(), input.SourceTransID, s)
-	if userHasSubmitRating != message.SuccessMsg {
-		return result, userHasSubmitRating
+	userHasSubmitRating, _ := checkUserHaveSubmitRatingMpBySourceTransID(input.SourceTransID, s)
+	if userHasSubmitRating != nil {
+		return result, message.UserRated
 	}
 	// process media_path
 	var mediaPath []string
@@ -321,7 +310,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 	// end process media_path
 
 	saveReq = append(saveReq, request.SaveRatingSubmissionMp{
-		RatingID:      rating.ID.Hex(),
+		// RatingID:      rating.ID.Hex(),
 		Value:         &input.Value,
 		UserID:        input.UserID,
 		UserIDLegacy:  input.UserIDLegacy,
@@ -334,7 +323,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		UserPlatform:  input.UserPlatform,
 		IsAnonymous:   input.IsAnonymous,
 		SourceUID:     input.SourceUID,
-		SourceType:    rating.SourceType,
+		SourceType:    sourceType,
 		MediaPath:     mediaPath,
 		IsWithMedia:   isWithMedia,
 		OrderNumber:   originalSourceTransID,
@@ -349,32 +338,22 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		return result, message.ErrSaveData
 	}
 
+	ratingSubsID := ""
+
+	for _, val := range *ratingSubs {
+		ratingSubsID = val.ID.Hex()
+	}
+
 	go func() {
 		//trigger image house keeping
-		util_media.ImageHouseKeeping(s.logger, input.MediaPath)
-
+		util_media.ImageHouseKeeping(s.logger, input.MediaPath, ratingSubsID)
 		// send review for product & store to payment svc
 		if ratingSubs != nil && len(*ratingSubs) > 0 {
 			ratingSub := *ratingSubs
-			util.UpdateReviewProductStore(originalSourceTransID, rating.SourceType, input.SourceUID, ratingSub[0].ID.Hex(), s.logger)
+			util.UpdateReviewProductStore(originalSourceTransID, sourceType, input.SourceUID, ratingSub[0].ID.Hex(), s.logger)
 		}
 	}()
 
-	for _, arg := range *ratingSubs {
-		data := response.CreateRatingSubmissionMpResponse{}
-		ratingSub, err := s.ratingMpRepo.GetRatingSubmissionById(arg.ID)
-		if err != nil {
-			return result, message.FailedMsg
-		}
-		data.ID = ratingSub.ID
-		data.RatingID = ratingSub.RatingID
-		data.RatingDescription = *rating.Description
-		data.Value = ratingSub.Value
-		// data.MediaPath = ratingSub.MediaPath
-		data.IsWithMedia = ratingSub.IsWithMedia
-		data.OrderNumber = ratingSub.OrderNumber
-		result = append(result, data)
-	}
 	return result, message.SuccessMsg
 }
 
@@ -478,36 +457,16 @@ func (s *ratingMpServiceImpl) GetListRatingSubmissionsMp(input request.ListRatin
 	return results, pagination, message.SuccessMsg
 }
 
-func checkUserHaveSubmitRatingMp(userId, userIdLegacy, ratingId, sourceTransId string, s *ratingMpServiceImpl) message.Message {
-	if userId != "" && userIdLegacy != "" {
-		ratingSubmissionMp, er := s.ratingMpRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(&userIdLegacy, ratingId, sourceTransId)
-		val := util.ValidateUserIdAndUserIdLegacyMp(sourceTransId, ratingId, &userId, &userIdLegacy, ratingSubmissionMp, er)
-		if val {
-			return message.UserRated
-		}
-		if !val {
-			ratingSubmissionMp, er = s.ratingMpRepo.FindRatingSubmissionByUserIDAndRatingID(&userId, ratingId, sourceTransId)
-			valL := util.ValidateUserIdAndUserIdLegacyMp(sourceTransId, ratingId, &userId, &userIdLegacy, ratingSubmissionMp, er)
-			if valL {
-				return message.UserRated
-			}
-		}
-	}
+func checkUserHaveSubmitRatingMp(userId, ratingId, sourceTransId string, s *ratingMpServiceImpl) (*entity.RatingSubmissionMp, error) {
+	
+	ratingSubmissionMp, err := s.ratingMpRepo.FindRatingSubmissionByUserIDAndRatingID(&userId, ratingId, sourceTransId)
+	return ratingSubmissionMp, err
+}
 
-	if userId == "" {
-		ratingSubmissionMp, er := s.ratingMpRepo.FindRatingSubmissionByUserIDLegacyAndRatingID(&userIdLegacy, ratingId, sourceTransId)
-		if val := util.ValidateUserIdAndUserIdLegacyMp(sourceTransId, ratingId, &userId, &userIdLegacy, ratingSubmissionMp, er); val {
-			return message.UserRated
-		}
-	}
-
-	if userIdLegacy == "" {
-		ratingSubmissionMp, er := s.ratingMpRepo.FindRatingSubmissionByUserIDAndRatingID(&userId, ratingId, sourceTransId)
-		if val := util.ValidateUserIdAndUserIdLegacyMp(sourceTransId, ratingId, &userId, &userIdLegacy, ratingSubmissionMp, er); val {
-			return message.UserRated
-		}
-	}
-	return message.SuccessMsg
+func checkUserHaveSubmitRatingMpBySourceTransID(sourceTransId string, s *ratingMpServiceImpl) (*entity.RatingSubmissionMp, error) {
+	
+	ratingSubmissionMp, err := s.ratingMpRepo.FindRatingSubmissionBySourceTransID(sourceTransId)
+	return ratingSubmissionMp, err
 }
 
 func filterScoreSubmissionMp(ratingSubmissionsMp entity.RatingSubmissionMp, score []float64) bool {
