@@ -8,14 +8,14 @@ import (
 )
 
 type PublicRatingSummaryMpResponse struct {
-	ID            primitive.ObjectID `json:"id"`
-	Name          string             `json:"name,omitempty"`
-	Description   *string            `json:"description,omitempty"`
-	SourceUid     string             `json:"source_uid,omitempty"`
-	SourceType    string             `json:"source_type,omitempty"`
-	RatingType    string             `json:"rating_type,omitempty"`
-	RatingTypeId  string             `json:"rating_type_id,omitempty"`
-	RatingSummary interface{}        `json:"rating_summary,omitempty"`
+	ID            *primitive.ObjectID `json:"id,omitempty"`
+	Name          string              `json:"name,omitempty"`
+	Description   *string             `json:"description,omitempty"`
+	SourceUid     string              `json:"source_uid,omitempty"`
+	SourceType    string              `json:"source_type,omitempty"`
+	RatingType    string              `json:"rating_type,omitempty"`
+	RatingTypeId  string              `json:"rating_type_id,omitempty"`
+	RatingSummary interface{}         `json:"rating_summary,omitempty"`
 }
 
 type PublicRatingSubmissionMpResponse struct {
@@ -27,7 +27,8 @@ type PublicRatingSubmissionMpResponse struct {
 	Comment       *string            `json:"comment,omitempty"`
 	SourceTransID string             `json:"source_trans_id,omitempty"`
 	LikeCounter   int                `json:"like_counter"`
-	RatingType    string             `json:"rating_type"`
+	SourceType    string             `json:"source_type"`
+	SourceUID     string             `json:"source_uid"`
 	Value         string             `json:"value"`
 	LikeByMe      bool               `json:"like_by_me"`
 	MediaPath     []string           `json:"media_path"`
@@ -169,4 +170,12 @@ type RatingSummaryMpNumeric struct {
 type PublicSumCountRatingSummaryMp struct {
 	Sum   int64 `json:"sum"`
 	Count int64 `json:"count"`
+}
+
+type PublicRatingSubGroupBySourceMp struct {
+	ID struct {
+		SourceUID  string `json:"source_uid" bson:"source_uid"`
+		SourceType string `json:"source_type" bson:"source_type"`
+	} `json:"_id" bson:"_id"`
+	RatingSubmissionMp []entity.RatingSubmissionMp `json:"rating_submission_mp" bson:"rating_submission_mp"`
 }

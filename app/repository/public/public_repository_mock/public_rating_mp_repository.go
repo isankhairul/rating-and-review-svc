@@ -40,15 +40,15 @@ func (_m *PublicRatingMpRepository) CountRatingSubsByRatingIdAndValue(ratingId s
 }
 
 // GetListRatingBySourceTypeAndUID provides a mock function with given fields: sourceType, sourceUID
-func (_m *PublicRatingMpRepository) GetListRatingBySourceTypeAndUID(sourceType string, sourceUID string) ([]entity.RatingsCol, error) {
+func (_m *PublicRatingMpRepository) GetListRatingBySourceTypeAndUID(sourceType string, sourceUID string) ([]entity.RatingsMpCol, error) {
 	ret := _m.Called(sourceType, sourceUID)
 
-	var r0 []entity.RatingsCol
-	if rf, ok := ret.Get(0).(func(string, string) []entity.RatingsCol); ok {
+	var r0 []entity.RatingsMpCol
+	if rf, ok := ret.Get(0).(func(string, string) []entity.RatingsMpCol); ok {
 		r0 = rf(sourceType, sourceUID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]entity.RatingsCol)
+			r0 = ret.Get(0).([]entity.RatingsMpCol)
 		}
 	}
 
@@ -94,16 +94,16 @@ func (_m *PublicRatingMpRepository) GetPublicRatingSubmissions(limit int, page i
 	return r0, r1, r2
 }
 
-// GetPublicRatingsByParams provides a mock function with given fields: limit, page, dir, sort, filter
-func (_m *PublicRatingMpRepository) GetPublicRatingsByParams(limit int, page int, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]entity.RatingsCol, *base.Pagination, error) {
+// GetPublicRatingSubmissionsGroupBySource provides a mock function with given fields: limit, page, dir, sort, filter
+func (_m *PublicRatingMpRepository) GetPublicRatingSubmissionsGroupBySource(limit int, page int, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]publicresponse.PublicRatingSubGroupBySourceMp, *base.Pagination, error) {
 	ret := _m.Called(limit, page, dir, sort, filter)
 
-	var r0 []entity.RatingsCol
-	if rf, ok := ret.Get(0).(func(int, int, int, string, publicrequest.FilterRatingSummary) []entity.RatingsCol); ok {
+	var r0 []publicresponse.PublicRatingSubGroupBySourceMp
+	if rf, ok := ret.Get(0).(func(int, int, int, string, publicrequest.FilterRatingSummary) []publicresponse.PublicRatingSubGroupBySourceMp); ok {
 		r0 = rf(limit, page, dir, sort, filter)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]entity.RatingsCol)
+			r0 = ret.Get(0).([]publicresponse.PublicRatingSubGroupBySourceMp)
 		}
 	}
 
@@ -126,13 +126,45 @@ func (_m *PublicRatingMpRepository) GetPublicRatingsByParams(limit int, page int
 	return r0, r1, r2
 }
 
-// GetRatingFormulaByRatingTypeIdAndSourceType provides a mock function with given fields: ratingTypeId, sourceType
-func (_m *PublicRatingMpRepository) GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId string, sourceType string) (*entity.RatingFormulaCol, error) {
-	ret := _m.Called(ratingTypeId, sourceType)
+// GetPublicRatingsByParams provides a mock function with given fields: limit, page, dir, sort, filter
+func (_m *PublicRatingMpRepository) GetPublicRatingsByParams(limit int, page int, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]entity.RatingsMpCol, *base.Pagination, error) {
+	ret := _m.Called(limit, page, dir, sort, filter)
+
+	var r0 []entity.RatingsMpCol
+	if rf, ok := ret.Get(0).(func(int, int, int, string, publicrequest.FilterRatingSummary) []entity.RatingsMpCol); ok {
+		r0 = rf(limit, page, dir, sort, filter)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entity.RatingsMpCol)
+		}
+	}
+
+	var r1 *base.Pagination
+	if rf, ok := ret.Get(1).(func(int, int, int, string, publicrequest.FilterRatingSummary) *base.Pagination); ok {
+		r1 = rf(limit, page, dir, sort, filter)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*base.Pagination)
+		}
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(int, int, int, string, publicrequest.FilterRatingSummary) error); ok {
+		r2 = rf(limit, page, dir, sort, filter)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// GetRatingFormulaBySourceType provides a mock function with given fields: sourceType
+func (_m *PublicRatingMpRepository) GetRatingFormulaBySourceType(sourceType string) (*entity.RatingFormulaCol, error) {
+	ret := _m.Called(sourceType)
 
 	var r0 *entity.RatingFormulaCol
-	if rf, ok := ret.Get(0).(func(string, string) *entity.RatingFormulaCol); ok {
-		r0 = rf(ratingTypeId, sourceType)
+	if rf, ok := ret.Get(0).(func(string) *entity.RatingFormulaCol); ok {
+		r0 = rf(sourceType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entity.RatingFormulaCol)
@@ -140,8 +172,8 @@ func (_m *PublicRatingMpRepository) GetRatingFormulaByRatingTypeIdAndSourceType(
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(ratingTypeId, sourceType)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(sourceType)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -188,6 +220,29 @@ func (_m *PublicRatingMpRepository) GetSumCountRatingSubsByRatingId(ratingId str
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(ratingId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetSumCountRatingSubsBySource provides a mock function with given fields: sourceUID, sourceType
+func (_m *PublicRatingMpRepository) GetSumCountRatingSubsBySource(sourceUID string, sourceType string) (*publicresponse.PublicSumCountRatingSummaryMp, error) {
+	ret := _m.Called(sourceUID, sourceType)
+
+	var r0 *publicresponse.PublicSumCountRatingSummaryMp
+	if rf, ok := ret.Get(0).(func(string, string) *publicresponse.PublicSumCountRatingSummaryMp); ok {
+		r0 = rf(sourceUID, sourceType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*publicresponse.PublicSumCountRatingSummaryMp)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(sourceUID, sourceType)
 	} else {
 		r1 = ret.Error(1)
 	}

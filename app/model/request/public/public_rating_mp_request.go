@@ -63,6 +63,9 @@ func (req GetPublicListRatingSubmissionMpRequest) ValidateSourceType() error {
 }
 
 type FilterRatingSubmissionMp struct {
+	SourceUID     string       `json:"source_uid"`
+	SourceUIDs    []string     `json:"source_uids"`
+	SourceType    string       `json:"source_type"`
 	RatingID      []string     `json:"rating_id"`
 	LikertFilter  LikertFilter `json:"likert_filter"`
 	UserIdLegacy  []string     `json:"user_id_legacy"`

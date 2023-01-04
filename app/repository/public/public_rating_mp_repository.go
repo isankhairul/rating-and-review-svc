@@ -2,6 +2,7 @@ package publicrepository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/spf13/viper"
 	"go-klikdokter/app/model/base"
@@ -24,11 +25,13 @@ type publicRatingMpRepo struct {
 type PublicRatingMpRepository interface {
 	GetListRatingBySourceTypeAndUID(sourceType, sourceUID string) ([]entity.RatingsMpCol, error)
 	GetPublicRatingSubmissions(limit, page, dir int, sort string, filter publicrequest.FilterRatingSubmissionMp) ([]entity.RatingSubmissionMp, *base.Pagination, error)
+	GetPublicRatingSubmissionsGroupBySource(limit, page, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]publicresponse.PublicRatingSubGroupBySourceMp, *base.Pagination, error)
 	GetPublicRatingsByParams(limit, page, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]entity.RatingsMpCol, *base.Pagination, error)
 	CountRatingSubsByRatingIdAndValue(ratingId, value string) (int64, error)
 	GetRatingSubsByRatingId(ratingId string) ([]entity.RatingSubmissionMp, error)
 	GetSumCountRatingSubsByRatingId(ratingId string) (*publicresponse.PublicSumCountRatingSummaryMp, error)
-	GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId, sourceType string) (*entity.RatingFormulaCol, error)
+	GetRatingFormulaBySourceType(sourceType string) (*entity.RatingFormulaCol, error)
+	GetSumCountRatingSubsBySource(sourceUID string, sourceType string) (*publicresponse.PublicSumCountRatingSummaryMp, error)
 }
 
 func NewPublicRatingMpRepository(db *mongo.Database) PublicRatingMpRepository {
@@ -70,6 +73,21 @@ func (r *publicRatingMpRepo) GetPublicRatingSubmissions(limit, page, dir int, so
 	bsonSourceTransId := bson.D{}
 	bsonValue := bson.D{}
 	bsonIsWithMedia := bson.D{}
+	bsonSourceType := bson.D{}
+	bsonSourceUID := bson.D{}
+	bsonSourceUIDs := bson.D{}
+
+	if filter.SourceUID != "" {
+		bsonSourceUID = bson.D{{Key: "source_uid", Value: filter.SourceUID}}
+	}
+
+	if filter.SourceType != "" {
+		bsonSourceType = bson.D{{Key: "source_type", Value: filter.SourceType}}
+	}
+
+	if len(filter.SourceUIDs) > 0 {
+		bsonSourceUIDs = bson.D{{Key: "source_uid", Value: bson.D{{Key: "$in", Value: filter.SourceUIDs}}}}
+	}
 
 	if len(filter.UserIdLegacy) > 0 {
 		bsonUserIdLegacy = bson.D{{Key: "user_id_legacy", Value: bson.D{{Key: "$in", Value: filter.UserIdLegacy}}}}
@@ -85,39 +103,29 @@ func (r *publicRatingMpRepo) GetPublicRatingSubmissions(limit, page, dir int, so
 	}
 
 	var bsonFilter = bson.D{}
-	if filter.LikertFilter.RatingId != "" && len(filter.LikertFilter.Value) != 0 {
-		bsonRatingType := bson.D{{Key: "tagging.rating_id", Value: filter.LikertFilter.RatingId}}
-		bsonLikertVal := bson.D{{Key: "tagging.value", Value: bson.D{{Key: "$in", Value: filter.LikertFilter.Value}}}}
 
-		bsonFilter = bson.D{{Key: "$and", Value: bson.A{
-			bsonRatingType,
-			bsonLikertVal,
-			bsonCancelled,
-			bsonIsWithMedia,
-		}}}
-	} else {
-		bsonRatingID := bson.D{{Key: "rating_id", Value: bson.D{{Key: "$in", Value: filter.RatingID}}}}
-		bsonFilter = bson.D{{Key: "$and", Value: bson.A{
-			bsonRatingID,
-			bsonCancelled,
-			bson.D{{Key: "$or",
-				Value: bson.A{
-					bsonUserIdLegacy,
-				}}},
-			bson.D{{Key: "$or",
-				Value: bson.A{
-					bsonSourceTransId,
-				}}},
-			bson.D{{Key: "$or",
-				Value: bson.A{
-					bsonValue,
-				}}},
-			bson.D{{Key: "$or",
-				Value: bson.A{
-					bsonIsWithMedia,
-				}}},
-		}}}
-	}
+	bsonFilter = bson.D{{Key: "$and", Value: bson.A{
+		bsonSourceType,
+		bsonSourceUID,
+		bsonSourceUIDs,
+		bsonCancelled,
+		bson.D{{Key: "$or",
+			Value: bson.A{
+				bsonUserIdLegacy,
+			}}},
+		bson.D{{Key: "$or",
+			Value: bson.A{
+				bsonSourceTransId,
+			}}},
+		bson.D{{Key: "$or",
+			Value: bson.A{
+				bsonValue,
+			}}},
+		bson.D{{Key: "$or",
+			Value: bson.A{
+				bsonIsWithMedia,
+			}}},
+	}}}
 
 	collectionName := entity.RatingSubmissionMp{}.CollectionName()
 	skip := int64(page)*limit64 - limit64
@@ -138,6 +146,69 @@ func (r *publicRatingMpRepo) GetPublicRatingSubmissions(limit, page, dir int, so
 		}
 	}
 	pagination := paginateMp(r.db, page, limit64, results, collectionName, bsonFilter)
+	return results, pagination, nil
+}
+
+func (r *publicRatingMpRepo) GetPublicRatingSubmissionsGroupBySource(limit, page, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]publicresponse.PublicRatingSubGroupBySourceMp, *base.Pagination, error) {
+	var results []publicresponse.PublicRatingSubGroupBySourceMp
+	limit64 := int64(limit)
+	bsonCancelled := bson.D{{Key: "cancelled", Value: false}}
+	skip := int64(page)*limit64 - limit64
+	groupSource := bson.D{
+		{"source_type", "$source_type"},
+		{"source_uid", "$source_uid"}}
+
+	bsonSourceType := bson.D{}
+	bsonSourceUID := bson.D{}
+
+	if filter.SourceType != "" {
+		bsonSourceType = bson.D{{Key: "source_type", Value: filter.SourceType}}
+	}
+
+	if len(filter.SourceUid) > 0 {
+		bsonSourceUID = bson.D{{Key: "source_uid", Value: bson.D{{Key: "$in", Value: filter.SourceUid}}}}
+	}
+
+	filterSource := bson.D{{Key: "$and",
+		Value: bson.A{
+			bsonSourceUID,
+			bsonSourceType,
+			bsonCancelled,
+		},
+	}}
+
+	pipeline := bson.A{
+		bson.D{
+			{"$match",
+				filterSource,
+			},
+		},
+		bson.D{
+			{"$group",
+				bson.D{
+					{"_id", groupSource},
+					{"ratingSubCol", bson.D{{"$push", "$$ROOT"}}},
+				},
+			},
+		},
+		bson.D{{"$sort", bson.D{{"created_at", -1}}}},
+		bson.D{{"$skip", skip}},
+		bson.D{{"$limit", limit}},
+	}
+
+	collectionName := entity.RatingSubmissionMp{}.CollectionName()
+	cursor, err := r.db.Collection(collectionName).Aggregate(context.Background(), pipeline)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	pagination := paginateGroupByMp(r.db, page, limit64, results, collectionName, groupSource, filterSource)
 	return results, pagination, nil
 }
 
@@ -281,16 +352,58 @@ func (r *publicRatingMpRepo) GetSumCountRatingSubsByRatingId(ratingId string) (*
 	return &results[0], nil
 }
 
-func (r *publicRatingMpRepo) GetRatingFormulaByRatingTypeIdAndSourceType(ratingTypeId, sourceType string) (*entity.RatingFormulaCol, error) {
+func (r *publicRatingMpRepo) GetSumCountRatingSubsBySource(sourceUID string, sourceType string) (*publicresponse.PublicSumCountRatingSummaryMp, error) {
+	var results []publicresponse.PublicSumCountRatingSummaryMp
+	bsonRatingIdAndCancelled := bson.D{
+		{Key: "source_uid", Value: sourceUID},
+		{Key: "source_type", Value: sourceType},
+		{Key: "cancelled", Value: false}}
+
+	pipeline := bson.A{
+		bson.D{{Key: "$match",
+			Value: bsonRatingIdAndCancelled,
+		}},
+		bson.D{{
+			Key:   "$addFields",
+			Value: bson.D{{"convertedValue", bson.D{{"$toInt", "$value"}}}}}},
+		bson.D{{
+			Key: "$group",
+			Value: bson.D{
+				{Key: "_id", Value: primitive.Null{}},
+				{Key: "sum", Value: bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$convertedValue"}}}}}},
+				{Key: "count", Value: bson.D{{"$sum", 1}}},
+			}}},
+	}
+
+	cursor, err := r.db.Collection(entity.RatingSubmissionMp{}.CollectionName()).Aggregate(context.Background(), pipeline)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return &publicresponse.PublicSumCountRatingSummaryMp{}, nil
+		}
+		return nil, err
+	}
+
+	if err = cursor.All(context.Background(), &results); err != nil {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(results) == 0 {
+		return nil, errors.New("repository data RatingSubmission not found")
+	}
+
+	return &results[0], nil
+}
+
+func (r *publicRatingMpRepo) GetRatingFormulaBySourceType(sourceType string) (*entity.RatingFormulaCol, error) {
 	var ratingFormula entity.RatingFormulaCol
 
-	bsonRatingTypeId := bson.D{{Key: "rating_type_id", Value: ratingTypeId}}
 	bsonSourceType := bson.D{{Key: "source_type", Value: sourceType}}
 	bsonStatus := bson.D{{Key: "status", Value: true}}
 
 	bsonFilter := bson.D{{Key: "$and",
 		Value: bson.A{
-			bsonRatingTypeId,
 			bsonSourceType,
 			bsonStatus,
 		}},
@@ -317,6 +430,53 @@ func paginateMp(db *mongo.Database, page int, limit int64, result interface{}, c
 	pagination.Page = page
 	pagination.Limit = int(limit)
 	pagination.TotalRecords = totalRecord
+	pagination.TotalPage = int(math.Ceil(float64(pagination.TotalRecords) / float64(pagination.GetLimit())))
+	pagination.Records = int64(s.Len())
+	return &pagination
+}
+
+func paginateGroupByMp(db *mongo.Database, page int, limit int64, result interface{}, collectionName string, group bson.D, filter bson.D) *base.Pagination {
+	var pagination base.Pagination
+	s := reflect.ValueOf(result)
+	type structResult struct {
+		Key   string `json:"key"`
+		Value int64  `json:"value"`
+	}
+	var arrStructTotal []structResult
+	var results []interface{}
+	var totalRecords int64
+	allFilter := bson.A{
+		bson.D{
+			{"$match",
+				filter,
+			},
+		},
+		bson.D{
+			{"$group",
+				bson.D{{"_id", group}},
+			},
+		},
+		bson.D{{"$count", "total"}},
+	}
+	cursor, err := db.Collection(collectionName).Aggregate(context.Background(), allFilter)
+
+	err = cursor.All(context.TODO(), &results)
+
+	if err == nil {
+		jsonResult, _ := json.Marshal(results[0])
+		json.Unmarshal(jsonResult, &arrStructTotal)
+
+		if len(arrStructTotal) > 0 {
+			totalRecords = arrStructTotal[0].Value
+		}
+	}
+
+	if err != nil {
+		return nil
+	}
+	pagination.Page = page
+	pagination.Limit = int(limit)
+	pagination.TotalRecords = totalRecords
 	pagination.TotalPage = int(math.Ceil(float64(pagination.TotalRecords) / float64(pagination.GetLimit())))
 	pagination.Records = int64(s.Len())
 	return &pagination

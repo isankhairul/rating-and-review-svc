@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/vjeantet/govaluate"
 	"go-klikdokter/app/model/base"
-	"go-klikdokter/app/model/entity"
 	publicrequest "go-klikdokter/app/model/request/public"
 	"go-klikdokter/app/model/response/public"
 	"go-klikdokter/app/repository"
@@ -17,9 +16,7 @@ import (
 	"go-klikdokter/helper/message"
 	"go-klikdokter/helper/thumbor"
 	"go-klikdokter/pkg/util"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"strconv"
 	"time"
 )
 
@@ -63,23 +60,6 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 		input.Sort = "created_at"
 	}
 
-	ratings, err := s.publicRatingMpRepo.GetListRatingBySourceTypeAndUID(input.SourceType, input.SourceUID)
-	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, nil, message.Message{
-				Code:    message.ValidationFailCode,
-				Message: "Cannot find rating with params SourceType :" + input.SourceType + ", SourceUid:" + input.SourceUID,
-			}
-		}
-		return nil, nil, message.FailedMsg
-	}
-	if len(ratings) <= 0 {
-		return nil, nil, message.Message{
-			Code:    message.ValidationFailCode,
-			Message: "Cannot find rating with params SourceType :" + input.SourceType + ", SourceUid:" + input.SourceUID,
-		}
-	}
-
 	// Unmarshal filter params
 	filterRatingSubs := publicrequest.FilterRatingSubmissionMp{}
 	if input.Filter != "" {
@@ -88,10 +68,9 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
 		}
 	}
-	// Set rating id to filter
-	for _, v := range ratings {
-		filterRatingSubs.RatingID = append(filterRatingSubs.RatingID, v.ID.Hex())
-	}
+	// new filter by source_uid and source_type
+	filterRatingSubs.SourceUID = input.SourceUID
+	filterRatingSubs.SourceType = input.SourceType
 
 	// Get Rating Submission
 	ratingSubs, pagination, err := s.publicRatingMpRepo.GetPublicRatingSubmissions(input.Limit, input.Page, dir, input.Sort, filterRatingSubs)
@@ -106,16 +85,6 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 	}
 
 	for _, v := range ratingSubs {
-		// Get Rating value
-		ratingId, err := primitive.ObjectIDFromHex(v.RatingID)
-		if err != nil {
-			return nil, nil, message.FailedMsg
-		}
-		rating, err := s.ratingMpRepo.GetRatingById(ratingId)
-		if err != nil {
-			return nil, nil, message.ErrRatingNotFound
-		}
-
 		if v.Avatar == "" {
 			v.Avatar = avatarDefault
 		}
@@ -141,6 +110,8 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 
 		results = append(results, publicresponse.PublicRatingSubmissionMpResponse{
 			ID:            v.ID,
+			SourceType:    v.SourceType,
+			SourceUID:     v.SourceUID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
 			DisplayName:   displayName,
@@ -148,7 +119,6 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,
 			LikeCounter:   v.LikeCounter,
-			RatingType:    rating.RatingType,
 			Value:         v.Value,
 			LikeByMe:      false,
 			MediaPath:     v.MediaPath,
@@ -182,99 +152,26 @@ func (s *publicRatingMpServiceImpl) GetListRatingSummaryBySourceType(input publi
 		return nil, nil, message.ErrSourceUidRequire
 	}
 
-	ratings, pagination, err := s.publicRatingMpRepo.GetPublicRatingsByParams(input.Limit, input.Page, dir, input.Sort, filter)
-
+	ratingSub, pagination, err := s.publicRatingMpRepo.GetPublicRatingSubmissionsGroupBySource(input.Limit, input.Page, dir, input.Sort, filter)
 	if err != nil {
 		return nil, nil, message.RecordNotFound
 	}
-	if len(ratings) <= 0 {
+	if len(ratingSub) <= 0 {
 		return results, pagination, message.SuccessMsg
 	}
 
-	for _, args := range ratings {
-		/*
-			ratingTypeId, err := primitive.ObjectIDFromHex(args.RatingTypeId)
-			if err != nil {
-				return nil, nil, message.FailedMsg
-			}
-				ratingTypeLikert, err := s.ratingMpRepo.GetRatingTypeLikertByIdAndStatus(ratingTypeId)
-				if err != nil {
-					if err != mongo.ErrNoDocuments {
-						return nil, nil, message.FailedMsg
-					}
-				}
-		*/
-
-		data, err := s.summaryRatingNumeric(args, input.SourceType)
+	for _, args := range ratingSub {
+		data, err := s.summaryRatingNumeric(args.ID.SourceUID, input.SourceType)
 		if err != nil {
 			return nil, nil, message.ErrFailedSummaryRatingNumeric
 		}
 		results = append(results, *data)
-
-		/*
-			if ratingTypeLikert == nil {
-				data, err := s.summaryRatingNumeric(args, input.SourceType)
-				if err != nil {
-					return nil, nil, message.ErrFailedSummaryRatingNumeric
-				}
-				results = append(results, *data)
-			} else {
-				data, err := s.summaryRatingLikert(args, *ratingTypeLikert)
-				if err != nil {
-					return nil, nil, message.ErrFailedSummaryRatingNumeric
-				}
-				results = append(results, *data)
-			}
-		*/
 	}
 	return results, pagination, message.SuccessMsg
 }
 
-func (s *publicRatingMpServiceImpl) summaryRatingLikert(rating entity.RatingsMpCol, ratingLikert entity.RatingTypesLikertCol) (*publicresponse.PublicRatingSummaryMpResponse, error) {
-	likertSummary := publicresponse.RatingSummaryLikert{}
-	var myMap map[string]string
-	datas, _ := json.Marshal(ratingLikert)
-	json.Unmarshal(datas, &myMap)
-
-	likertSummary.SourceUID = rating.SourceUid
-	for i := 1; i <= ratingLikert.NumStatements; i++ {
-		var statement string
-		if i < 10 {
-			statement = fmt.Sprint("statement_0", i)
-		} else {
-			statement = fmt.Sprint("statement_", i)
-		}
-		data := myMap[statement]
-		if data != "" {
-			totalCount, err := s.publicRatingMpRepo.CountRatingSubsByRatingIdAndValue(rating.ID.Hex(), strconv.Itoa(i))
-			if err != nil {
-				return nil, err
-			}
-			likertObjCount := make(map[string]interface{})
-			likertObjCount["seq_id"] = i
-			likertObjCount["value"] = data
-			likertObjCount["total_reviewer"] = totalCount
-			likertSummary.ValueList = append(likertSummary.ValueList, likertObjCount)
-		} else {
-			return nil, errors.New("invalid statement value")
-		}
-	}
-
-	result := publicresponse.PublicRatingSummaryMpResponse{
-		ID:            rating.ID,
-		Name:          rating.Name,
-		Description:   rating.Description,
-		SourceUid:     rating.SourceUid,
-		SourceType:    rating.SourceType,
-		RatingType:    rating.RatingType,
-		RatingTypeId:  rating.RatingTypeId,
-		RatingSummary: likertSummary,
-	}
-	return &result, nil
-}
-
-func (s *publicRatingMpServiceImpl) summaryRatingNumeric(rating entity.RatingsMpCol, sourceType string) (*publicresponse.PublicRatingSummaryMpResponse, error) {
-	sumCountRatingSubs, err := s.publicRatingMpRepo.GetSumCountRatingSubsByRatingId(rating.ID.Hex())
+func (s *publicRatingMpServiceImpl) summaryRatingNumeric(sourceUID string, sourceType string) (*publicresponse.PublicRatingSummaryMpResponse, error) {
+	sumCountRatingSubs, err := s.publicRatingMpRepo.GetSumCountRatingSubsBySource(sourceUID, sourceType)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +179,7 @@ func (s *publicRatingMpServiceImpl) summaryRatingNumeric(rating entity.RatingsMp
 		return nil, errors.New("data RatingSubmission not found")
 	}
 
-	formulaRating, err := s.publicRatingMpRepo.GetRatingFormulaByRatingTypeIdAndSourceType(rating.RatingTypeId, sourceType)
+	formulaRating, err := s.publicRatingMpRepo.GetRatingFormulaBySourceType(sourceType)
 	if err != nil {
 		return nil, err
 	}
@@ -291,19 +188,14 @@ func (s *publicRatingMpServiceImpl) summaryRatingNumeric(rating entity.RatingsMp
 	}
 
 	if formulaRating.Formula != "" {
-		ratingSummary, err := calculateRatingMpValue(rating.SourceUid, formulaRating.Formula, sumCountRatingSubs)
+		ratingSummary, err := calculateRatingMpValue(sourceUID, formulaRating.Formula, sumCountRatingSubs)
 		if err != nil {
 			return nil, err
 		}
 
 		data := publicresponse.PublicRatingSummaryMpResponse{
-			ID:            rating.ID,
-			Name:          rating.Name,
-			Description:   rating.Description,
-			SourceUid:     rating.SourceUid,
-			SourceType:    rating.SourceType,
-			RatingType:    rating.RatingType,
-			RatingTypeId:  rating.RatingTypeId,
+			SourceUid:     sourceUID,
+			SourceType:    sourceType,
 			RatingSummary: ratingSummary,
 		}
 		return &data, nil

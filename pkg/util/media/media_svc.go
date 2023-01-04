@@ -39,7 +39,7 @@ func ImageHouseKeeping(logg log.Logger, mediaPath []request.MediaPathObj, rating
 				"Content-Type":  "application/json",
 				"Authorization": "Bearer " + token,
 			}
-			statusCode, _, dataResponse, err := httpRequest.PerformRequest(http.MethodPut, url, jsonData, nil, headers)
+			statusCode, _, dataResponse, err := httpRequest.PerformRequest(http.MethodPut, url, jsonData, nil, headers, logg)
 			jsonDataResponse, _ := json.Marshal(dataResponse)
 
 			response = append(response, dataResponse)

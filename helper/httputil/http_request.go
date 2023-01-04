@@ -3,8 +3,9 @@ package httputil
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/spf13/viper"
 	"go-klikdokter/helper/config"
 	"gorm.io/gorm"
@@ -31,6 +32,7 @@ type HttpRequest interface {
 		body []byte,
 		bodyQuery []byte,
 		headers map[string]string,
+		Logger log.Logger,
 	) (int, []byte, map[string]interface{}, error)
 }
 
@@ -44,9 +46,11 @@ func (hr *HttpRequestStruct) PerformRequest(
 	body []byte,
 	bodyQuery []byte,
 	headers map[string]string,
+	Logger log.Logger,
 ) (int, []byte, map[string]interface{}, error) {
-	errorLog := "HttpRequest.PerformRequest.error"
-	infoLog := "HttpRequest.PerformRequest.info"
+	//errorLog := "HttpRequest.PerformRequest.error"
+	//infoLog := "HttpRequest.PerformRequest.info"
+	logUID, _ := gonanoid.New()
 	client := NewClient()
 
 	var dataResponse = make(map[string]interface{})
@@ -62,18 +66,22 @@ func (hr *HttpRequestStruct) PerformRequest(
 	var err error
 	if method == "GET" {
 		req, err = NewRequest(method, url, bytes.NewReader(body))
+		command, _ := http2curl.GetCurlCommand(req.Request)
 		if err != nil {
 			dataResponse["Response"] = "Error when request get, with message: " + err.Error()
-			LoggerHttpClient(errorLog, fmt.Sprintf("%v", err))
+			//LoggerHttpClient(errorLog, fmt.Sprintf("%v", err))
+			_ = level.Error(Logger).Log("logUID", logUID, "RQ", string(body), "RS", err.Error(), "Curl", command)
 			return 0, nil, dataResponse, err
 		}
 		req.Header.Add("Content-Type", "application/json")
 		req.URL.RawQuery = string(bodyQuery)
 	} else {
 		req, err = NewRequest(method, url, bytes.NewReader(body))
+		command, _ := http2curl.GetCurlCommand(req.Request)
 		if err != nil {
 			dataResponse["Response"] = "Error when request, with message: " + err.Error()
-			LoggerHttpClient(errorLog, fmt.Sprintf("%v", err))
+			//LoggerHttpClient(errorLog, fmt.Sprintf("%v", err))
+			_ = level.Error(Logger).Log("logUID", logUID, "RQ", string(body), "RS", err.Error(), "Curl", command)
 			return 0, nil, dataResponse, err
 		}
 		req.Header.Add("Content-Type", "application/json")
@@ -89,27 +97,31 @@ func (hr *HttpRequestStruct) PerformRequest(
 
 	//Log CURL
 	command, _ := http2curl.GetCurlCommand(req.Request)
-	LoggerHttpClient(infoLog, fmt.Sprintf("%v", command))
+	//LoggerHttpClient(infoLog, fmt.Sprintf("%v", command))
 
 	resp, err := client.Do(req)
 
 	if err != nil {
 		dataResponse["Response"] = "Error when client do, with message: " + err.Error()
+		_ = level.Error(Logger).Log("logUID", logUID, "RQ", string(body), "RS", err.Error(), "Curl", command)
 		return 0, nil, dataResponse, err
 	}
 
 	dataRsh, err := json.Marshal(resp.Header)
 	if err != nil {
 		dataResponse["Response"] = "Error when jsonMarshal resp.Header, with message: " + err.Error()
+		_ = level.Error(Logger).Log("logUID", logUID, "RQ", string(body), "RS", err.Error(), "Curl", command)
 		return 0, nil, dataResponse, err
 	}
 
 	dataRs, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		dataResponse["Response"] = "Error when ioutil.ReadAll body, with message: " + err.Error()
-		LoggerHttpClient(errorLog, fmt.Sprintf("%v", err))
+		_ = level.Error(Logger).Log("logUID", logUID, "RQ", string(body), "RS", err.Error(), "Curl", command)
+		//LoggerHttpClient(errorLog, fmt.Sprintf("%v", err))
 		return 0, nil, dataResponse, err
 	}
+	_ = level.Debug(Logger).Log("logUID", logUID, "RQ", string(body), "RS", string(dataRs), "Curl", command)
 	dataResponse["ResponseHeader"] = string(dataRsh)
 	dataResponse["Response"] = string(dataRs)
 
