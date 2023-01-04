@@ -19,71 +19,53 @@ var ratingMpRepository = &repository_mock.RatingMpRepository{Mock: mock.Mock{}}
 var ratingMpSvc = service.NewRatingMpService(logger, ratingMpRepository)
 
 func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
-	likertID := "629dce7bf1f26275e0d84820"
-	objectLikertId, _ := primitive.ObjectIDFromHex(likertID)
-	objectId, _ := primitive.ObjectIDFromHex(id)
+	userId := "34343432"
+	orderNumber := "888888"
 	value := "4"
-	orderNumber := "8888888"
-
+	SourceTransID := orderNumber + "||product||Frtgffggffgft123||34343432"
 	input := request.CreateRatingSubmissionRequest{
-		UserID:        &id,
-		UserIDLegacy:  &id,
+		UserID:        &userId,
+		UserIDLegacy:  &userId,
 		DisplayName:   &name,
 		SourceTransID: orderNumber,
-		SourceUID:     "9YUHJHHJKH99OJKJKJKJKJKJK",
+		SourceUID:     "Frtgffggffgft123",
 		RatingType:    "rating_for_product",
-		Value:         value,
-	}
-
-	sub := entity.RatingSubmissionMp{
-		ID:            objectId,
-		UserID:        &id,
-		UserIDLegacy:  &id,
-		RatingID:      id,
-		SourceTransID: orderNumber + "||629dce7bf1f26275e0d84826||629dce7bf1f26275e0d84826",
-		Value:         value,
-		OrderNumber:   orderNumber,
-	}
-	arrSub := []entity.RatingSubmissionMp{sub}
-
-	likert := entity.RatingTypesLikertCol{
-		ID:            objectLikertId,
-		Description:   &description,
-		NumStatements: 1,
-		Statement01:   &description,
-	}
-
-	saveReq := []request.SaveRatingSubmissionMp{
-		{
-			UserID:        &id,
-			UserIDLegacy:  &id,
-			// RatingID:      id,
-			DisplayName:   &name,
-			SourceTransID: orderNumber + "||629dce7bf1f26275e0d84826||629dce7bf1f26275e0d84826",
-			SourceUID:     "9YUHJHHJKH99OJKJKJKJKJKJK",
-			Value:         &value,
-			OrderNumber:   orderNumber,
+		Value:         "4",
+		MediaPath: []request.MediaPathObj{
+			
 		},
 	}
 
-	rating := entity.RatingsMpCol{
-		ID:             objectId,
-		RatingTypeId:   id,
-		CommentAllowed: &Bool,
-		Status:         &Bool,
-		Description:    &name,
+	objectID, _ := primitive.ObjectIDFromHex(id)
+	sub := entity.RatingSubmissionMp{
+		ID:            objectID,
+		UserID:        &userId,
+		UserIDLegacy:  &userId,
+		RatingID:      id,
+		SourceTransID: orderNumber + "||product||Frtgffggffgft123||34343432",
+		Value:         value,
+		OrderNumber:   orderNumber,
+		MediaPath: nil,
 	}
-
-	ratingMpRepository.Mock.On("FindRatingBySourceUIDAndRatingType", input.SourceUID, input.RatingType).Return(&rating, nil)
-	ratingMpRepository.Mock.On("FindRatingSubmissionByUserIDLegacyAndRatingID", &id, id, sub.SourceTransID).Return(nil, gorm.ErrRecordNotFound)
-	ratingMpRepository.Mock.On("FindRatingSubmissionByUserIDAndRatingID", &id, id, sub.SourceTransID).Return(nil, gorm.ErrRecordNotFound)
-	ratingMpRepository.Mock.On("GetRatingTypeLikertByIdAndStatus", objectLikertId).Return(likert, nil)
-	ratingMpRepository.Mock.On("GetRatingSubmissionById", objectId).Return(&sub, nil)
-	ratingMpRepository.Mock.On("GetRatingById", objectId).Return(&rating, nil)
+	saveReq := []request.SaveRatingSubmissionMp{
+		{
+			UserID:        &userId,
+			UserIDLegacy:  &userId,
+			DisplayName:   &name,
+			SourceTransID: orderNumber + "||product||Frtgffggffgft123||34343432",
+			SourceUID:     "Frtgffggffgft123",
+			SourceType:    "product",
+			Value:         &value,
+			MediaPath: nil,
+			OrderNumber: orderNumber,
+		},
+	}
+	arrSub := []entity.RatingSubmissionMp{sub}
+	ratingMpRepository.Mock.On("FindRatingSubmissionBySourceTransID", SourceTransID).Return(nil, gorm.ErrRecordNotFound)
 	ratingMpRepository.Mock.On("CreateRatingSubmission", saveReq).Return(&arrSub, nil)
 
 	_, msg := ratingMpSvc.CreateRatingSubmissionMp(input)
-
+	
 	assert.Equal(t, message.SuccessMsg, msg)
 }
 
