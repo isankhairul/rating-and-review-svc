@@ -195,6 +195,29 @@ func (_m *RatingMpRepository) FindRatingSubmissionByUserIDLegacyAndRatingID(user
 	return r0, r1
 }
 
+// FindRatingTypeNumByRatingType provides a mock function with given fields: ratingType
+func (_m *RatingMpRepository) FindRatingTypeNumByRatingType(ratingType string) (*entity.RatingTypesNumCol, error) {
+	ret := _m.Called(ratingType)
+
+	var r0 *entity.RatingTypesNumCol
+	if rf, ok := ret.Get(0).(func(string) *entity.RatingTypesNumCol); ok {
+		r0 = rf(ratingType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.RatingTypesNumCol)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(ratingType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetListRatingSubmissions provides a mock function with given fields: filter, page, limit, sort, dir
 func (_m *RatingMpRepository) GetListRatingSubmissions(filter request.RatingSubmissionMpFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingSubmissionMp, *base.Pagination, error) {
 	ret := _m.Called(filter, page, limit, sort, dir)

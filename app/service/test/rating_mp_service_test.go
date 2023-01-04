@@ -37,6 +37,9 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 	}
 
 	objectID, _ := primitive.ObjectIDFromHex(id)
+	ratingTypeID:= entity.RatingTypesNumCol{
+		ID: objectID,
+	}
 	sub := entity.RatingSubmissionMp{
 		ID:            objectID,
 		UserID:        &userId,
@@ -46,7 +49,9 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 		Value:         value,
 		OrderNumber:   orderNumber,
 		MediaPath: nil,
+		RatingTypeID: ratingTypeID.ID.Hex(),
 	}
+	
 	saveReq := []request.SaveRatingSubmissionMp{
 		{
 			UserID:        &userId,
@@ -58,10 +63,12 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 			Value:         &value,
 			MediaPath: nil,
 			OrderNumber: orderNumber,
+			RatingTypeID: ratingTypeID.ID.Hex(),
 		},
 	}
 	arrSub := []entity.RatingSubmissionMp{sub}
 	ratingMpRepository.Mock.On("FindRatingSubmissionBySourceTransID", SourceTransID).Return(nil, gorm.ErrRecordNotFound)
+	ratingMpRepository.Mock.On("FindRatingTypeNumByRatingType", input.RatingType).Return(nil, gorm.ErrRecordNotFound)
 	ratingMpRepository.Mock.On("CreateRatingSubmission", saveReq).Return(&arrSub, nil)
 
 	_, msg := ratingMpSvc.CreateRatingSubmissionMp(input)

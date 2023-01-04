@@ -126,6 +126,7 @@ type SaveRatingSubmissionMp struct {
 	ReplyComment  string     `json:"reply_comment"`
 	ReplyBy       string     `json:"reply_by"`
 	OrderNumber   string     `json:"order_number"`
+	RatingTypeID  string     `json:"rating_type_id"`
 }
 
 func (req CreateRatingSubmissionMpRequest) Validate() error {

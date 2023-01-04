@@ -30,6 +30,7 @@ type RatingSubmissionMp struct {
 	OrderNumber     string             `json:"order_number" bson:"order_number"`
 	CreatedAt       time.Time          `json:"-" bson:"created_at,omitempty"`
 	UpdatedAt       time.Time          `json:"-" bson:"updated_at,omitempty"`
+	RatingTypeID    string             `json:"rating_type_id" bson:"rating_type_id, omitempty"`
 }
 
 func (RatingSubmissionMp) CollectionName() string {

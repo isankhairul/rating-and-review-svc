@@ -287,6 +287,17 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 	// if rating == nil || !*rating.Status {
 	// 	return result, message.ErrRatingNotFound
 	// }
+	// Get Rating Type Numeric by rating type
+
+	ratingTypeNum, err := s.ratingMpRepo.FindRatingTypeNumByRatingType(input.RatingType)
+
+	if err != nil {
+		return result, message.ErrDB
+	}
+
+	if ratingTypeNum == nil {
+		return result, message.ErrRatingTypeNotExist
+	}
 
 	// Concate source_trans_id, source_type, source_uid, user_id
 	input.SourceTransID = originalSourceTransID + "||" + sourceType + "||" + input.SourceUID + "||" + *input.UserID
@@ -327,6 +338,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		MediaPath:     mediaPath,
 		IsWithMedia:   isWithMedia,
 		OrderNumber:   originalSourceTransID,
+		RatingTypeID:  ratingTypeNum.ID.Hex(),
 	})
 
 	if len(saveReq) == 0 {

@@ -48,6 +48,9 @@ type RatingMpRepository interface {
 	UpdateRating(id primitive.ObjectID, input request.BodyUpdateRatingRequest) (*entity.RatingsMpCol, error)
 	DeleteRating(id primitive.ObjectID) error
 	GetRatingsByParams(limit, page, dir int, sort string, filter request.RatingFilter) ([]entity.RatingsMpCol, *base.Pagination, error)
+
+	// rating type
+	FindRatingTypeNumByRatingType(ratingType string) (*entity.RatingTypesNumCol, error)
 }
 
 func NewRatingMpRepository(db *mongo.Database) RatingMpRepository {
@@ -113,6 +116,7 @@ func (r *ratingMpRepo) CreateRatingSubmission(input []request.SaveRatingSubmissi
 			{Key: "media_path", Value: args.MediaPath},
 			{Key: "is_with_media", Value: args.IsWithMedia},
 			{Key: "order_number", Value: args.OrderNumber},
+			{Key: "rating_type_id", Value: args.RatingTypeID},
 		})
 	}
 	if len(docs) < 1 {
@@ -620,6 +624,18 @@ func (r *ratingMpRepo) GetRatingTypeNumByIdAndStatus(id primitive.ObjectID) (*en
 		},
 	},
 	}
+	err := r.db.Collection("ratingTypesNumCol").FindOne(ctx, bsonFilter).Decode(&ratingTypeNum)
+	if err != nil {
+
+		return nil, err
+	}
+	return &ratingTypeNum, nil
+}
+
+func (r *ratingMpRepo) FindRatingTypeNumByRatingType(ratingType string) (*entity.RatingTypesNumCol, error) {
+	var ratingTypeNum entity.RatingTypesNumCol
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	bsonFilter := bson.D{{"type", ratingType}}
 	err := r.db.Collection("ratingTypesNumCol").FindOne(ctx, bsonFilter).Decode(&ratingTypeNum)
 	if err != nil {
 
