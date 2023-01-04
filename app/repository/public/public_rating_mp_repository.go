@@ -4,18 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/spf13/viper"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	publicrequest "go-klikdokter/app/model/request/public"
 	publicresponse "go-klikdokter/app/model/response/public"
+	"math"
+	"reflect"
+	"time"
+
+	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"math"
-	"reflect"
-	"time"
 )
 
 type publicRatingMpRepo struct {
@@ -326,7 +327,7 @@ func (r *publicRatingMpRepo) GetSumCountRatingSubsByRatingId(ratingId string) (*
 			Key: "$group",
 			Value: bson.D{
 				{Key: "_id", Value: primitive.Null{}},
-				{Key: "sum", Value: bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$convertedValue"}}}}}},
+				{Key: "sum", Value: bson.D{{"$sum", "$convertedValue"}}},
 				{Key: "count", Value: bson.D{{"$sum", 1}}},
 			}}},
 	}
@@ -462,7 +463,7 @@ func paginateGroupByMp(db *mongo.Database, page int, limit int64, result interfa
 
 	err = cursor.All(context.TODO(), &results)
 
-	if err == nil {
+	if err == nil && len(results) > 0 {
 		jsonResult, _ := json.Marshal(results[0])
 		json.Unmarshal(jsonResult, &arrStructTotal)
 
