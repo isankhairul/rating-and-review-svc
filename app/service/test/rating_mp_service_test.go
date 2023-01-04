@@ -68,7 +68,7 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 	}
 	arrSub := []entity.RatingSubmissionMp{sub}
 	ratingMpRepository.Mock.On("FindRatingSubmissionBySourceTransID", SourceTransID).Return(nil, gorm.ErrRecordNotFound)
-	ratingMpRepository.Mock.On("FindRatingTypeNumByRatingType", input.RatingType).Return(nil, gorm.ErrRecordNotFound)
+	ratingMpRepository.Mock.On("FindRatingTypeNumByRatingType", input.RatingType).Return(&ratingTypeID, nil)
 	ratingMpRepository.Mock.On("CreateRatingSubmission", saveReq).Return(&arrSub, nil)
 
 	_, msg := ratingMpSvc.CreateRatingSubmissionMp(input)
