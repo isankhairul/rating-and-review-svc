@@ -746,11 +746,11 @@ definitions:
         type: object
         x-go-name: Errors
       meta:
-        $ref: '#/definitions/MetaResponse'
+        $ref: '#/definitions/metaResponseWithCorrelationID'
       pagination:
         $ref: '#/definitions/PaginationResponse'
     type: object
-    x-go-name: responseHttp
+    x-go-name: responseHttpWithCorrelationID
     x-go-package: go-klikdokter/app/model/base
   UpdateRatingSubDisplayNameRequest:
     properties:
@@ -1014,7 +1014,7 @@ paths:
       description: Get Rating Submission By ID
       operationId: GetPublicListRatingSubmissionByIDRequest
       parameters:
-      - description: 'Filter available {"rating_sub_id": [""]}'
+      - description: 'Filter available {"rating_subs_id": [""]}'
         in: query
         name: filter
         type: string
