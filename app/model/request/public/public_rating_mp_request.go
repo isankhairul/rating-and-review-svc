@@ -42,7 +42,7 @@ type GetPublicListRatingSubmissionMpRequest struct {
 
 // swagger:parameters GetPublicListRatingSubmissionByIDRequest
 type GetPublicListRatingSubmissionByIDRequest struct {
-	// Filter available {"rating_sub_id": [""]}
+	// Filter available {"rating_subs_id": [""]}
 	Filter string `json:"filter" schema:"filter" binding:"omitempty"`
 	Source string `json:"source" schema:"source" binding:"omitempty"`
 	Limit  int    `json:"limit" schema:"limit" binding:"omitempty,numeric,min=1,max=100"`
