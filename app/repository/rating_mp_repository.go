@@ -27,9 +27,10 @@ type ratingMpRepo struct {
 type RatingMpRepository interface {
 	// Rating submission
 	CreateRatingSubmission(input []request.SaveRatingSubmissionMp) (*[]entity.RatingSubmissionMp, error)
+	UpdateRatingSubmission(input entity.RatingSubmissionMp, id primitive.ObjectID) error
 	GetRatingSubmissionById(id primitive.ObjectID) (*entity.RatingSubmissionMp, error)
+	GetRatingSubmissionByIdAndUser(id primitive.ObjectID, userIDLegacy string) (*entity.RatingSubmissionMp, error)
 	GetListRatingSubmissions(filter request.RatingSubmissionMpFilter, page int, limit int64, sort string, dir interface{}) ([]entity.RatingSubmissionMp, *base.Pagination, error)
-	FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string, sourceTransId string) (*entity.RatingSubmissionMp, error)
 	FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string, sourceTransId string) (*entity.RatingSubmissionMp, error)
 	FindRatingSubmissionBySourceTransID(sourceTransId string) (*entity.RatingSubmissionMp, error)
 	GetPublicRatingsByParams(limit, page, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]entity.RatingsMpCol, *base.Pagination, error)
@@ -51,6 +52,7 @@ type RatingMpRepository interface {
 
 	// rating type
 	FindRatingTypeNumByRatingType(ratingType string) (*entity.RatingTypesNumCol, error)
+	FindRatingTypeNumByRatingTypeID(ratingTypeID primitive.ObjectID) (*entity.RatingTypesNumCol, error)
 }
 
 func NewRatingMpRepository(db *mongo.Database) RatingMpRepository {
@@ -64,8 +66,7 @@ func (r *ratingMpRepo) GetRatingTypeLikertByIdAndStatus(id primitive.ObjectID) (
 		Value: bson.A{
 			bsonStatus,
 			bson.M{"_id": id},
-		},
-	},
+		}},
 	}
 	err := r.db.Collection("ratingTypesLikertCol").FindOne(ctx, bsonFilter).Decode(&ratingTypeLikert)
 	if err != nil {
@@ -152,13 +153,51 @@ func (r *ratingMpRepo) CreateRatingSubmission(input []request.SaveRatingSubmissi
 	return &ratingSubmission, nil
 }
 
+func (r *ratingMpRepo) UpdateRatingSubmission(input entity.RatingSubmissionMp, id primitive.ObjectID) error {
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
+
+	filter := bson.D{{"_id", id}}
+	data := bson.D{{"$set", input}}
+
+	// transaction
+	errTransaction := r.db.Client().UseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		err := sessionContext.StartTransaction()
+		if err != nil {
+			return err
+		}
+		err1 := r.db.Collection(entity.RatingSubmissionMp{}.CollectionName()).FindOneAndUpdate(context.Background(), filter, data, &options.FindOneAndUpdateOptions{})
+		if err1 != nil {
+			sessionContext.AbortTransaction(sessionContext)
+			return err1.Err()
+		}
+		if err = sessionContext.CommitTransaction(sessionContext); err != nil {
+			return err
+		}
+		return nil
+	})
+	if errTransaction != nil {
+		return errTransaction
+	}
+	return nil
+}
+
 func (r *ratingMpRepo) GetRatingSubmissionById(id primitive.ObjectID) (*entity.RatingSubmissionMp, error) {
 	var ratingSubmission entity.RatingSubmissionMp
 	ratingSubmissionColl := r.db.Collection(entity.RatingSubmissionMp{}.CollectionName())
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
 	err := ratingSubmissionColl.FindOne(ctx, bson.M{"_id": id}).Decode(&ratingSubmission)
 	if err != nil {
+		return nil, err
+	}
+	return &ratingSubmission, nil
+}
 
+func (r *ratingMpRepo) GetRatingSubmissionByIdAndUser(id primitive.ObjectID, userIDLegacy string) (*entity.RatingSubmissionMp, error) {
+	var ratingSubmission entity.RatingSubmissionMp
+	ratingSubmissionColl := r.db.Collection(entity.RatingSubmissionMp{}.CollectionName())
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := ratingSubmissionColl.FindOne(ctx, bson.M{"_id": id, "user_id_legacy": &userIDLegacy}).Decode(&ratingSubmission)
+	if err != nil {
 		return nil, err
 	}
 	return &ratingSubmission, nil
@@ -242,18 +281,6 @@ func (r *ratingMpRepo) GetListRatingSubmissions(filter request.RatingSubmissionM
 	}
 	pagination := getPaginationMp(r.db, page, limit, results, "ratingSubMpCol", filter1)
 	return results, pagination, nil
-}
-
-func (r *ratingMpRepo) FindRatingSubmissionByUserIDLegacyAndRatingID(userIdLegacy *string, ratingId string, sourceTransId string) (*entity.RatingSubmissionMp, error) {
-	var ratingSubmission entity.RatingSubmissionMp
-	ratingSubmissionColl := r.db.Collection(entity.RatingSubmissionMp{}.CollectionName())
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
-	err := ratingSubmissionColl.FindOne(ctx, bson.M{"user_id_legacy": &userIdLegacy, "rating_id": ratingId, "source_trans_id": sourceTransId}).Decode(&ratingSubmission)
-	if err != nil {
-
-		return nil, err
-	}
-	return &ratingSubmission, nil
 }
 
 func (r *ratingMpRepo) FindRatingSubmissionByUserIDAndRatingID(userId *string, ratingId string, sourceTransId string) (*entity.RatingSubmissionMp, error) {
@@ -624,7 +651,7 @@ func (r *ratingMpRepo) GetRatingTypeNumByIdAndStatus(id primitive.ObjectID) (*en
 		},
 	},
 	}
-	err := r.db.Collection("ratingTypesNumCol").FindOne(ctx, bsonFilter).Decode(&ratingTypeNum)
+	err := r.db.Collection(ratingTypeNum.CollectionName()).FindOne(ctx, bsonFilter).Decode(&ratingTypeNum)
 	if err != nil {
 
 		return nil, err
@@ -636,9 +663,20 @@ func (r *ratingMpRepo) FindRatingTypeNumByRatingType(ratingType string) (*entity
 	var ratingTypeNum entity.RatingTypesNumCol
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
 	bsonFilter := bson.D{{"type", ratingType}}
-	err := r.db.Collection("ratingTypesNumCol").FindOne(ctx, bsonFilter).Decode(&ratingTypeNum)
+	err := r.db.Collection(ratingTypeNum.CollectionName()).FindOne(ctx, bsonFilter).Decode(&ratingTypeNum)
 	if err != nil {
 
+		return nil, err
+	}
+	return &ratingTypeNum, nil
+}
+
+func (r *ratingMpRepo) FindRatingTypeNumByRatingTypeID(ratingTypeId primitive.ObjectID) (*entity.RatingTypesNumCol, error) {
+	var ratingTypeNum entity.RatingTypesNumCol
+	ratingTypeNumColl := r.db.Collection(ratingTypeNum.CollectionName())
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := ratingTypeNumColl.FindOne(ctx, bson.M{"_id": ratingTypeId}).Decode(&ratingTypeNum)
+	if err != nil {
 		return nil, err
 	}
 	return &ratingTypeNum, nil

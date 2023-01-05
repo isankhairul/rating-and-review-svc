@@ -3,6 +3,7 @@ package endpoint
 import (
 	"context"
 	"fmt"
+	"github.com/spf13/viper"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/base/encoder"
 	"go-klikdokter/app/model/request"
@@ -68,7 +69,7 @@ func MakeRatingEndpoints(s service.RatingService, logger log.Logger, db *mongo.D
 		GetRatingTypeNums:       makeGetRatingTypeNums(s),
 
 		CreateRatingSubmission:                  makeCreateRatingSubmission(s, logger, db),
-		UpdateRatingSubmission:                  makeUpdateRatingSubmission(s),
+		UpdateRatingSubmission:                  makeUpdateRatingSubmission(s, logger, db),
 		GetRatingSubmission:                     makeGetRatingSubmission(s),
 		GetListRatingSubmission:                 makeGetListRatingSubmissions(s),
 		DeleteRatingSubmission:                  makeDeleteRatingSubmission(s),
@@ -215,11 +216,11 @@ func makeCreateRatingSubmission(s service.RatingService, logger log.Logger, db *
 		// set user_id_legacy from token jwt
 		userIdLegacy := fmt.Sprintf("%v", jwtObj.UserIdLegacy)
 		req.UserIDLegacy = &userIdLegacy
-		
+
 		var result interface{}
 		var msg message.Message
 
-		if util.StringInSlice(strings.ToLower(req.RatingType), []string{"rating_for_product", "rating_for_store"}) {
+		if util.StringInSlice(strings.ToLower(req.RatingType), viper.GetStringSlice("rating-type-mp")) {
 			ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
 			result, msg = ratingMp.CreateRatingSubmissionMp(req)
 		} else {
@@ -233,16 +234,27 @@ func makeCreateRatingSubmission(s service.RatingService, logger log.Logger, db *
 	}
 }
 
-func makeUpdateRatingSubmission(s service.RatingService) endpoint.Endpoint {
+func makeUpdateRatingSubmission(s service.RatingService, logger log.Logger, db *mongo.Database) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(request.UpdateRatingSubmissionRequest)
 
-		_, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		jwtObj, jwtMsg := global.SetJWTInfoFromContext(ctx)
 		if jwtMsg.Code != message.SuccessMsg.Code {
 			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
 		}
 
-		msg := s.UpdateRatingSubmission(req)
+		var msg message.Message
+		userIdLegacy := fmt.Sprintf("%v", jwtObj.UserIdLegacy)
+		req.UserIDLegacy = &userIdLegacy
+		req.UserID = &userIdLegacy
+
+		if util.StringInSlice(strings.ToLower(req.RatingType), viper.GetStringSlice("rating-type-mp")) {
+			ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
+			msg = ratingMp.UpdateRatingSubmission(req)
+		} else {
+			msg = s.UpdateRatingSubmission(req)
+		}
+
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 		}
@@ -553,7 +565,7 @@ func makGetListRatingSummary(s service.RatingService, logger log.Logger, db *mon
 		var msg message.Message
 		var result interface{}
 
-		if util.StringInSlice(strings.ToLower(req.SourceType), []string{"product", "store"}) {
+		if util.StringInSlice(strings.ToLower(req.SourceType), viper.GetStringSlice("source-type-mp")) {
 			ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
 			result, _, msg = ratingMp.GetListRatingSummaryBySourceType(req)
 		} else {

@@ -82,6 +82,7 @@ var ErrFailedToGetFormula = Message{Code: ValidationFailCode, Message: "Failed t
 var ErrFailedSummaryRatingNumeric = Message{Code: ValidationFailCode, Message: "Failed to summary rating numeric"}
 var ErrDisplayNameRequired = Message{Code: ValidationFailCode, Message: "Display Name is required"}
 var ErrUserNotFound = Message{Code: ValidationFailCode, Message: "User not found"}
+var ErrUserPermissionUpdate = Message{Code: ValidationFailCode, Message: "Not allowed update rating submission of another user"}
 
 // Code 39000 - 39999 Server error
 var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}
@@ -96,5 +97,5 @@ var ErrFailedRequestToPayment = Message{Code: ValidationFailCode, Message: "Fail
 var GetMedicalFacilitySuccess = Message{Code: 200, Message: "OK"}
 var GetMedicalFacilityNotFound = Message{Code: 400, Message: "Data tidak ditemukan"}
 
-//error code upload media
+// error code upload media
 var ErrUploadMedia = Message{Code: 109400, Message: "Upload Failed"}

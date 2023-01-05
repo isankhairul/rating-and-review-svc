@@ -18,6 +18,7 @@ import (
 	util_media "go-klikdokter/pkg/util/media"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-kit/log"
 	"github.com/vjeantet/govaluate"
@@ -28,6 +29,7 @@ import (
 type RatingMpService interface {
 	// Rating submission
 	CreateRatingSubmissionMp(input request.CreateRatingSubmissionRequest) ([]response.CreateRatingSubmissionMpResponse, message.Message)
+	UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest) message.Message
 	GetRatingSubmissionMp(id string) (*response.RatingSubmissionMpResponse, message.Message)
 	GetListRatingSubmissionsMp(input request.ListRatingSubmissionRequest) ([]response.RatingSubmissionMpResponse, *base.Pagination, message.Message)
 	GetListRatingSummaryBySourceType(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryMpResponse, *base.Pagination, message.Message)
@@ -192,7 +194,7 @@ func (s *ratingMpServiceImpl) DeleteRating(id string) message.Message {
 	if err != nil {
 		return message.ErrDataNotFound
 	}
-	//FindRatingByRatingID
+	// FindRatingByRatingID
 
 	rating, err := s.ratingMpRepo.GetRatingById(objectId)
 	if err != nil {
@@ -251,11 +253,11 @@ func (s *ratingMpServiceImpl) GetListRatings(input request.GetListRatingsRequest
 }
 
 func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatingSubmissionRequest) ([]response.CreateRatingSubmissionMpResponse, message.Message) {
-	//logger := log.With(s.logger, "RatingService", "CreateRatingSubmission")
+	// logger := log.With(s.logger, "RatingService", "CreateRatingSubmission")
 	var saveReq = make([]request.SaveRatingSubmissionMp, 0)
 
 	result := []response.CreateRatingSubmissionMpResponse{}
-	//isOrderIdExist := false
+	// isOrderIdExist := false
 
 	// validation input
 	if err := input.ValidateMp(); err != nil {
@@ -264,7 +266,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 			Message: err.Error(),
 		}
 	}
-	//set source type
+	// set source type
 	sourceType := global.GetSourceTypeByRatingType(input.RatingType)
 	// set user_id as user_id_legacy must be filled
 	input.UserID = input.UserIDLegacy
@@ -357,7 +359,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 	}
 
 	go func() {
-		//trigger image house keeping
+		// trigger image house keeping
 		util_media.ImageHouseKeeping(s.logger, input.MediaPath, ratingSubsID)
 		// send review for product & store to payment svc
 		if ratingSubs != nil && len(*ratingSubs) > 0 {
@@ -367,6 +369,65 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 	}()
 
 	return result, message.SuccessMsg
+}
+
+func (s *ratingMpServiceImpl) UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest) message.Message {
+	// Input ID of Submission
+	objectRatingSubmissionId, err := primitive.ObjectIDFromHex(input.ID)
+	if err != nil {
+		return message.RatingSubmissionNotFound
+	}
+	// find Rating submission
+	ratingSubmission, err := s.ratingMpRepo.GetRatingSubmissionById(objectRatingSubmissionId)
+	if err != nil || ratingSubmission == nil {
+		return message.RatingSubmissionNotFound
+	}
+
+	// Validate value of numeric type
+	var validateMsg message.Message
+
+	if validateMsg.Code == message.ValidationFailCode {
+		return validateMsg
+	}
+
+	// validate cannot update rating submission of another user
+	notValidUpdate := util.ValidateUserCannotUpdateMp(*input.UserID, *input.UserIDLegacy, *ratingSubmission)
+	if notValidUpdate {
+		return message.ErrUserPermissionUpdate
+	}
+
+	// set update data ratingSub
+	var timeUpdate time.Time
+	timeUpdate = time.Now().In(util.Loc)
+	var mediaPath []string
+	var isWithMedia bool
+	if len(input.MediaPath) > 0 {
+		for _, mp := range input.MediaPath {
+			if mp.MediaPath != "" {
+				mediaPath = append(mediaPath, mp.MediaPath)
+			}
+		}
+		isWithMedia = true
+	}
+	ratingSubmission.Comment = &input.Comment
+	ratingSubmission.Value = *input.Value
+	ratingSubmission.MediaPath = mediaPath
+	ratingSubmission.IsWithMedia = isWithMedia
+	ratingSubmission.UpdatedAt = timeUpdate
+
+	// Update
+	errC := s.ratingMpRepo.UpdateRatingSubmission(*ratingSubmission, objectRatingSubmissionId)
+	if errC != nil {
+		return message.ErrSaveData
+	}
+
+	go func() {
+		// trigger image house keeping
+		util_media.ImageHouseKeeping(s.logger, input.MediaPath, ratingSubmission.ID.Hex())
+	}()
+
+	return message.SuccessMsg
+
 }
 
 func (s *ratingMpServiceImpl) GetRatingSubmissionMp(id string) (*response.RatingSubmissionMpResponse, message.Message) {
@@ -407,7 +468,7 @@ func (s *ratingMpServiceImpl) GetListRatingSubmissionsMp(input request.ListRatin
 	} else {
 		dir = -1
 	}
-	//Set default value
+	// Set default value
 	if input.Page <= 0 {
 		input.Page = 1
 	}
@@ -470,13 +531,13 @@ func (s *ratingMpServiceImpl) GetListRatingSubmissionsMp(input request.ListRatin
 }
 
 func checkUserHaveSubmitRatingMp(userId, ratingId, sourceTransId string, s *ratingMpServiceImpl) (*entity.RatingSubmissionMp, error) {
-	
+
 	ratingSubmissionMp, err := s.ratingMpRepo.FindRatingSubmissionByUserIDAndRatingID(&userId, ratingId, sourceTransId)
 	return ratingSubmissionMp, err
 }
 
 func checkUserHaveSubmitRatingMpBySourceTransID(sourceTransId string, s *ratingMpServiceImpl) (*entity.RatingSubmissionMp, error) {
-	
+
 	ratingSubmissionMp, err := s.ratingMpRepo.FindRatingSubmissionBySourceTransID(sourceTransId)
 	return ratingSubmissionMp, err
 }
@@ -660,10 +721,10 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 		if err != nil {
 			return result, err
 		}
-		//totalValue, err := strconv.ParseFloat(fmt.Sprintf("%.1f", finalCalc.(float64)), 64)
-		//if err != nil {
+		// totalValue, err := strconv.ParseFloat(fmt.Sprintf("%.1f", finalCalc.(float64)), 64)
+		// if err != nil {
 		//	return result, err
-		//}
+		// }
 		result.TotalValue = fmt.Sprintf("%.1f", finalCalc)
 	}
 

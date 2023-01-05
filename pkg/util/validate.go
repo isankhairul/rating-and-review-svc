@@ -280,3 +280,40 @@ func ValidateUserIdAndUserIdLegacyForUpdate(input request.UpdateRatingSubmission
 	}
 	return false
 }
+
+func ValidateUserIdAndUserIdLegacyForUpdateMp(input request.UpdateRatingSubmissionRequest, subId primitive.ObjectID, sourceTransId string, id *string, idLegacy *string, ratingSubmission *entity.RatingSubmissionMp, err error) bool {
+	if ratingSubmission != nil {
+		if ratingSubmission.ID == subId {
+			return false
+		}
+
+		if ratingSubmission.UserID != nil {
+			if *ratingSubmission.UserID == *id && ratingSubmission.SourceTransID == sourceTransId {
+				return true
+			}
+		}
+
+		if ratingSubmission.UserIDLegacy != nil {
+			if *ratingSubmission.UserIDLegacy == *idLegacy && ratingSubmission.SourceTransID == sourceTransId {
+				return true
+			}
+		}
+
+		if err != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func ValidateUserCannotUpdateMp(userID string, userIDLegacy string, ratingSub entity.RatingSubmissionMp) bool {
+	if userID != "" && *ratingSub.UserID != userID {
+		return true
+	}
+
+	if userIDLegacy != "" && *ratingSub.UserIDLegacy != userIDLegacy {
+		return true
+	}
+
+	return false
+}

@@ -358,7 +358,7 @@ definitions:
         type: string
         x-go-name: UpdatedAt
     type: object
-    x-go-name: RatingsCol
+    x-go-name: RatingsMpCol
     x-go-package: go-klikdokter/app/model/entity
   RatingByType:
     properties:
@@ -764,9 +764,17 @@ definitions:
       comment:
         type: string
         x-go-name: Comment
+      media_path:
+        items:
+          $ref: '#/definitions/MediaPathObj'
+        type: array
+        x-go-name: MediaPath
       rating_id:
         type: string
         x-go-name: RatingID
+      rating_type:
+        type: string
+        x-go-name: RatingType
       value:
         type: string
         x-go-name: Value

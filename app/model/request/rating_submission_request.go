@@ -2,6 +2,7 @@ package request
 
 import (
 	"fmt"
+	"github.com/spf13/viper"
 	"go-klikdokter/helper/message"
 	"regexp"
 	"strings"
@@ -119,11 +120,15 @@ type TaggingObj struct {
 }
 
 type UpdateRatingSubmissionRequest struct {
-	ID        string    `json:"-"`
-	RatingID  string    `json:"rating_id,omitempty" bson:"rating_id"`
-	Comment   string    `json:"comment,omitempty" bson:"comment"`
-	Value     *string   `json:"value,omitempty" bson:"value"`
-	UpdatedAt time.Time `json:"-,omitempty" bson:"updated_at"`
+	ID           string         `json:"-"`
+	RatingType   string         `json:"rating_type"`
+	RatingID     string         `json:"rating_id,omitempty" bson:"rating_id"`
+	Comment      string         `json:"comment,omitempty" bson:"comment"`
+	Value        *string        `json:"value,omitempty" bson:"value"`
+	MediaPath    []MediaPathObj `json:"media_path" bson:"media_path"`
+	UpdatedAt    time.Time      `json:"-,omitempty" bson:"updated_at"`
+	UserID       *string        `json:"-" bson:"user_id"`
+	UserIDLegacy *string        `json:"-" bson:"user_id_legacy"`
 }
 
 func (req CreateRatingSubmissionRequest) Validate() error {
@@ -162,9 +167,28 @@ func (req RatingByType) Validate() error {
 }
 
 func (req UpdateRatingSubmissionRequest) Validate() error {
+	arrRatingTypeMp := viper.GetStringSlice("rating-type-mp")
+	isRatingMp := stringInSlice(req.RatingType, arrRatingTypeMp)
+	arrAllowedValueRatingProduct := []string{"1", "2", "3", "4", "5"}
+	arrAllowedValueRatingStore := []string{"1", "2", "3"}
+
 	return validation.ValidateStruct(&req,
-		validation.Field(&req.RatingID, validation.Required.Error(message.ErrReq.Message)),
+		// validation.Field(&req.RatingID, validation.Required.Error(message.ErrReq.Message)),
+		validation.Field(&req.RatingID, validation.When(isRatingMp == false, validation.Required.Error(message.ErrReq.Message))),
 		validation.Field(&req.Value, validation.Required.Error(message.ErrReq.Message)),
 		validation.Field(&req.Comment, validation.NotNil),
+		validation.Field(&req.Value, validation.When(req.RatingType == "rating_for_product",
+			validation.In(sliceStringToSliceInterface(arrAllowedValueRatingProduct)...).Error(fmt.Sprintf("value should be %s", strings.Join(arrAllowedValueRatingProduct, ","))))),
+		validation.Field(&req.Value, validation.When(req.RatingType == "rating_for_store",
+			validation.In(sliceStringToSliceInterface(arrAllowedValueRatingStore)...).Error(fmt.Sprintf("value should be %s", strings.Join(arrAllowedValueRatingStore, ","))))),
 	)
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
