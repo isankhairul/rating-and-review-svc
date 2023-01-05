@@ -33,6 +33,7 @@ type PublicRatingMpRepository interface {
 	GetSumCountRatingSubsByRatingId(ratingId string) (*publicresponse.PublicSumCountRatingSummaryMp, error)
 	GetRatingFormulaBySourceType(sourceType string) (*entity.RatingFormulaCol, error)
 	GetSumCountRatingSubsBySource(sourceUID string, sourceType string) (*publicresponse.PublicSumCountRatingSummaryMp, error)
+	GetPublicRatingSubmissionsCustom(limit, page, dir int, sort string, filter publicrequest.FilterRatingSubmissionMp, source string) ([]entity.RatingSubmissionMp, *base.Pagination, error)
 }
 
 func NewPublicRatingMpRepository(db *mongo.Database) PublicRatingMpRepository {
@@ -146,6 +147,71 @@ func (r *publicRatingMpRepo) GetPublicRatingSubmissions(limit, page, dir int, so
 			return nil, nil, err
 		}
 	}
+	pagination := paginateMp(r.db, page, limit64, results, collectionName, bsonFilter)
+	return results, pagination, nil
+}
+
+func (r *publicRatingMpRepo) GetPublicRatingSubmissionsCustom(limit, page, dir int, sort string, filter publicrequest.FilterRatingSubmissionMp, source string) ([]entity.RatingSubmissionMp, *base.Pagination, error) {
+	var results []entity.RatingSubmissionMp
+	limit64 := int64(limit)
+	bsonCancelled := bson.D{{Key: "cancelled", Value: false}}
+
+	bsonRatingSubsID := bson.D{}
+	
+	if filter.RatingSubsID != nil {
+		var objectIDFromHex = func(hex string) primitive.ObjectID {
+			objectID, _ := primitive.ObjectIDFromHex(hex)
+			return objectID
+		}
+		var listObjID = filter.RatingSubsID
+		var Receivers []primitive.ObjectID
+	
+		for _, val := range listObjID {
+			newID := objectIDFromHex(val)
+			Receivers = append(Receivers, newID )
+		}
+		filter := bson.D{
+			{"_id",
+				bson.D{
+					{"$in",
+						Receivers,
+					},
+				},
+			},
+		}
+		
+		bsonRatingSubsID = filter
+	}
+
+	var bsonFilter = bson.D{}
+
+	bsonFilter = bson.D{{Key: "$and", Value: bson.A{
+		bsonRatingSubsID,
+		bsonCancelled,
+	}}}
+	collectionName := entity.RatingSubmissionMp{}.CollectionName()
+	if source == "all" {
+		collectionName = entity.RatingSubmisson{}.CollectionName()
+	}
+
+	skip := int64(page)*limit64 - limit64
+	cursor, err := r.db.Collection(collectionName).
+		Find(context.Background(), bsonFilter,
+			&options.FindOptions{
+				Sort:  bson.D{bson.E{Key: sort, Value: dir}},
+				Limit: &limit64,
+				Skip:  &skip,
+			})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
 	pagination := paginateMp(r.db, page, limit64, results, collectionName, bsonFilter)
 	return results, pagination, nil
 }

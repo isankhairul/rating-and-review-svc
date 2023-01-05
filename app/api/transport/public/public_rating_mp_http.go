@@ -2,13 +2,16 @@ package publictransport
 
 import (
 	"context"
-	"github.com/gorilla/schema"
 	publicendpoint "go-klikdokter/app/api/endpoint/public"
 	"go-klikdokter/app/model/base/encoder"
 	publicrequest "go-klikdokter/app/model/request/public"
-	"go-klikdokter/app/service/public"
+	publicservice "go-klikdokter/app/service/public"
 	"go-klikdokter/helper/_struct"
 	"net/http"
+
+	"github.com/gorilla/schema"
+
+	"go-klikdokter/app/middleware"
 
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
@@ -35,6 +38,13 @@ func PublicRatingMpHttpHandler(s publicservice.PublicRatingMpService, logger log
 		decodeGetRatingSubmissionMpBySourceTypeAndUID,
 		encoder.EncodeResponseHTTP,
 		options...,
+	))
+
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/public/rating-submissions-by-id").Handler(httptransport.NewServer(
+		ep.GetListRatingSubmissionByID,
+		decodeGetRatingSubmissionByID,
+		encoder.EncodeResponseHTTPWithCorrelationID,
+		append(options, httptransport.ServerBefore(middleware.CorrelationIdToContext()))...,
 	))
 
 	return pr
@@ -64,6 +74,17 @@ func decodeGetRatingSubmissionMpBySourceTypeAndUID(ctx context.Context, r *http.
 	params.SourceUID = mux.Vars(r)["source_uid"]
 	err = params.ValidateSourceType()
 	if err != nil {
+		return nil, err
+	}
+	return params, nil
+}
+
+func decodeGetRatingSubmissionByID(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var params publicrequest.GetPublicListRatingSubmissionByIDRequest
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+	if err = schema.NewDecoder().Decode(&params, r.Form); err != nil {
 		return nil, err
 	}
 	return params, nil

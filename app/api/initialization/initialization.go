@@ -61,7 +61,7 @@ func GlobalHttpHandler(logger log.Logger, db *mongo.Database) http.Handler {
 	// Service registry
 	ratingSvc := registry.RegisterRatingService(db, logger)
 	publicRatingSvc := registry.RegisterPublicRatingService(db, logger)
-	//publicRatingMpSvc := registry.RegisterPublicRatingMpService(db, logger)
+	publicRatingMpSvc := registry.RegisterPublicRatingMpService(db, logger)
 	daprSvc := registry.RegisterDaprService(db, logger)
 	//ratingMpSvc := registry.RegisterRatingMpService(db, logger)
 	updloadImgSvc := registry.RegisterUploadService(db, logger)
@@ -70,12 +70,12 @@ func GlobalHttpHandler(logger log.Logger, db *mongo.Database) http.Handler {
 
 	//ratingMpHttp := transport.RatingMpHttpHandler(ratingMpSvc, log.With(logger, "RatingMpTransportLayer", "HTTP"))
 	ratingHttp := transport.RatingHttpHandler(ratingSvc, log.With(logger, "RatingTransportLayer", "HTTP"), db)
-	//publicRatingMpHttp := publictransport.PublicRatingMpHttpHandler(publicRatingMpSvc, log.With(logger, "PublicRatingMpTransportLayer", "HTTP"))
+	publicRatingMpHttp := publictransport.PublicRatingMpHttpHandler(publicRatingMpSvc, log.With(logger, "PublicRatingMpTransportLayer", "HTTP"))
 	publicRatingHttp := publictransport.PublicRatingHttpHandler(publicRatingSvc, log.With(logger, "PublicRatingTransportLayer", "HTTP"), db)
 	daprHttp := transport.DaprHttpHandler(daprSvc, log.With(logger, "DaprTransportLayer", "HTTP"))
 	uploadHttp := transport.UploadHttpHandler(updloadImgSvc, log.With(logger, "UploadTransportLayer", "HTTP"))
 
-	//pr.PathPrefix(_struct.PrefixBase + "/public/rating-submissions-mp").Handler(publicRatingMpHttp)
+	pr.PathPrefix(_struct.PrefixBase + "/public/rating-submissions-by-id").Handler(publicRatingMpHttp)
 	//pr.PathPrefix(_struct.PrefixBase + "/public/ratings-summary-mp").Handler(publicRatingMpHttp)
 	pr.PathPrefix(_struct.PrefixBase + "/public/rating-submissions").Handler(publicRatingHttp)
 	pr.PathPrefix(_struct.PrefixBase + "/public/ratings-summary").Handler(publicRatingHttp)

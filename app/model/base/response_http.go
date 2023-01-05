@@ -91,7 +91,11 @@ func SetHttpResponse(code int, message string, result interface{}, paging *Pagin
 func SetHttpResponseWithCorrelationID(ctx context.Context,code int, message string, result interface{}, paging *Pagination, errMsg interface{}) interface{} {
 	dt := data{}
 	isSlice := reflect.ValueOf(result).Kind() == reflect.Slice
-	if isSlice {
+	if isSlice {	
+		s:= reflect.ValueOf(result)
+		if s.Len() == 0 {
+			result = make([]string,0)
+		}
 		dt.Records = result
 		dt.Record = nil
 	} else {

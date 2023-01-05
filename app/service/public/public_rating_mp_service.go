@@ -1,28 +1,31 @@
 package publicservice
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-kit/log"
-	"github.com/spf13/viper"
-	"github.com/vjeantet/govaluate"
 	"go-klikdokter/app/model/base"
 	publicrequest "go-klikdokter/app/model/request/public"
-	"go-klikdokter/app/model/response/public"
+	publicresponse "go-klikdokter/app/model/response/public"
 	"go-klikdokter/app/repository"
 	publicrepository "go-klikdokter/app/repository/public"
 	"go-klikdokter/helper/config"
 	"go-klikdokter/helper/message"
 	"go-klikdokter/helper/thumbor"
 	"go-klikdokter/pkg/util"
-	"go.mongodb.org/mongo-driver/mongo"
 	"time"
+
+	"github.com/go-kit/log"
+	"github.com/spf13/viper"
+	"github.com/vjeantet/govaluate"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type PublicRatingMpService interface {
 	GetListRatingSubmissionBySourceTypeAndUID(input publicrequest.GetPublicListRatingSubmissionRequest) ([]publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message)
 	GetListRatingSummaryBySourceType(input publicrequest.GetPublicListRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryMpResponse, *base.Pagination, message.Message)
+	GetListRatingSubmissionByID(ctx context.Context,input publicrequest.GetPublicListRatingSubmissionByIDRequest)([] publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message, interface{})
 }
 
 type publicRatingMpServiceImpl struct {
@@ -202,6 +205,104 @@ func (s *publicRatingMpServiceImpl) summaryRatingNumeric(sourceUID string, sourc
 	} else {
 		return nil, errors.New("formula string is empty")
 	}
+}
+
+// swagger:route GET /public/rating-submissions-by-id PublicRating GetPublicListRatingSubmissionByIDRequest
+// Get Rating Submission By ID
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s * publicRatingMpServiceImpl) GetListRatingSubmissionByID(ctx context.Context, input publicrequest.GetPublicListRatingSubmissionByIDRequest)([] publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message, interface{}) {
+	err := input.ValidateFilterAndSource()
+	if err != nil {
+		return nil, nil, message.ErrReqParam, err
+	}
+	errMsg := make(map[string]interface{})
+	avatarDefault := config.GetConfigString(viper.GetString("image.default-avatar"))
+	timezone := config.GetConfigString(viper.GetString("util.timezone"))
+	var result []publicresponse.PublicRatingSubmissionMpResponse
+	// Unmarshal filter params
+	filterRatingSubs := publicrequest.FilterRatingSubmissionMp{}
+	if input.Filter != "" {
+		errMarshal := json.Unmarshal([]byte(input.Filter), &filterRatingSubs)
+		if errMarshal != nil {
+			return result, nil, message.ErrUnmarshalFilterListRatingRequest, nil
+		}
+	}
+	// Get Rating Submission
+	var dir int
+	if input.Dir == "asc" {
+		dir = 1
+	} else {
+		dir = -1
+	}
+	//Set default value
+	if input.Page <= 0 {
+		input.Page = 1
+	}
+	if input.Limit <= 0 {
+		input.Limit = 10
+	}
+	if input.Sort == "" {
+		input.Sort = "created_at"
+	}
+	ratingSubs, pagination, err := s.publicRatingMpRepo.GetPublicRatingSubmissionsCustom(input.Limit, input.Page, dir, input.Sort, filterRatingSubs, input.Source)
+	if err != nil {
+		errMsg["rating"] = "Error Not Found"
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return result, pagination, message.ErrNoData, errMsg
+		}
+		return result, pagination, message.FailedMsg,errMsg
+	}
+	if len(ratingSubs) <= 0 {
+		return result, pagination, message.SuccessMsg, nil
+	}
+
+	for _, v := range ratingSubs {
+		if v.Avatar == "" {
+			v.Avatar = avatarDefault
+		}
+		Loc, _ := time.LoadLocation(timezone)
+
+		// Masking Anonym Display Name
+		displayName := ""
+		if v.IsAnonymous {
+			displayName = util.MaskDisplayName(*v.DisplayName)
+		} else {
+			displayName = *v.DisplayName
+		}
+
+		// create thumbor response
+		mediaImages := []string{}
+		for _, value := range v.MediaPath {
+			mediaImages = append(mediaImages, thumbor.GetNewThumborImagesOriginal(value))
+		}
+		if v.MediaPath == nil {
+			v.MediaPath = []string{}
+		}
+		result = append(result, publicresponse.PublicRatingSubmissionMpResponse{
+			ID:            v.ID,
+			SourceType:    v.SourceType,
+			SourceUID:     v.SourceUID,
+			UserID:        v.UserID,
+			UserIDLegacy:  v.UserIDLegacy,
+			DisplayName:   displayName,
+			Avatar:        v.Avatar,
+			Comment:       v.Comment,
+			SourceTransID: v.SourceTransID,
+			LikeCounter:   v.LikeCounter,
+			Value:         v.Value,
+			LikeByMe:      false,
+			MediaPath:     nil,
+			IsWithMedia:   v.IsWithMedia,
+			MediaImages:   mediaImages,
+			CreatedAt:     v.CreatedAt.In(Loc),
+		})
+
+	}
+	return result, pagination, message.SuccessMsg, nil
 }
 
 func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publicresponse.PublicSumCountRatingSummaryMp) (publicresponse.RatingSummaryMpNumeric, error) {

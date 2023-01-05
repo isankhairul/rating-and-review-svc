@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
-	"go-klikdokter/app/model/request/public"
+	publicrequest "go-klikdokter/app/model/request/public"
 	publicresponse "go-klikdokter/app/model/response/public"
 	"go-klikdokter/app/repository"
 	publicrepository "go-klikdokter/app/repository/public"
