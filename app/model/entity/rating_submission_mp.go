@@ -20,17 +20,19 @@ type RatingSubmissionMp struct {
 	SourceUID       string             `json:"source_uid" bson:"source_uid"`
 	SourceType      string             `json:"source_type" bson:"source_type"`
 	SourceTransID   string             `json:"source_trans_id" bson:"source_trans_id,omitempty"`
-	LikeCounter     int                `json:"like_counter" bson:"like_counter,omitempty"`
+	LikeCounter     int                `json:"like_counter" bson:"like_counter"`
 	UserPlatform    string             `json:"user_platform" bson:"user_platform,omitempty"`
-	Cancelled       bool               `json:"cancelled" bson:"cancelled,omitempty"`
-	CancelledReason string             `json:"cancelled_reason" bson:"cancelled_reason,omitempty"`
+	Cancelled       bool               `json:"cancelled" bson:"cancelled"`
+	CancelledReason string             `json:"cancelled_reason" bson:"cancelled_reason"`
 	IsAnonymous     bool               `json:"is_anonymous" bson:"is_anonymous,omitempty"`
-	MediaPath       []string           `json:"media_path" bson:"media_path,omitempty"`
-	IsWithMedia     bool               `json:"is_with_media" bson:"is_with_media,omitempty"`
+	MediaPath       []string           `json:"media_path" bson:"media_path"`
+	IsWithMedia     bool               `json:"is_with_media" bson:"is_with_media"`
 	OrderNumber     string             `json:"order_number" bson:"order_number"`
 	CreatedAt       time.Time          `json:"-" bson:"created_at,omitempty"`
 	UpdatedAt       time.Time          `json:"-" bson:"updated_at,omitempty"`
 	RatingTypeID    string             `json:"rating_type_id" bson:"rating_type_id, omitempty"`
+	Reply           string             `json:"reply" bson:"reply"`
+	ReplyBy         string             `json:"reply_by" bson:"reply_by"`
 }
 
 func (RatingSubmissionMp) CollectionName() string {

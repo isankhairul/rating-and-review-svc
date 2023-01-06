@@ -67,11 +67,11 @@ func (_m *RatingMpRepository) CreateRating(input request.SaveRatingRequest) (*en
 }
 
 // CreateRatingSubmission provides a mock function with given fields: input
-func (_m *RatingMpRepository) CreateRatingSubmission(input []request.SaveRatingSubmissionMp) (*[]entity.RatingSubmissionMp, error) {
+func (_m *RatingMpRepository) CreateRatingSubmission(input []entity.RatingSubmissionMp) (*[]entity.RatingSubmissionMp, error) {
 	ret := _m.Called(input)
 
 	var r0 *[]entity.RatingSubmissionMp
-	if rf, ok := ret.Get(0).(func([]request.SaveRatingSubmissionMp) *[]entity.RatingSubmissionMp); ok {
+	if rf, ok := ret.Get(0).(func([]entity.RatingSubmissionMp) *[]entity.RatingSubmissionMp); ok {
 		r0 = rf(input)
 	} else {
 		if ret.Get(0) != nil {
@@ -80,7 +80,7 @@ func (_m *RatingMpRepository) CreateRatingSubmission(input []request.SaveRatingS
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func([]request.SaveRatingSubmissionMp) error); ok {
+	if rf, ok := ret.Get(1).(func([]entity.RatingSubmissionMp) error); ok {
 		r1 = rf(input)
 	} else {
 		r1 = ret.Error(1)

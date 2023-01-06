@@ -121,6 +121,13 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger, db *mongo.Dat
 		options...,
 	))
 
+	pr.Methods(http.MethodPut).Path(_struct.PrefixBase + "/rating-submissions/reply/{id}").Handler(httptransport.NewServer(
+		ep.ReplyAdminRatingSubmission,
+		decodeReplyAdminRatingSubmission,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
 	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "/rating-types-likert/").Handler(httptransport.NewServer(
 		ep.CreateRatingTypeLikert,
 		decodeCreateRatingTypeLikert,
@@ -273,7 +280,7 @@ func decodeUpdateRatingById(ctx context.Context, r *http.Request) (rqst interfac
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
-	//err = req.Validate()
+	// err = req.Validate()
 	if err != nil {
 		return nil, err
 	}
@@ -383,7 +390,7 @@ func decodeUpdateRatingTypeLikertById(ctx context.Context, r *http.Request) (rqs
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
-	//err = req.Validate()
+	// err = req.Validate()
 	if err != nil {
 		return nil, err
 	}
@@ -551,5 +558,21 @@ func decodeCancelRatingSub(ctx context.Context, r *http.Request) (rqst interface
 	if err != nil {
 		return nil, err
 	}
+	return req, nil
+}
+
+func decodeReplyAdminRatingSubmission(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var req request.ReplyAdminRatingSubmissionRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	req.ID = mux.Vars(r)["id"]
+
+	err = req.Validate()
+	if err != nil {
+		return nil, err
+	}
+
 	return req, nil
 }

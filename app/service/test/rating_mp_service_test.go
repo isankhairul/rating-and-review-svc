@@ -31,13 +31,12 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 		SourceUID:     "Frtgffggffgft123",
 		RatingType:    "rating_for_product",
 		Value:         "4",
-		MediaPath: []request.MediaPathObj{
-			
-		},
+		MediaPath:     []request.MediaPathObj{},
+		Comment:       userId,
 	}
 
 	objectID, _ := primitive.ObjectIDFromHex(id)
-	ratingTypeID:= entity.RatingTypesNumCol{
+	ratingTypeID := entity.RatingTypesNumCol{
 		ID: objectID,
 	}
 	sub := entity.RatingSubmissionMp{
@@ -48,11 +47,12 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 		SourceTransID: orderNumber + "||product||Frtgffggffgft123||34343432",
 		Value:         value,
 		OrderNumber:   orderNumber,
-		MediaPath: nil,
-		RatingTypeID: ratingTypeID.ID.Hex(),
+		MediaPath:     nil,
+		RatingTypeID:  ratingTypeID.ID.Hex(),
+		Comment:       &userId,
 	}
-	
-	saveReq := []request.SaveRatingSubmissionMp{
+
+	saveReq := []entity.RatingSubmissionMp{
 		{
 			UserID:        &userId,
 			UserIDLegacy:  &userId,
@@ -60,10 +60,11 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 			SourceTransID: orderNumber + "||product||Frtgffggffgft123||34343432",
 			SourceUID:     "Frtgffggffgft123",
 			SourceType:    "product",
-			Value:         &value,
-			MediaPath: nil,
-			OrderNumber: orderNumber,
-			RatingTypeID: ratingTypeID.ID.Hex(),
+			Value:         value,
+			MediaPath:     nil,
+			OrderNumber:   orderNumber,
+			RatingTypeID:  ratingTypeID.ID.Hex(),
+			Comment:       &userId,
 		},
 	}
 	arrSub := []entity.RatingSubmissionMp{sub}
@@ -72,7 +73,7 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 	ratingMpRepository.Mock.On("CreateRatingSubmission", saveReq).Return(&arrSub, nil)
 
 	_, msg := ratingMpSvc.CreateRatingSubmissionMp(input)
-	
+
 	assert.Equal(t, message.SuccessMsg, msg)
 }
 

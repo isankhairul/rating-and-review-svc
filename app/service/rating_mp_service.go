@@ -33,6 +33,7 @@ type RatingMpService interface {
 	GetRatingSubmissionMp(id string) (*response.RatingSubmissionMpResponse, message.Message)
 	GetListRatingSubmissionsMp(input request.ListRatingSubmissionRequest) ([]response.RatingSubmissionMpResponse, *base.Pagination, message.Message)
 	GetListRatingSummaryBySourceType(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryMpResponse, *base.Pagination, message.Message)
+	ReplyAdminRatingSubmission(input request.ReplyAdminRatingSubmissionRequest) message.Message
 
 	// Rating
 	CreateRating(input request.SaveRatingRequest) (*entity.RatingsMpCol, message.Message)
@@ -254,7 +255,7 @@ func (s *ratingMpServiceImpl) GetListRatings(input request.GetListRatingsRequest
 
 func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatingSubmissionRequest) ([]response.CreateRatingSubmissionMpResponse, message.Message) {
 	// logger := log.With(s.logger, "RatingService", "CreateRatingSubmission")
-	var saveReq = make([]request.SaveRatingSubmissionMp, 0)
+	var saveReq = make([]entity.RatingSubmissionMp, 0)
 
 	result := []response.CreateRatingSubmissionMpResponse{}
 	// isOrderIdExist := false
@@ -322,13 +323,13 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 	}
 	// end process media_path
 
-	saveReq = append(saveReq, request.SaveRatingSubmissionMp{
+	saveReq = append(saveReq, entity.RatingSubmissionMp{
 		// RatingID:      rating.ID.Hex(),
-		Value:         &input.Value,
+		Value:         input.Value,
 		UserID:        input.UserID,
 		UserIDLegacy:  input.UserIDLegacy,
 		DisplayName:   input.DisplayName,
-		Comment:       input.Comment,
+		Comment:       &input.Comment,
 		Avatar:        input.Avatar,
 		IPAddress:     input.IPAddress,
 		UserAgent:     input.UserAgent,
@@ -341,6 +342,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		IsWithMedia:   isWithMedia,
 		OrderNumber:   originalSourceTransID,
 		RatingTypeID:  ratingTypeNum.ID.Hex(),
+		Cancelled:     false,
 	})
 
 	if len(saveReq) == 0 {
@@ -428,6 +430,40 @@ func (s *ratingMpServiceImpl) UpdateRatingSubmission(input request.UpdateRatingS
 
 	return message.SuccessMsg
 
+}
+
+// swagger:route PUT /rating-submissions/reply/{id} RatingSubmission ReqAdminReplyRatingSubmissionBody
+// Reply Rating Submission By ID
+//
+// security:
+// - Bearer: []
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *ratingMpServiceImpl) ReplyAdminRatingSubmission(input request.ReplyAdminRatingSubmissionRequest) message.Message {
+	// Input ID of Submission
+	objectRatingSubmissionId, err := primitive.ObjectIDFromHex(input.ID)
+	if err != nil {
+		return message.RatingSubmissionNotFound
+	}
+	// find Rating submission
+	ratingSubmission, err := s.ratingMpRepo.GetRatingSubmissionById(objectRatingSubmissionId)
+	if err != nil || ratingSubmission == nil {
+		return message.RatingSubmissionNotFound
+	}
+
+	// set update data ratingSub
+	ratingSubmission.UpdatedAt = time.Now().In(util.Loc)
+	ratingSubmission.Reply = input.Reply
+	ratingSubmission.ReplyBy = fmt.Sprint(input.JWTObj.Fullname)
+
+	// Update
+	errC := s.ratingMpRepo.UpdateRatingSubmission(*ratingSubmission, objectRatingSubmissionId)
+	if errC != nil {
+		return message.ErrSaveData
+	}
+
+	return message.SuccessMsg
 }
 
 func (s *ratingMpServiceImpl) GetRatingSubmissionMp(id string) (*response.RatingSubmissionMpResponse, message.Message) {

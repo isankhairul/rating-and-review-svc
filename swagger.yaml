@@ -203,10 +203,8 @@ definitions:
   DataResponse:
     properties:
       record:
-        type: object
         x-go-name: Record
       records:
-        type: object
         x-go-name: Records
     type: object
     x-go-name: data
@@ -358,7 +356,7 @@ definitions:
         type: string
         x-go-name: UpdatedAt
     type: object
-    x-go-name: RatingsMpCol
+    x-go-name: RatingsCol
     x-go-package: go-klikdokter/app/model/entity
   RatingByType:
     properties:
@@ -576,6 +574,16 @@ definitions:
         x-go-name: UpdatedAt
     type: object
     x-go-package: go-klikdokter/app/model/entity
+  ReplyAdminRatingSubmissionRequest:
+    properties:
+      reply:
+        type: string
+        x-go-name: Reply
+      source:
+        type: string
+        x-go-name: Source
+    type: object
+    x-go-package: go-klikdokter/app/model/request
   SaveRatingFormula:
     properties:
       formula:
@@ -743,14 +751,13 @@ definitions:
         description: |-
           Errors is the response message
           in: string
-        type: object
         x-go-name: Errors
       meta:
-        $ref: '#/definitions/metaResponseWithCorrelationID'
+        $ref: '#/definitions/MetaResponse'
       pagination:
         $ref: '#/definitions/PaginationResponse'
     type: object
-    x-go-name: responseHttpWithCorrelationID
+    x-go-name: responseHttp
     x-go-package: go-klikdokter/app/model/base
   UpdateRatingSubDisplayNameRequest:
     properties:
@@ -1432,6 +1439,37 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/UpdateRatingSubmissionRequest'
+        x-go-name: Body
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      security:
+      - Bearer:
+        - '[]'
+      tags:
+      - RatingSubmission
+  /rating-submissions/reply/{id}:
+    put:
+      description: Reply Rating Submission By ID
+      operationId: ReqAdminReplyRatingSubmissionBody
+      parameters:
+      - description: ID of Rating Submission
+        in: path
+        name: id
+        required: true
+        type: string
+        x-go-name: ID
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ReplyAdminRatingSubmissionRequest'
         x-go-name: Body
       responses:
         "200":

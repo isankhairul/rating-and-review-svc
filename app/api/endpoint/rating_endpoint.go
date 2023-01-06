@@ -36,6 +36,7 @@ type RatingEndpoint struct {
 	GetListRatingSubmissionWithUserIdLegacy endpoint.Endpoint
 	UpdateRatingSubDisplayNameByIdLegacy    endpoint.Endpoint
 	CancelRatingSubByIds                    endpoint.Endpoint
+	ReplyAdminRatingSubmission              endpoint.Endpoint
 
 	CreateRatingTypeLikert     endpoint.Endpoint
 	GetRatingTypeLikertById    endpoint.Endpoint
@@ -76,6 +77,7 @@ func MakeRatingEndpoints(s service.RatingService, logger log.Logger, db *mongo.D
 		GetListRatingSubmissionWithUserIdLegacy: makeGetListRatingSubmissionWithUserIdLegacy(s),
 		UpdateRatingSubDisplayNameByIdLegacy:    makeUpdatePublicRatingSubDisplayNameByIdLegacy(s),
 		CancelRatingSubByIds:                    makeCancelRatingSubByIds(s),
+		ReplyAdminRatingSubmission:              makeReplyAdminRatingSubmission(s, logger, db),
 
 		CreateRatingTypeLikert:     makeCreateRatingTypeLikert(s),
 		GetRatingTypeLikertById:    makeGetRatingTypeLikertById(s),
@@ -705,5 +707,28 @@ func makeCreateRatingSubHelpful(s service.RatingService) endpoint.Endpoint {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 		}
 		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
+	}
+}
+
+func makeReplyAdminRatingSubmission(s service.RatingService, logger log.Logger, db *mongo.Database) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.ReplyAdminRatingSubmissionRequest)
+
+		jwtObj, jwtMsg := global.SetJWTInfoFromContext(ctx)
+		if jwtMsg.Code != message.SuccessMsg.Code {
+			return base.SetHttpResponse(jwtMsg.Code, jwtMsg.Message, nil, nil), nil
+		}
+
+		// set JWTObj to req
+		req.JWTObj = jwtObj
+
+		// currently for mp
+		ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
+		msg := ratingMp.ReplyAdminRatingSubmission(req)
+
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 	}
 }

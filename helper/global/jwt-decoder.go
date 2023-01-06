@@ -14,8 +14,9 @@ import (
 type JWTObj struct {
 	UserIdLegacy interface{} `json:"user_id_legacy"`
 	Fullname     interface{} `json:"fullname"`
+	Email        string      `json:"email"`
 	Avatar       interface{} `json:"avatar"`
-	Token        string      `json:"token""`
+	Token        string      `json:"token"`
 }
 
 func SetJWTInfoFromContext(ctx context.Context) (JWTObj, message.Message) {
@@ -30,13 +31,17 @@ func SetJWTInfoFromContext(ctx context.Context) (JWTObj, message.Message) {
 	if claims, ok := token.Claims.(jwtgo.MapClaims); ok {
 		// Get claim value
 		var userIdLegacy = claims["id"]
-		//if token.Method == jwtgo.SigningMethodRS256 {
+		// if token.Method == jwtgo.SigningMethodRS256 {
 		//	userIdLegacy = claims["user_id_legacy"]
-		//} else {
+		// } else {
 		//	userIdLegacy = claims["sub"]
-		//}
+		// }
 
-		fullname := claims["full_name"]
+		fullname, ok := claims["full_name"]
+		if !ok {
+			fullname = claims["preferred_username"]
+		}
+
 		rawAvatar, ok := claims["avatar"]
 		if !ok || rawAvatar == nil {
 			avatar = defaultAvatar
@@ -55,6 +60,7 @@ func SetJWTInfoFromContext(ctx context.Context) (JWTObj, message.Message) {
 		}
 		jwtObj.Fullname = fmt.Sprintf("%s", fullname)
 		jwtObj.Avatar = avatar
+		jwtObj.Email = fmt.Sprintf("%s", claims["email"])
 
 		return jwtObj, message.SuccessMsg
 	} else {

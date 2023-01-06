@@ -3,6 +3,7 @@ package request
 import (
 	"fmt"
 	"github.com/spf13/viper"
+	"go-klikdokter/helper/global"
 	"go-klikdokter/helper/message"
 	"regexp"
 	"strings"
@@ -57,6 +58,18 @@ type ReqUpdateRatingSubmissionBody struct {
 	// in: body
 	// required: true
 	Body UpdateRatingSubmissionRequest `json:"body"`
+}
+
+// swagger:parameters ReqAdminReplyRatingSubmissionBody
+type ReqAdminReplyRatingSubmissionBody struct {
+	// ID of Rating Submission
+	// in: path
+	// required: true
+	ID string `json:"id"`
+
+	// in: body
+	// required: true
+	Body ReplyAdminRatingSubmissionRequest `json:"body"`
 }
 
 // swagger:parameters ReqCancelRatingSubmission
@@ -117,6 +130,20 @@ type SaveRatingSubmission struct {
 type TaggingObj struct {
 	RatingId string   `json:"rating_id" bson:"rating_id"`
 	Value    []string `json:"value" bson:"value"`
+}
+
+type ReplyAdminRatingSubmissionRequest struct {
+	ID     string        `json:"-"`
+	Source string        `json:"source"`
+	Reply  string        `json:"reply"`
+	JWTObj global.JWTObj `json:"-"`
+}
+
+func (req ReplyAdminRatingSubmissionRequest) Validate() error {
+	return validation.ValidateStruct(&req,
+		validation.Field(&req.ID, validation.Required.Error(message.ErrReq.Message)),
+		validation.Field(&req.Reply, validation.Required.Error(message.ErrReq.Message)),
+	)
 }
 
 type UpdateRatingSubmissionRequest struct {

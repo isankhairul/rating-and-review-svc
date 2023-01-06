@@ -26,7 +26,7 @@ type ratingMpRepo struct {
 
 type RatingMpRepository interface {
 	// Rating submission
-	CreateRatingSubmission(input []request.SaveRatingSubmissionMp) (*[]entity.RatingSubmissionMp, error)
+	CreateRatingSubmission(input []entity.RatingSubmissionMp) (*[]entity.RatingSubmissionMp, error)
 	UpdateRatingSubmission(input entity.RatingSubmissionMp, id primitive.ObjectID) error
 	GetRatingSubmissionById(id primitive.ObjectID) (*entity.RatingSubmissionMp, error)
 	GetRatingSubmissionByIdAndUser(id primitive.ObjectID, userIDLegacy string) (*entity.RatingSubmissionMp, error)
@@ -87,38 +87,16 @@ func (r *ratingMpRepo) FindRatingBySourceUIDAndRatingType(sourceUID, ratingType 
 	return &rating, nil
 }
 
-func (r *ratingMpRepo) CreateRatingSubmission(input []request.SaveRatingSubmissionMp) (*[]entity.RatingSubmissionMp, error) {
+func (r *ratingMpRepo) CreateRatingSubmission(input []entity.RatingSubmissionMp) (*[]entity.RatingSubmissionMp, error) {
 	ratingSubmissionColl := r.db.Collection(entity.RatingSubmissionMp{}.CollectionName())
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*20)
 	var ratingSubmission []entity.RatingSubmissionMp
 	var docs []interface{}
 	for _, args := range input {
 		dateNow := time.Now().In(util.Loc)
-		docs = append(docs, bson.D{
-			// {Key: "rating_id", Value: args.RatingID},
-			{Key: "user_id", Value: args.UserID},
-			{Key: "user_id_legacy", Value: args.UserIDLegacy},
-			{Key: "display_name", Value: args.DisplayName},
-			{Key: "comment", Value: args.Comment},
-			{Key: "value", Value: args.Value},
-			{Key: "avatar", Value: args.Avatar},
-			{Key: "ip_address", Value: args.IPAddress},
-			{Key: "user_agent", Value: args.UserAgent},
-			{Key: "source_trans_id", Value: args.SourceTransID},
-			{Key: "user_platform", Value: args.UserPlatform},
-			{Key: "like_counter", Value: 0},
-			{Key: "created_at", Value: dateNow},
-			{Key: "updated_at", Value: dateNow},
-			{Key: "source_uid", Value: args.SourceUID},
-			{Key: "cancelled", Value: false},
-			{Key: "cancelled_reason", Value: ""},
-			{Key: "is_anonymous", Value: args.IsAnonymous},
-			{Key: "source_type", Value: args.SourceType},
-			{Key: "media_path", Value: args.MediaPath},
-			{Key: "is_with_media", Value: args.IsWithMedia},
-			{Key: "order_number", Value: args.OrderNumber},
-			{Key: "rating_type_id", Value: args.RatingTypeID},
-		})
+		args.CreatedAt = dateNow
+		args.UpdatedAt = dateNow
+		docs = append(docs, args)
 	}
 	if len(docs) < 1 {
 		return nil, mongo.ErrNilValue
