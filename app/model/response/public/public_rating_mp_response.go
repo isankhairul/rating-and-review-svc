@@ -35,6 +35,8 @@ type PublicRatingSubmissionMpResponse struct {
 	IsWithMedia   bool               `json:"is_with_media"`
 	MediaImages   []string           `json:"media_images"`
 	CreatedAt     time.Time          `json:"created_at"`
+	Reply         string             `json:"reply"`
+	ReplyBy       string             `json:"reply_by"`
 }
 
 type PublicCreateRatingSubmissionMpResponse struct {

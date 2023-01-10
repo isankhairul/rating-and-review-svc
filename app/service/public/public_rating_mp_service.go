@@ -25,7 +25,7 @@ import (
 type PublicRatingMpService interface {
 	GetListRatingSubmissionBySourceTypeAndUID(input publicrequest.GetPublicListRatingSubmissionRequest) ([]publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message)
 	GetListRatingSummaryBySourceType(input publicrequest.GetPublicListRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryMpResponse, *base.Pagination, message.Message)
-	GetListRatingSubmissionByID(ctx context.Context,input publicrequest.GetPublicListRatingSubmissionByIDRequest)([] publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message, interface{})
+	GetListRatingSubmissionByID(ctx context.Context, input publicrequest.GetPublicListRatingSubmissionByIDRequest) ([]publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message, interface{})
 }
 
 type publicRatingMpServiceImpl struct {
@@ -52,7 +52,7 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 	} else {
 		dir = -1
 	}
-	//Set default value
+	// Set default value
 	if input.Page <= 0 {
 		input.Page = 1
 	}
@@ -214,7 +214,7 @@ func (s *publicRatingMpServiceImpl) summaryRatingNumeric(sourceUID string, sourc
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
-func (s * publicRatingMpServiceImpl) GetListRatingSubmissionByID(ctx context.Context, input publicrequest.GetPublicListRatingSubmissionByIDRequest)([] publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message, interface{}) {
+func (s *publicRatingMpServiceImpl) GetListRatingSubmissionByID(ctx context.Context, input publicrequest.GetPublicListRatingSubmissionByIDRequest) ([]publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message, interface{}) {
 	err := input.ValidateFilterAndSource()
 	if err != nil {
 		return nil, nil, message.ErrReqParam, err
@@ -238,7 +238,7 @@ func (s * publicRatingMpServiceImpl) GetListRatingSubmissionByID(ctx context.Con
 	} else {
 		dir = -1
 	}
-	//Set default value
+	// Set default value
 	if input.Page <= 0 {
 		input.Page = 1
 	}
@@ -254,7 +254,7 @@ func (s * publicRatingMpServiceImpl) GetListRatingSubmissionByID(ctx context.Con
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return result, pagination, message.ErrNoData, errMsg
 		}
-		return result, pagination, message.FailedMsg,errMsg
+		return result, pagination, message.FailedMsg, errMsg
 	}
 	if len(ratingSubs) <= 0 {
 		return result, pagination, message.SuccessMsg, nil
@@ -299,6 +299,8 @@ func (s * publicRatingMpServiceImpl) GetListRatingSubmissionByID(ctx context.Con
 			IsWithMedia:   v.IsWithMedia,
 			MediaImages:   mediaImages,
 			CreatedAt:     v.CreatedAt.In(Loc),
+			Reply:         v.Reply,
+			ReplyBy:       v.ReplyBy,
 		})
 
 	}
@@ -325,10 +327,10 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 			return result, err
 		}
 
-		//totalValue, err := strconv.ParseFloat(fmt.Sprintf("%.1f", finalCalc.(float64)), 64)
-		//if err != nil {
+		// totalValue, err := strconv.ParseFloat(fmt.Sprintf("%.1f", finalCalc.(float64)), 64)
+		// if err != nil {
 		//	return result, err
-		//}
+		// }
 		result.TotalValue = fmt.Sprintf("%.1f", finalCalc)
 	}
 
