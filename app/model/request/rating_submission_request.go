@@ -3,6 +3,7 @@ package request
 import (
 	"fmt"
 	"github.com/spf13/viper"
+	"go-klikdokter/app/model/entity"
 	"go-klikdokter/helper/global"
 	"go-klikdokter/helper/message"
 	"regexp"
@@ -90,41 +91,41 @@ type RatingByType struct {
 }
 
 type CreateRatingSubmissionRequest struct {
-	Ratings       []RatingByType `json:"ratings" bson:"ratings"`
-	UserID        *string        `json:"user_id" bson:"user_id"`
-	UserIDLegacy  *string        `json:"user_id_legacy" bson:"user_id_legacy"`
-	DisplayName   *string        `json:"display_name" bson:"display_name"`
-	Comment       string         `json:"comment" bson:"comment"`
-	IPAddress     string         `json:"ip_address" bson:"ip_address"`
-	UserAgent     string         `json:"user_agent" bson:"user_agent"`
-	SourceTransID string         `json:"source_trans_id" bson:"source_trans_id"`
-	UserPlatform  string         `json:"user_platform" bson:"user_platform"`
-	Avatar        string         `json:"-" bson:"-"`
-	IsAnonymous   bool           `json:"is_anonymous" bson:"is_anonymous"`
-	SourceUID     string         `json:"source_uid" bson:"source_uid"`
-	RatingType    string         `json:"rating_type" bson:"rating_type"`
-	Value         string         `json:"value" bson:"value"`
-	MediaPath     []MediaPathObj `json:"media_path" bson:"media_path"`
+	Ratings       []RatingByType    `json:"ratings" bson:"ratings"`
+	UserID        *string           `json:"user_id" bson:"user_id"`
+	UserIDLegacy  *string           `json:"user_id_legacy" bson:"user_id_legacy"`
+	DisplayName   *string           `json:"display_name" bson:"display_name"`
+	Comment       string            `json:"comment" bson:"comment"`
+	IPAddress     string            `json:"ip_address" bson:"ip_address"`
+	UserAgent     string            `json:"user_agent" bson:"user_agent"`
+	SourceTransID string            `json:"source_trans_id" bson:"source_trans_id"`
+	UserPlatform  string            `json:"user_platform" bson:"user_platform"`
+	Avatar        string            `json:"-" bson:"-"`
+	IsAnonymous   bool              `json:"is_anonymous" bson:"is_anonymous"`
+	SourceUID     string            `json:"source_uid" bson:"source_uid"`
+	RatingType    string            `json:"rating_type" bson:"rating_type"`
+	Value         string            `json:"value" bson:"value"`
+	Media         []entity.MediaObj `json:"media" bson:"media"`
 }
 
 type SaveRatingSubmission struct {
-	RatingID      string     `json:"rating_id" bson:"rating_id"`
-	UserID        *string    `json:"user_id" bson:"user_id"`
-	UserIDLegacy  *string    `json:"user_id_legacy" bson:"user_id_legacy"`
-	DisplayName   *string    `json:"display_name" bson:"display_name"`
-	Comment       string     `json:"comment" bson:"comment"`
-	Value         *string    `json:"value" bson:"value"`
-	Avatar        string     `json:"avatar" bson:"avatar"`
-	IPAddress     string     `json:"ip_address" bson:"ip_address"`
-	UserAgent     string     `json:"user_agent" bson:"user_agent"`
-	SourceTransID string     `json:"source_trans_id" bson:"source_trans_id"`
-	SourceUID     string     `json:"source_uid" bson:"source_uid"`
-	SourceType    string     `json:"source_type" bson:"source_type"`
-	UserPlatform  string     `json:"user_platform" bson:"user_platform"`
-	Tagging       TaggingObj `json:"tagging" bson:"tagging"`
-	IsAnonymous   bool       `json:"is_anonymous" bson:"is_anonymous"`
-	MediaPath     []string   `json:"media_path" bson:"media_path"`
-	IsWithMedia   bool       `json:"is_with_media" bson:"is_with_media"`
+	RatingID      string            `json:"rating_id" bson:"rating_id"`
+	UserID        *string           `json:"user_id" bson:"user_id"`
+	UserIDLegacy  *string           `json:"user_id_legacy" bson:"user_id_legacy"`
+	DisplayName   *string           `json:"display_name" bson:"display_name"`
+	Comment       string            `json:"comment" bson:"comment"`
+	Value         *string           `json:"value" bson:"value"`
+	Avatar        string            `json:"avatar" bson:"avatar"`
+	IPAddress     string            `json:"ip_address" bson:"ip_address"`
+	UserAgent     string            `json:"user_agent" bson:"user_agent"`
+	SourceTransID string            `json:"source_trans_id" bson:"source_trans_id"`
+	SourceUID     string            `json:"source_uid" bson:"source_uid"`
+	SourceType    string            `json:"source_type" bson:"source_type"`
+	UserPlatform  string            `json:"user_platform" bson:"user_platform"`
+	Tagging       TaggingObj        `json:"tagging" bson:"tagging"`
+	IsAnonymous   bool              `json:"is_anonymous" bson:"is_anonymous"`
+	Media         []entity.MediaObj `json:"media" bson:"media"`
+	IsWithMedia   bool              `json:"is_with_media" bson:"is_with_media"`
 }
 
 type TaggingObj struct {
@@ -147,15 +148,15 @@ func (req ReplyAdminRatingSubmissionRequest) Validate() error {
 }
 
 type UpdateRatingSubmissionRequest struct {
-	ID           string         `json:"-"`
-	RatingType   string         `json:"rating_type"`
-	RatingID     string         `json:"rating_id,omitempty" bson:"rating_id"`
-	Comment      string         `json:"comment,omitempty" bson:"comment"`
-	Value        *string        `json:"value,omitempty" bson:"value"`
-	MediaPath    []MediaPathObj `json:"media_path" bson:"media_path"`
-	UpdatedAt    time.Time      `json:"-,omitempty" bson:"updated_at"`
-	UserID       *string        `json:"-" bson:"user_id"`
-	UserIDLegacy *string        `json:"-" bson:"user_id_legacy"`
+	ID           string            `json:"-"`
+	RatingType   string            `json:"rating_type"`
+	RatingID     string            `json:"rating_id,omitempty" bson:"rating_id"`
+	Comment      string            `json:"comment,omitempty" bson:"comment"`
+	Value        *string           `json:"value,omitempty" bson:"value"`
+	Media        []entity.MediaObj `json:"media" bson:"media"`
+	UpdatedAt    time.Time         `json:"-,omitempty" bson:"updated_at"`
+	UserID       *string           `json:"-" bson:"user_id"`
+	UserIDLegacy *string           `json:"-" bson:"user_id_legacy"`
 }
 
 func (req CreateRatingSubmissionRequest) Validate() error {

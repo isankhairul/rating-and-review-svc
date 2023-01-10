@@ -25,7 +25,7 @@ type RatingSubmissionMp struct {
 	Cancelled       bool               `json:"cancelled" bson:"cancelled"`
 	CancelledReason string             `json:"cancelled_reason" bson:"cancelled_reason"`
 	IsAnonymous     bool               `json:"is_anonymous" bson:"is_anonymous,omitempty"`
-	MediaPath       []string           `json:"media_path" bson:"media_path"`
+	Media           []MediaObj         `json:"media" bson:"media"`
 	IsWithMedia     bool               `json:"is_with_media" bson:"is_with_media"`
 	OrderNumber     string             `json:"order_number" bson:"order_number"`
 	CreatedAt       time.Time          `json:"-" bson:"created_at,omitempty"`
@@ -37,4 +37,9 @@ type RatingSubmissionMp struct {
 
 func (RatingSubmissionMp) CollectionName() string {
 	return "ratingSubMpCol"
+}
+
+type MediaObj struct {
+	UID       string `json:"uid" bson:"uid"`
+	MediaPath string `json:"media_path" bson:"media_path"`
 }

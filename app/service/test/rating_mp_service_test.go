@@ -31,7 +31,7 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 		SourceUID:     "Frtgffggffgft123",
 		RatingType:    "rating_for_product",
 		Value:         "4",
-		MediaPath:     []request.MediaPathObj{},
+		Media:         []entity.MediaObj{},
 		Comment:       userId,
 	}
 
@@ -47,7 +47,7 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 		SourceTransID: orderNumber + "||product||Frtgffggffgft123||34343432",
 		Value:         value,
 		OrderNumber:   orderNumber,
-		MediaPath:     nil,
+		Media:         nil,
 		RatingTypeID:  ratingTypeID.ID.Hex(),
 		Comment:       &userId,
 	}
@@ -61,7 +61,7 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 			SourceUID:     "Frtgffggffgft123",
 			SourceType:    "product",
 			Value:         value,
-			MediaPath:     nil,
+			Media:         nil,
 			OrderNumber:   orderNumber,
 			RatingTypeID:  ratingTypeID.ID.Hex(),
 			Comment:       &userId,

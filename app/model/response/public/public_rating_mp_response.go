@@ -2,6 +2,7 @@ package publicresponse
 
 import (
 	"go-klikdokter/app/model/entity"
+	"go-klikdokter/app/model/response"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -19,24 +20,23 @@ type PublicRatingSummaryMpResponse struct {
 }
 
 type PublicRatingSubmissionMpResponse struct {
-	ID            primitive.ObjectID `json:"id"`
-	UserID        *string            `json:"user_id,omitempty"`
-	UserIDLegacy  *string            `json:"user_id_legacy,omitempty"`
-	DisplayName   string             `json:"display_name,omitempty"`
-	Avatar        string             `json:"avatar,omitempty"`
-	Comment       *string            `json:"comment,omitempty"`
-	SourceTransID string             `json:"source_trans_id,omitempty"`
-	LikeCounter   int                `json:"like_counter"`
-	SourceType    string             `json:"source_type"`
-	SourceUID     string             `json:"source_uid"`
-	Value         string             `json:"value"`
-	LikeByMe      bool               `json:"like_by_me"`
-	MediaPath     []string           `json:"media_path"`
-	IsWithMedia   bool               `json:"is_with_media"`
-	MediaImages   []string           `json:"media_images"`
-	CreatedAt     time.Time          `json:"created_at"`
-	Reply         string             `json:"reply"`
-	ReplyBy       string             `json:"reply_by"`
+	ID            primitive.ObjectID          `json:"id"`
+	UserID        *string                     `json:"user_id,omitempty"`
+	UserIDLegacy  *string                     `json:"user_id_legacy,omitempty"`
+	DisplayName   string                      `json:"display_name,omitempty"`
+	Avatar        string                      `json:"avatar,omitempty"`
+	Comment       *string                     `json:"comment,omitempty"`
+	SourceTransID string                      `json:"source_trans_id,omitempty"`
+	LikeCounter   int                         `json:"like_counter"`
+	SourceType    string                      `json:"source_type"`
+	SourceUID     string                      `json:"source_uid"`
+	Value         string                      `json:"value"`
+	LikeByMe      bool                        `json:"like_by_me"`
+	IsWithMedia   bool                        `json:"is_with_media"`
+	CreatedAt     time.Time                   `json:"created_at"`
+	Media         []response.MediaObjResponse `json:"media"`
+	Reply         string                      `json:"reply"`
+	ReplyBy       string                      `json:"reply_by"`
 }
 
 type PublicCreateRatingSubmissionMpResponse struct {

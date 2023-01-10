@@ -311,15 +311,15 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		return result, message.UserRated
 	}
 	// process media_path
-	var mediaPath []string
+	var media []entity.MediaObj
 	var isWithMedia bool
-	if len(input.MediaPath) > 0 {
-		for _, mp := range input.MediaPath {
-			if mp.MediaPath != "" {
-				mediaPath = append(mediaPath, mp.MediaPath)
+	if len(input.Media) > 0 {
+		for _, mp := range input.Media {
+			if mp.MediaPath != "" && mp.UID != "" {
+				media = append(media, entity.MediaObj{UID: mp.UID, MediaPath: mp.MediaPath})
+				isWithMedia = true
 			}
 		}
-		isWithMedia = true
 	}
 	// end process media_path
 
@@ -338,7 +338,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		IsAnonymous:   input.IsAnonymous,
 		SourceUID:     input.SourceUID,
 		SourceType:    sourceType,
-		MediaPath:     mediaPath,
+		Media:         media,
 		IsWithMedia:   isWithMedia,
 		OrderNumber:   originalSourceTransID,
 		RatingTypeID:  ratingTypeNum.ID.Hex(),
@@ -362,7 +362,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 
 	go func() {
 		// trigger image house keeping
-		util_media.ImageHouseKeeping(s.logger, input.MediaPath, ratingSubsID)
+		util_media.ImageHouseKeeping(s.logger, media, ratingSubsID)
 		// send review for product & store to payment svc
 		if ratingSubs != nil && len(*ratingSubs) > 0 {
 			ratingSub := *ratingSubs
@@ -401,19 +401,21 @@ func (s *ratingMpServiceImpl) UpdateRatingSubmission(input request.UpdateRatingS
 	// set update data ratingSub
 	var timeUpdate time.Time
 	timeUpdate = time.Now().In(util.Loc)
-	var mediaPath []string
+	// process media_path
+	var media []entity.MediaObj
 	var isWithMedia bool
-	if len(input.MediaPath) > 0 {
-		for _, mp := range input.MediaPath {
-			if mp.MediaPath != "" {
-				mediaPath = append(mediaPath, mp.MediaPath)
+	if len(input.Media) > 0 {
+		for _, mp := range input.Media {
+			if mp.MediaPath != "" && mp.UID != "" {
+				media = append(media, entity.MediaObj{UID: mp.UID, MediaPath: mp.MediaPath})
+				isWithMedia = true
 			}
 		}
-		isWithMedia = true
 	}
+	// end process media_path
 	ratingSubmission.Comment = &input.Comment
 	ratingSubmission.Value = *input.Value
-	ratingSubmission.MediaPath = mediaPath
+	ratingSubmission.Media = media
 	ratingSubmission.IsWithMedia = isWithMedia
 	ratingSubmission.UpdatedAt = timeUpdate
 
@@ -425,7 +427,7 @@ func (s *ratingMpServiceImpl) UpdateRatingSubmission(input request.UpdateRatingS
 
 	go func() {
 		// trigger image house keeping
-		util_media.ImageHouseKeeping(s.logger, input.MediaPath, ratingSubmission.ID.Hex())
+		util_media.ImageHouseKeeping(s.logger, media, ratingSubmission.ID.Hex())
 	}()
 
 	return message.SuccessMsg
@@ -478,13 +480,22 @@ func (s *ratingMpServiceImpl) GetRatingSubmissionMp(id string) (*response.Rating
 		}
 		return nil, message.FailedMsg
 	}
+	var mediaResponse []response.MediaObjResponse
+	for _, value := range get.Media {
+		mediaObjResponse := response.MediaObjResponse{
+			UID:        value.UID,
+			MediaPath:  value.MediaPath,
+			MediaImage: thumbor.GetNewThumborImagesOriginal(value.MediaPath),
+		}
+		mediaResponse = append(mediaResponse, mediaObjResponse)
+	}
 	var result = response.RatingSubmissionMpResponse{
 		RatingID:      get.RatingID,
 		UserID:        get.UserID,
 		UserIDLegacy:  get.UserIDLegacy,
 		Value:         get.Value,
 		SourceTransID: get.SourceTransID,
-		MediaPath:     get.MediaPath,
+		Media:         mediaResponse,
 		IsWithMedia:   get.IsWithMedia,
 	}
 	if get != nil && get.Comment != nil {
@@ -539,9 +550,14 @@ func (s *ratingMpServiceImpl) GetListRatingSubmissionsMp(input request.ListRatin
 		}
 		if filScore := filterScoreSubmissionMp(args, filter.Score); filScore {
 			// create thumbor response
-			mediaImages := []string{}
-			for _, value := range args.MediaPath {
-				mediaImages = append(mediaImages, thumbor.GetNewThumborImagesOriginal(value))
+			var mediaResponse []response.MediaObjResponse
+			for _, value := range args.Media {
+				mediaObjResponse := response.MediaObjResponse{
+					UID:        value.UID,
+					MediaPath:  value.MediaPath,
+					MediaImage: thumbor.GetNewThumborImagesOriginal(value.MediaPath),
+				}
+				mediaResponse = append(mediaResponse, mediaObjResponse)
 			}
 
 			results = append(results, response.RatingSubmissionMpResponse{
@@ -551,8 +567,7 @@ func (s *ratingMpServiceImpl) GetListRatingSubmissionsMp(input request.ListRatin
 				Comment:       *args.Comment,
 				Value:         args.Value,
 				SourceTransID: args.SourceTransID,
-				MediaPath:     args.MediaPath,
-				MediaImages:   mediaImages,
+				Media:         mediaResponse,
 				IsWithMedia:   args.IsWithMedia,
 			})
 		}

@@ -2,6 +2,7 @@ package request
 
 import (
 	"fmt"
+	"go-klikdokter/app/model/entity"
 	"go-klikdokter/helper/message"
 	"regexp"
 	"strings"
@@ -73,25 +74,20 @@ func (r *GetListRatingSummaryMpRequest) MakeDefaultValueIfEmpty() {
 }
 
 type CreateRatingSubmissionMpRequest struct {
-	UserID        *string        `json:"-" bson:"-"`
-	UserIDLegacy  *string        `json:"-" bson:"-"`
-	DisplayName   *string        `json:"-" bson:"-"`
-	Avatar        string         `json:"-" bson:"-"`
-	Value         string         `json:"value" bson:"value"`
-	Comment       string         `json:"comment" bson:"comment"`
-	IPAddress     string         `json:"ip_address" bson:"ip_address"`
-	IsAnonymous   bool           `json:"is_anonymous" bson:"is_anonymous"`
-	UserAgent     string         `json:"user_agent" bson:"user_agent"`
-	UserPlatform  string         `json:"user_platform" bson:"user_platform"`
-	SourceTransID string         `json:"source_trans_id" bson:"source_trans_id"`
-	SourceUID     string         `json:"source_uid" bson:"source_uid"`
-	RatingType    string         `json:"rating_type" bson:"rating_type"`
-	MediaPath     []MediaPathObj `json:"media_path" bson:"media_path"`
-}
-
-type MediaPathObj struct {
-	UID       string `json:"uid"`
-	MediaPath string `json:"media_path"`
+	UserID        *string           `json:"-" bson:"-"`
+	UserIDLegacy  *string           `json:"-" bson:"-"`
+	DisplayName   *string           `json:"-" bson:"-"`
+	Avatar        string            `json:"-" bson:"-"`
+	Value         string            `json:"value" bson:"value"`
+	Comment       string            `json:"comment" bson:"comment"`
+	IPAddress     string            `json:"ip_address" bson:"ip_address"`
+	IsAnonymous   bool              `json:"is_anonymous" bson:"is_anonymous"`
+	UserAgent     string            `json:"user_agent" bson:"user_agent"`
+	UserPlatform  string            `json:"user_platform" bson:"user_platform"`
+	SourceTransID string            `json:"source_trans_id" bson:"source_trans_id"`
+	SourceUID     string            `json:"source_uid" bson:"source_uid"`
+	RatingType    string            `json:"rating_type" bson:"rating_type"`
+	Media         []entity.MediaObj `json:"media" bson:"media"`
 }
 
 type RatingSummaryMpResponse struct {
@@ -107,26 +103,26 @@ type RatingSummaryMpResponse struct {
 
 type SaveRatingSubmissionMp struct {
 	// RatingID      string     `json:"rating_id" bson:"rating_id"`
-	UserID        *string    `json:"user_id" bson:"user_id"`
-	UserIDLegacy  *string    `json:"user_id_legacy" bson:"user_id_legacy"`
-	DisplayName   *string    `json:"display_name" bson:"display_name"`
-	Comment       string     `json:"comment" bson:"comment"`
-	Value         *string    `json:"value" bson:"value"`
-	Avatar        string     `json:"avatar" bson:"avatar"`
-	IPAddress     string     `json:"ip_address" bson:"ip_address"`
-	UserAgent     string     `json:"user_agent" bson:"user_agent"`
-	SourceTransID string     `json:"source_trans_id" bson:"source_trans_id"`
-	SourceUID     string     `json:"source_uid" bson:"source_uid"`
-	SourceType    string     `json:"source_type" bson:"source_type"`
-	UserPlatform  string     `json:"user_platform" bson:"user_platform"`
-	Tagging       TaggingObj `json:"tagging" bson:"tagging"`
-	IsAnonymous   bool       `json:"is_anonymous" bson:"is_anonymous"`
-	MediaPath     []string   `json:"media_path" bson:"media_path"`
-	IsWithMedia   bool       `json:"is_with_media" bson:"is_with_media"`
-	ReplyComment  string     `json:"reply_comment"`
-	ReplyBy       string     `json:"reply_by"`
-	OrderNumber   string     `json:"order_number"`
-	RatingTypeID  string     `json:"rating_type_id"`
+	UserID        *string           `json:"user_id" bson:"user_id"`
+	UserIDLegacy  *string           `json:"user_id_legacy" bson:"user_id_legacy"`
+	DisplayName   *string           `json:"display_name" bson:"display_name"`
+	Comment       string            `json:"comment" bson:"comment"`
+	Value         *string           `json:"value" bson:"value"`
+	Avatar        string            `json:"avatar" bson:"avatar"`
+	IPAddress     string            `json:"ip_address" bson:"ip_address"`
+	UserAgent     string            `json:"user_agent" bson:"user_agent"`
+	SourceTransID string            `json:"source_trans_id" bson:"source_trans_id"`
+	SourceUID     string            `json:"source_uid" bson:"source_uid"`
+	SourceType    string            `json:"source_type" bson:"source_type"`
+	UserPlatform  string            `json:"user_platform" bson:"user_platform"`
+	Tagging       TaggingObj        `json:"tagging" bson:"tagging"`
+	IsAnonymous   bool              `json:"is_anonymous" bson:"is_anonymous"`
+	Media         []entity.MediaObj `json:"media" bson:"media"`
+	IsWithMedia   bool              `json:"is_with_media" bson:"is_with_media"`
+	ReplyComment  string            `json:"reply_comment"`
+	ReplyBy       string            `json:"reply_by"`
+	OrderNumber   string            `json:"order_number"`
+	RatingTypeID  string            `json:"rating_type_id"`
 }
 
 func (req CreateRatingSubmissionMpRequest) Validate() error {

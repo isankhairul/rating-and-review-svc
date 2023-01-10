@@ -75,11 +75,11 @@ definitions:
       is_anonymous:
         type: boolean
         x-go-name: IsAnonymous
-      media_path:
+      media:
         items:
-          $ref: '#/definitions/MediaPathObj'
+          $ref: '#/definitions/MediaObj'
         type: array
-        x-go-name: MediaPath
+        x-go-name: Media
       rating_type:
         type: string
         x-go-name: RatingType
@@ -114,11 +114,11 @@ definitions:
       is_anonymous:
         type: boolean
         x-go-name: IsAnonymous
-      media_path:
+      media:
         items:
-          $ref: '#/definitions/MediaPathObj'
+          $ref: '#/definitions/MediaObj'
         type: array
-        x-go-name: MediaPath
+        x-go-name: Media
       rating_type:
         type: string
         x-go-name: RatingType
@@ -259,7 +259,7 @@ definitions:
         x-go-name: Type
     type: object
     x-go-package: go-klikdokter/app/model/request
-  MediaPathObj:
+  MediaObj:
     properties:
       media_path:
         type: string
@@ -268,7 +268,7 @@ definitions:
         type: string
         x-go-name: UID
     type: object
-    x-go-package: go-klikdokter/app/model/request
+    x-go-package: go-klikdokter/app/model/entity
   MetaResponse:
     properties:
       code:
@@ -771,11 +771,11 @@ definitions:
       comment:
         type: string
         x-go-name: Comment
-      media_path:
+      media:
         items:
-          $ref: '#/definitions/MediaPathObj'
+          $ref: '#/definitions/MediaObj'
         type: array
-        x-go-name: MediaPath
+        x-go-name: Media
       rating_id:
         type: string
         x-go-name: RatingID

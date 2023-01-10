@@ -3,7 +3,7 @@ package util_media
 import (
 	"encoding/json"
 	"fmt"
-	"go-klikdokter/app/model/request"
+	"go-klikdokter/app/model/entity"
 	"go-klikdokter/helper/global"
 	"go-klikdokter/helper/httputil"
 	"net/http"
@@ -19,7 +19,7 @@ type Response struct {
 	Data    interface{} `json:"data"`
 }
 
-func ImageHouseKeeping(logg log.Logger, mediaPath []request.MediaPathObj, ratingSubsID string) ([]map[string]interface{}, error) {
+func ImageHouseKeeping(logg log.Logger, mediaPath []entity.MediaObj, ratingSubsID string) ([]map[string]interface{}, error) {
 	logger := log.With(logg, "media-svc", "ImageHouseKeeping")
 	response := []map[string]interface{}{}
 	var error error

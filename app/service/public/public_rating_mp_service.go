@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"go-klikdokter/app/model/base"
 	publicrequest "go-klikdokter/app/model/request/public"
+	"go-klikdokter/app/model/response"
 	publicresponse "go-klikdokter/app/model/response/public"
 	"go-klikdokter/app/repository"
 	publicrepository "go-klikdokter/app/repository/public"
@@ -101,14 +102,15 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 			displayName = *v.DisplayName
 		}
 		// update media_path from null to empty array
-		if v.MediaPath == nil {
-			v.MediaPath = []string{}
-		}
-
 		// create thumbor response
-		mediaImages := []string{}
-		for _, value := range v.MediaPath {
-			mediaImages = append(mediaImages, thumbor.GetNewThumborImagesOriginal(value))
+		var mediaResponse = []response.MediaObjResponse{}
+		for _, value := range v.Media {
+			mediaObjResponse := response.MediaObjResponse{
+				UID:        value.UID,
+				MediaPath:  value.MediaPath,
+				MediaImage: thumbor.GetNewThumborImagesOriginal(value.MediaPath),
+			}
+			mediaResponse = append(mediaResponse, mediaObjResponse)
 		}
 
 		results = append(results, publicresponse.PublicRatingSubmissionMpResponse{
@@ -124,9 +126,8 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 			LikeCounter:   v.LikeCounter,
 			Value:         v.Value,
 			LikeByMe:      false,
-			MediaPath:     v.MediaPath,
+			Media:         mediaResponse,
 			IsWithMedia:   v.IsWithMedia,
-			MediaImages:   mediaImages,
 			CreatedAt:     v.CreatedAt.In(Loc),
 		})
 
@@ -275,12 +276,14 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionByID(ctx context.Cont
 		}
 
 		// create thumbor response
-		mediaImages := []string{}
-		for _, value := range v.MediaPath {
-			mediaImages = append(mediaImages, thumbor.GetNewThumborImagesOriginal(value))
-		}
-		if v.MediaPath == nil {
-			v.MediaPath = []string{}
+		var mediaResponse = []response.MediaObjResponse{}
+		for _, value := range v.Media {
+			mediaObjResponse := response.MediaObjResponse{
+				UID:        value.UID,
+				MediaPath:  value.MediaPath,
+				MediaImage: thumbor.GetNewThumborImagesOriginal(value.MediaPath),
+			}
+			mediaResponse = append(mediaResponse, mediaObjResponse)
 		}
 		result = append(result, publicresponse.PublicRatingSubmissionMpResponse{
 			ID:            v.ID,
@@ -295,9 +298,8 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionByID(ctx context.Cont
 			LikeCounter:   v.LikeCounter,
 			Value:         v.Value,
 			LikeByMe:      false,
-			MediaPath:     nil,
 			IsWithMedia:   v.IsWithMedia,
-			MediaImages:   mediaImages,
+			Media:         mediaResponse,
 			CreatedAt:     v.CreatedAt.In(Loc),
 			Reply:         v.Reply,
 			ReplyBy:       v.ReplyBy,

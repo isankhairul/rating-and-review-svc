@@ -3,15 +3,20 @@ package response
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type RatingSubmissionMpResponse struct {
-	RatingID      string   `json:"rating_id" bson:"rating_id"`
-	UserID        *string  `json:"user_id" bson:"user_id"`
-	UserIDLegacy  *string  `json:"user_id_legacy" bson:"user_id_legacy"`
-	Comment       string   `json:"comment" bson:"comment"`
-	Value         string   `json:"value" bson:"value"`
-	SourceTransID string   `json:"source_trans_id" bson:"source_trans_id"`
-	MediaPath     []string `json:"media_path" bson:"media_path"`
-	MediaImages   []string `json:"media_images" bson:"media_images"`
-	IsWithMedia   bool     `json:"is_with_media" bson:"is_with_media"`
+	RatingID      string             `json:"rating_id" bson:"rating_id"`
+	UserID        *string            `json:"user_id" bson:"user_id"`
+	UserIDLegacy  *string            `json:"user_id_legacy" bson:"user_id_legacy"`
+	Comment       string             `json:"comment" bson:"comment"`
+	Value         string             `json:"value" bson:"value"`
+	SourceTransID string             `json:"source_trans_id" bson:"source_trans_id"`
+	Media         []MediaObjResponse `json:"media" bson:"media"`
+	IsWithMedia   bool               `json:"is_with_media" bson:"is_with_media"`
+}
+
+type MediaObjResponse struct {
+	UID        string `json:"uid"`
+	MediaPath  string `json:"media_path"`
+	MediaImage string `json:"media_image"`
 }
 
 type CreateRatingSubmissionMpResponse struct {
