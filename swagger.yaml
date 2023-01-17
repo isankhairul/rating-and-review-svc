@@ -356,7 +356,7 @@ definitions:
         type: string
         x-go-name: UpdatedAt
     type: object
-    x-go-name: RatingsCol
+    x-go-name: RatingsMpCol
     x-go-package: go-klikdokter/app/model/entity
   RatingByType:
     properties:
@@ -789,6 +789,9 @@ definitions:
     x-go-package: go-klikdokter/app/model/request
   UploadResponse:
     properties:
+      media_image:
+        type: string
+        x-go-name: MediaImage
       media_path:
         type: string
         x-go-name: MediaPath
@@ -2025,16 +2028,19 @@ paths:
       parameters:
       - description: Image file
         in: formData
-        name: Image
+        name: image
         type: file
+        x-go-name: Image
       - description: Source
         in: formData
-        name: SourceType
+        name: source_type
         type: string
+        x-go-name: SourceType
       - description: Source UID
         in: formData
-        name: SourceUID
+        name: source_uid
         type: string
+        x-go-name: SourceUID
       responses:
         "200":
           description: Success Response.

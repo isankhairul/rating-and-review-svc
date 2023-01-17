@@ -7,17 +7,17 @@ type ReqUploadForm struct {
 	// Image file
 	// in: formData
 	// swagger:file
-	Image os.File `json: "image"`
+	Image os.File `json:"image"`
 	// Source
 	// in: formData
-	SourceType string `json: "source_type"`
+	SourceType string `json:"source_type"`
 	// Source UID
 	// in: formData
-	SourceUID string `json: "source_uid"`
+	SourceUID string `json:"source_uid"`
 }
 
 type UploadImageRequest struct {
-	//Filename
+	// Filename
 	FileName string `json:"file_name"`
 	// Image byte
 	Image []byte `json:"image"`
