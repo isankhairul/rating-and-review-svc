@@ -722,7 +722,6 @@ func (s *ratingMpServiceImpl) summaryRatingNumeric(rating entity.RatingsMpCol, s
 	if sumCountRatingSubs == nil {
 		return nil, errors.New("data RatingSubmission not found")
 	}
-
 	formulaRating, err := s.ratingMpRepo.GetRatingFormulaByRatingTypeIdAndSourceType(rating.RatingTypeId, sourceType)
 	if err != nil {
 		return nil, err
@@ -758,6 +757,12 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 	result.SourceUID = sourceUID
 	result.TotalReviewer = sumCountRatingSubs.Count
 	result.TotalValue = "0"
+
+	for _, c := range sumCountRatingSubs.Comments {
+		if strings.TrimSpace(c) != "" {
+			result.TotalComment++
+		}
+	}
 
 	if formula != "" {
 		expression, err := govaluate.NewEvaluableExpression(formula)

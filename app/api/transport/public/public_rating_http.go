@@ -25,6 +25,13 @@ func PublicRatingHttpHandler(s publicservice.PublicRatingService, logger log.Log
 		httptransport.ServerErrorEncoder(encoder.EncodeError),
 	}
 
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/public/ratings-summary/detail/{source_type}").Handler(httptransport.NewServer(
+		ep.GetListDetailRatingSummaryBySourceType,
+		decodePublicGetListDetailRatingSummaryRequest,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
 	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/public/ratings-summary/{source_type}").Handler(httptransport.NewServer(
 		ep.GetListRatingSummaryBySourceType,
 		decodeGetRatingSummaryBySourceType,
@@ -68,5 +75,17 @@ func decodeGetRatingSubmissionBySourceTypeAndUID(ctx context.Context, r *http.Re
 	if err != nil {
 		return nil, err
 	}
+	return params, nil
+}
+
+func decodePublicGetListDetailRatingSummaryRequest(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var params publicrequest.PublicGetListDetailRatingSummaryRequest
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+	if err = schema.NewDecoder().Decode(&params, r.Form); err != nil {
+		return nil, err
+	}
+	params.SourceType = mux.Vars(r)["source_type"]
 	return params, nil
 }

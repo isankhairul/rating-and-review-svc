@@ -358,6 +358,7 @@ func (r *ratingMpRepo) GetSumCountRatingSubsByRatingId(ratingId string) (*public
 				{Key: "_id", Value: primitive.Null{}},
 				{Key: "sum", Value: bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$convertedValue"}}}}}},
 				{Key: "count", Value: bson.D{{"$sum", 1}}},
+				{Key: "comments", Value: bson.D{{"$addToSet", "$comment"}}},
 			}}},
 	}
 

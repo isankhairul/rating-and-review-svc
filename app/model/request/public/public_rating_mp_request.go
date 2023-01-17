@@ -76,7 +76,7 @@ func (req GetPublicListRatingSubmissionMpRequest) ValidateSourceType() error {
 
 func (req GetPublicListRatingSubmissionByIDRequest) ValidateFilterAndSource() error {
 	listAvailableSource := []string{"all", "mp"}
-	
+
 	return validation.ValidateStruct(&req,
 		validation.Field(&req.Source, validation.Required, validation.In(sliceStringToSliceInterface(listAvailableSource)...).Error(fmt.Sprintf("source should be %s", strings.Join(listAvailableSource, ",")))),
 	)
@@ -90,7 +90,7 @@ type FilterRatingSubmissionMp struct {
 	LikertFilter  LikertFilter `json:"likert_filter"`
 	UserIdLegacy  []string     `json:"user_id_legacy"`
 	SourceTransID []string     `json:"source_trans_id"`
-	RatingSubsID  []string	   `json:"rating_subs_id"`
+	RatingSubsID  []string     `json:"rating_subs_id"`
 	Value         string       `json:"value"`
 	IsWithMedia   *bool        `json:"is_with_media"`
 }
@@ -101,4 +101,33 @@ func sliceStringToSliceInterface(arr []string) []interface{} {
 		arrInterface[i] = v
 	}
 	return arrInterface
+}
+
+// swagger:parameters PublicGetListDetailRatingSummaryRequest
+type PublicGetListDetailRatingSummaryRequest struct {
+	// Filter available {"source_uid": [], "rating_type": []}
+	// required: true
+	Filter string `json:"filter" schema:"filter" binding:"omitempty"`
+
+	Limit int    `json:"limit" schema:"limit" binding:"omitempty,numeric,min=1,max=100"`
+	Page  int    `json:"page" schema:"page" binding:"omitempty,numeric,min=1"`
+	Sort  string `json:"sort" schema:"sort" binding:"omitempty"`
+	Dir   string `json:"dir" schema:"dir" binding:"omitempty"`
+
+	// SourceType
+	// in: path
+	// required: true
+	SourceType string `json:"source_type"`
+}
+
+func (r *PublicGetListDetailRatingSummaryRequest) MakeDefaultValueIfEmpty() {
+	if r.Limit <= 0 {
+		r.Limit = 50
+	}
+	if r.Page <= 0 {
+		r.Page = 1
+	}
+	if r.Sort == "" {
+		r.Sort = "updated_at"
+	}
 }

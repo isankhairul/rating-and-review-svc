@@ -167,11 +167,13 @@ type RatingSummaryMpNumeric struct {
 	SourceUID     string `json:"source_uid"`
 	TotalValue    string `json:"total_value"`
 	TotalReviewer int64  `json:"total_reviewer"`
+	TotalComment  int64  `json:"total_comment"`
 }
 
 type PublicSumCountRatingSummaryMp struct {
-	Sum   int64 `json:"sum"`
-	Count int64 `json:"count"`
+	Sum      int64    `json:"sum"`
+	Count    int64    `json:"count"`
+	Comments []string `json:"comments"`
 }
 
 type PublicRatingSubGroupBySourceMp struct {
@@ -179,5 +181,19 @@ type PublicRatingSubGroupBySourceMp struct {
 		SourceUID  string `json:"source_uid" bson:"source_uid"`
 		SourceType string `json:"source_type" bson:"source_type"`
 	} `json:"_id" bson:"_id"`
-	RatingSubmissionMp []entity.RatingSubmissionMp `json:"rating_submission_mp" bson:"rating_submission_mp"`
+	RatingSubmissionsMp []entity.RatingSubmissionMp `json:"rating_submissions_mp" bson:"rating_submissions_mp"`
+}
+
+type PublicRatingSummaryListDetailResponse struct {
+	SourceUID           string                                `json:"source_uid,omitempty"`
+	SourceType          string                                `json:"source_type,omitempty"`
+	RatingType          string                                `json:"rating_type,omitempty"`
+	TotalReview         int64                                 `json:"total_review,omitempty"`
+	RatingSummaryDetail []PublicRatingSummaryDetailMpResponse `json:"rating_summary_detail"`
+}
+
+type PublicRatingSummaryDetailMpResponse struct {
+	Value   string  `json:"value"`
+	Count   int64   `json:"count"`
+	Percent float32 `json:"percent"`
 }

@@ -15,6 +15,8 @@ import (
 	"go-klikdokter/helper/message"
 	"go-klikdokter/helper/thumbor"
 	"go-klikdokter/pkg/util"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-kit/log"
@@ -27,6 +29,7 @@ type PublicRatingMpService interface {
 	GetListRatingSubmissionBySourceTypeAndUID(input publicrequest.GetPublicListRatingSubmissionRequest) ([]publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message)
 	GetListRatingSummaryBySourceType(input publicrequest.GetPublicListRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryMpResponse, *base.Pagination, message.Message)
 	GetListRatingSubmissionByID(ctx context.Context, input publicrequest.GetPublicListRatingSubmissionByIDRequest) ([]publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message, interface{})
+	GetListDetailRatingSummaryBySourceType(input publicrequest.PublicGetListDetailRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryListDetailResponse, *base.Pagination, message.Message)
 }
 
 type publicRatingMpServiceImpl struct {
@@ -179,6 +182,7 @@ func (s *publicRatingMpServiceImpl) summaryRatingNumeric(sourceUID string, sourc
 	if err != nil {
 		return nil, err
 	}
+
 	if sumCountRatingSubs == nil {
 		return nil, errors.New("data RatingSubmission not found")
 	}
@@ -269,10 +273,12 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionByID(ctx context.Cont
 
 		// Masking Anonym Display Name
 		displayName := ""
-		if v.IsAnonymous {
-			displayName = util.MaskDisplayName(*v.DisplayName)
-		} else {
-			displayName = *v.DisplayName
+		if v.DisplayName != nil {
+			if v.IsAnonymous {
+				displayName = util.MaskDisplayName(*v.DisplayName)
+			} else {
+				displayName = *v.DisplayName
+			}
 		}
 
 		// create thumbor response
@@ -315,6 +321,12 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 	result.TotalReviewer = sumCountRatingSubs.Count
 	result.TotalValue = "0"
 
+	for _, c := range sumCountRatingSubs.Comments {
+		if strings.TrimSpace(c) != "" {
+			result.TotalComment++
+		}
+	}
+
 	if formula != "" {
 		expression, err := govaluate.NewEvaluableExpression(formula)
 		if err != nil {
@@ -337,4 +349,84 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 	}
 
 	return result, nil
+}
+
+// swagger:route GET /public/ratings-summary/detail/{source_type} PublicRating PublicGetListDetailRatingSummaryRequest
+// Get List Detail Rating Summary
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input publicrequest.PublicGetListDetailRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryListDetailResponse, *base.Pagination, message.Message) {
+	results := []publicresponse.PublicRatingSummaryListDetailResponse{}
+	input.MakeDefaultValueIfEmpty()
+	var dir int
+	if input.Dir == "asc" {
+		dir = 1
+	} else {
+		dir = -1
+	}
+	filter := publicrequest.FilterRatingSummary{}
+	filter.SourceType = input.SourceType
+	if input.Filter != "" {
+		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
+		if errMarshal != nil {
+			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+		}
+	}
+	if len(filter.SourceUid) == 0 {
+		return nil, nil, message.ErrSourceUidRequire
+	}
+
+	ratingSubs, pagination, err := s.publicRatingMpRepo.GetPublicRatingSubmissionsGroupBySource(input.Limit, input.Page, dir, input.Sort, filter)
+
+	if err != nil {
+		return nil, nil, message.RecordNotFound
+	}
+	if len(ratingSubs) <= 0 {
+		return results, pagination, message.SuccessMsg
+	}
+
+	// https://it-mkt.atlassian.net/browse/MP-675
+	// case product 1: total 10 review, bintang 5 ada 9, bar hijau hampir penuh (9/10 = 90%).
+	// case product 2: total 155 review, bintang 4 ada 11, bar hijau nya sedikit (11/155 = 7%)
+
+	// processing calculate detail summary
+	for _, ratingSub := range ratingSubs {
+		// initiate rating value
+		arrRatingValue := []string{"5", "4", "3", "2", "1"}
+		if ratingSub.ID.SourceType == "store" {
+			arrRatingValue = []string{"3", "2", "1"}
+		}
+
+		pRsldr := publicresponse.PublicRatingSummaryListDetailResponse{}
+		pRsldr.SourceType = ratingSub.ID.SourceType
+		pRsldr.SourceUID = ratingSub.ID.SourceUID
+		pRsldr.TotalReview = int64(len(ratingSub.RatingSubmissionsMp))
+		var arrRatingDetailSummary []publicresponse.PublicRatingSummaryDetailMpResponse
+
+		for _, arv := range arrRatingValue {
+			ratingDetailSummary := publicresponse.PublicRatingSummaryDetailMpResponse{}
+			for _, rsmp := range ratingSub.RatingSubmissionsMp {
+				ratingDetailSummary.Value = arv
+
+				// increment count
+				if arv == rsmp.Value {
+					ratingDetailSummary.Count = ratingDetailSummary.Count + 1
+				}
+			}
+
+			// calculate percentage
+			if ratingDetailSummary.Count > 0 {
+				percent, _ := strconv.ParseFloat(fmt.Sprintf("%.1f", (float32(ratingDetailSummary.Count)/float32(pRsldr.TotalReview))*100), 32)
+				ratingDetailSummary.Percent = float32(percent)
+			}
+			arrRatingDetailSummary = append(arrRatingDetailSummary, ratingDetailSummary)
+		}
+		pRsldr.RatingSummaryDetail = arrRatingDetailSummary
+		results = append(results, pRsldr)
+	}
+
+	return results, pagination, message.SuccessMsg
 }

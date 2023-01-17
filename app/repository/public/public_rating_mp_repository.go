@@ -157,7 +157,7 @@ func (r *publicRatingMpRepo) GetPublicRatingSubmissionsCustom(limit, page, dir i
 	bsonCancelled := bson.D{{Key: "cancelled", Value: false}}
 
 	bsonRatingSubsID := bson.D{}
-	
+
 	if filter.RatingSubsID != nil {
 		var objectIDFromHex = func(hex string) primitive.ObjectID {
 			objectID, _ := primitive.ObjectIDFromHex(hex)
@@ -165,10 +165,10 @@ func (r *publicRatingMpRepo) GetPublicRatingSubmissionsCustom(limit, page, dir i
 		}
 		var listObjID = filter.RatingSubsID
 		var Receivers []primitive.ObjectID
-	
+
 		for _, val := range listObjID {
 			newID := objectIDFromHex(val)
-			Receivers = append(Receivers, newID )
+			Receivers = append(Receivers, newID)
 		}
 		filter := bson.D{
 			{"_id",
@@ -179,7 +179,7 @@ func (r *publicRatingMpRepo) GetPublicRatingSubmissionsCustom(limit, page, dir i
 				},
 			},
 		}
-		
+
 		bsonRatingSubsID = filter
 	}
 
@@ -254,7 +254,7 @@ func (r *publicRatingMpRepo) GetPublicRatingSubmissionsGroupBySource(limit, page
 			{"$group",
 				bson.D{
 					{"_id", groupSource},
-					{"ratingSubCol", bson.D{{"$push", "$$ROOT"}}},
+					{"rating_submissions_mp", bson.D{{"$push", "$$ROOT"}}},
 				},
 			},
 		},
@@ -392,7 +392,7 @@ func (r *publicRatingMpRepo) GetSumCountRatingSubsByRatingId(ratingId string) (*
 		bson.D{{
 			Key: "$group",
 			Value: bson.D{
-				{Key: "_id", Value: primitive.Null{}},
+				{Key: "_id", Value: bson.D{{Key: "rating_id", Value: ratingId}}},
 				{Key: "sum", Value: bson.D{{"$sum", "$convertedValue"}}},
 				{Key: "count", Value: bson.D{{"$sum", 1}}},
 			}}},
@@ -426,6 +426,9 @@ func (r *publicRatingMpRepo) GetSumCountRatingSubsBySource(sourceUID string, sou
 		{Key: "source_type", Value: sourceType},
 		{Key: "cancelled", Value: false}}
 
+	bsonGroupID := bson.D{{Key: "source_uid", Value: sourceUID},
+		{Key: "source_type", Value: sourceType}}
+
 	pipeline := bson.A{
 		bson.D{{Key: "$match",
 			Value: bsonRatingIdAndCancelled,
@@ -436,9 +439,10 @@ func (r *publicRatingMpRepo) GetSumCountRatingSubsBySource(sourceUID string, sou
 		bson.D{{
 			Key: "$group",
 			Value: bson.D{
-				{Key: "_id", Value: primitive.Null{}},
+				{Key: "_id", Value: bsonGroupID},
 				{Key: "sum", Value: bson.D{{"$sum", bson.D{{"$multiply", bson.A{"$convertedValue"}}}}}},
 				{Key: "count", Value: bson.D{{"$sum", 1}}},
+				{Key: "comments", Value: bson.D{{"$addToSet", "$comment"}}},
 			}}},
 	}
 

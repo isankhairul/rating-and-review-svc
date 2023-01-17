@@ -1164,6 +1164,52 @@ paths:
             $ref: '#/definitions/SuccessResponse'
       tags:
       - PublicRating
+  /public/ratings-summary/detail/{source_type}:
+    get:
+      description: Get List Detail Rating Summary
+      operationId: PublicGetListDetailRatingSummaryRequest
+      parameters:
+      - description: 'Filter available {"source_uid": [], "rating_type": []}'
+        in: query
+        name: filter
+        required: true
+        type: string
+        x-go-name: Filter
+      - format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - in: query
+        name: sort
+        type: string
+        x-go-name: Sort
+      - in: query
+        name: dir
+        type: string
+        x-go-name: Dir
+      - description: SourceType
+        in: path
+        name: source_type
+        required: true
+        type: string
+        x-go-name: SourceType
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - PublicRating
   /rating-formula:
     get:
       description: Get Rating Formula Listing

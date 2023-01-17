@@ -20,12 +20,14 @@ import (
 type PublicRatingEndpoint struct {
 	GetListRatingSubmissionBySourceTypeAndUID endpoint.Endpoint
 	GetListRatingSummaryBySourceType          endpoint.Endpoint
+	GetListDetailRatingSummaryBySourceType    endpoint.Endpoint
 }
 
 func MakePublicRatingEndpoints(s publicservice.PublicRatingService, logger log.Logger, db *mongo.Database) PublicRatingEndpoint {
 	return PublicRatingEndpoint{
 		GetListRatingSummaryBySourceType:          makeGetListRatingSummaryBySourceType(s, logger, db),
 		GetListRatingSubmissionBySourceTypeAndUID: makeGetListRatingSubmissionBySourceTypeAndUID(s, logger, db),
+		GetListDetailRatingSummaryBySourceType:    makeGetListDetailRatingSummaryBySourceType(s, logger, db),
 	}
 }
 
@@ -62,6 +64,23 @@ func makeGetListRatingSubmissionBySourceTypeAndUID(s publicservice.PublicRatingS
 		} else {
 			result, pagination, msg = s.GetListRatingSubmissionBySourceTypeAndUID(req)
 		}
+
+		if msg.Code != 212000 {
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil
+		}
+		return base.SetHttpResponse(msg.Code, msg.Message, result, pagination), nil
+	}
+}
+
+func makeGetListDetailRatingSummaryBySourceType(s publicservice.PublicRatingService, logger log.Logger, db *mongo.Database) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(publicrequest.PublicGetListDetailRatingSummaryRequest)
+		var result interface{}
+		var pagination *base.Pagination
+		var msg message.Message
+
+		publicMp := publicservice.NewPublicRatingMpService(logger, rp.NewRatingMpRepository(db), publicrepository.NewPublicRatingMpRepository(db))
+		result, pagination, msg = publicMp.GetListDetailRatingSummaryBySourceType(req)
 
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil
