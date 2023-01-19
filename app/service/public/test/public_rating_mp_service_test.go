@@ -226,6 +226,7 @@ func TestGetListRatingSubmissionMpByID(t *testing.T) {
 }
 
 func TestGetListDetailRatingSummaryMpBySourceType(t *testing.T) {
+	idObj, _ := primitive.ObjectIDFromHex(idDummy1)
 	paginationResult := base.Pagination{
 		Records:      1,
 		Limit:        10,
@@ -248,8 +249,17 @@ func TestGetListDetailRatingSummaryMpBySourceType(t *testing.T) {
 		SourceUid:  []string{"1234"},
 	}
 
+	ratingFormulaMp := entity.RatingFormulaCol{
+		ID:           idObj,
+		SourceType:   "product",
+		Formula:      "(sum / count) / 1",
+		RatingTypeId: ratingid,
+		RatingType:   ratingType,
+	}
+
 	publicRatingMpRepository.Mock.On("GetPublicRatingSubmissionsGroupBySource", requestSummaryMp.Limit, requestSummaryMp.Page, -1, "created_at", filterListDetailRatingSummaryMp).
 		Return([]publicresponse.PublicRatingSubGroupBySourceMp{ratingSubmissionGroupBySource}, &paginationResult, nil).Once()
+	publicRatingMpRepository.Mock.On("GetRatingFormulaBySourceType", requestSummaryMp.SourceType).Return(&ratingFormulaMp, nil).Once()
 
 	result, pagination, msg := publicRatingMpService.GetListDetailRatingSummaryBySourceType(requestSummaryMpDetail)
 

@@ -382,12 +382,19 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 	}
 
 	ratingSubs, pagination, err := s.publicRatingMpRepo.GetPublicRatingSubmissionsGroupBySource(input.Limit, input.Page, dir, input.Sort, filter)
-
 	if err != nil {
 		return nil, nil, message.RecordNotFound
 	}
 	if len(ratingSubs) <= 0 {
 		return results, pagination, message.SuccessMsg
+	}
+
+	formulaRating, err := s.publicRatingMpRepo.GetRatingFormulaBySourceType(input.SourceType)
+	if err != nil {
+		return nil, nil, message.RecordNotFound
+	}
+	if formulaRating == nil {
+		return nil, nil, message.RecordNotFound
 	}
 
 	// https://it-mkt.atlassian.net/browse/MP-675
@@ -406,8 +413,21 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 		pRsldr.SourceType = ratingSub.ID.SourceType
 		pRsldr.SourceUID = ratingSub.ID.SourceUID
 		pRsldr.TotalReview = int64(len(ratingSub.RatingSubmissionsMp))
-		var arrRatingDetailSummary []publicresponse.PublicRatingSummaryDetailMpResponse
+		var arrComment []string
+		var totalValue int64
+		// get comment and total value
+		for _, rsmp := range ratingSub.RatingSubmissionsMp {
+			if rsmp.Comment != nil && *rsmp.Comment != "" {
+				arrComment = append(arrComment, *rsmp.Comment)
+			}
+			intValue, err := strconv.Atoi(rsmp.Value)
+			if err != nil {
+				intValue = 0
+			}
+			totalValue = totalValue + int64(intValue)
+		}
 
+		var arrRatingDetailSummary []publicresponse.PublicRatingSummaryDetailMpResponse
 		for _, arv := range arrRatingValue {
 			ratingDetailSummary := publicresponse.PublicRatingSummaryDetailMpResponse{}
 			for _, rsmp := range ratingSub.RatingSubmissionsMp {
@@ -427,6 +447,19 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 			arrRatingDetailSummary = append(arrRatingDetailSummary, ratingDetailSummary)
 		}
 		pRsldr.RatingSummaryDetail = arrRatingDetailSummary
+
+		// calculate total_value
+		sumCountRatingSub := &publicresponse.PublicSumCountRatingSummaryMp{
+			Comments: arrComment,
+			Sum:      totalValue,
+			Count:    pRsldr.TotalReview,
+		}
+		ratingSummary, err := calculateRatingMpValue(ratingSub.ID.SourceUID, formulaRating.Formula, sumCountRatingSub)
+		if err == nil {
+			pRsldr.TotalValue = ratingSummary.TotalValue
+			pRsldr.TotalComment = ratingSummary.TotalComment
+		}
+
 		results = append(results, pRsldr)
 	}
 

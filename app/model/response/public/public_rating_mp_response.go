@@ -188,7 +188,9 @@ type PublicRatingSummaryListDetailResponse struct {
 	SourceUID           string                                `json:"source_uid,omitempty"`
 	SourceType          string                                `json:"source_type,omitempty"`
 	RatingType          string                                `json:"rating_type,omitempty"`
+	TotalValue          string                                `json:"total_value,omitempty"`
 	TotalReview         int64                                 `json:"total_review,omitempty"`
+	TotalComment        int64                                 `json:"total_comment,omitempty"`
 	RatingSummaryDetail []PublicRatingSummaryDetailMpResponse `json:"rating_summary_detail"`
 }
 
