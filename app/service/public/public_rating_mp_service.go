@@ -132,6 +132,8 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 			Media:         mediaResponse,
 			IsWithMedia:   v.IsWithMedia,
 			CreatedAt:     v.CreatedAt.In(Loc),
+			Reply:         v.Reply,
+			ReplyBy:       v.ReplyBy,
 		})
 
 	}
