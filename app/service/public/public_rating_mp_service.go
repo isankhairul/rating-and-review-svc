@@ -203,6 +203,11 @@ func (s *publicRatingMpServiceImpl) summaryRatingNumeric(sourceUID string, sourc
 			return nil, err
 		}
 
+		ratingSummary.MaximumValue = "5.0"
+		if sourceType == "store" {
+			ratingSummary.MaximumValue = "3.0"
+		}
+
 		data := publicresponse.PublicRatingSummaryMpResponse{
 			SourceUid:     sourceUID,
 			SourceType:    sourceType,
@@ -454,6 +459,12 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 			Sum:      totalValue,
 			Count:    pRsldr.TotalReview,
 		}
+
+		pRsldr.MaximumValue = "5.0"
+		if input.SourceType == "store" {
+			pRsldr.MaximumValue = "3.0"
+		}
+
 		ratingSummary, err := calculateRatingMpValue(ratingSub.ID.SourceUID, formulaRating.Formula, sumCountRatingSub)
 		if err == nil {
 			pRsldr.TotalValue = ratingSummary.TotalValue

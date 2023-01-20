@@ -166,6 +166,7 @@ func MapRatingLikertToRatingNumericMpResp(data entity.RatingTypesLikertCol, rati
 type RatingSummaryMpNumeric struct {
 	SourceUID     string `json:"source_uid"`
 	TotalValue    string `json:"total_value"`
+	MaximumValue  string `json:"maximum_value"`
 	TotalReviewer int64  `json:"total_reviewer"`
 	TotalComment  int64  `json:"total_comment"`
 }
@@ -189,6 +190,7 @@ type PublicRatingSummaryListDetailResponse struct {
 	SourceType          string                                `json:"source_type,omitempty"`
 	RatingType          string                                `json:"rating_type,omitempty"`
 	TotalValue          string                                `json:"total_value,omitempty"`
+	MaximumValue        string                                `json:"maximum_value,omitempty"`
 	TotalReview         int64                                 `json:"total_review,omitempty"`
 	TotalComment        int64                                 `json:"total_comment,omitempty"`
 	RatingSummaryDetail []PublicRatingSummaryDetailMpResponse `json:"rating_summary_detail"`
