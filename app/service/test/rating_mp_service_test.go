@@ -33,6 +33,7 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 		Value:         "4",
 		Media:         []entity.MediaObj{},
 		Comment:       userId,
+		StoreUID:      "1",
 	}
 
 	objectID, _ := primitive.ObjectIDFromHex(id)
@@ -65,6 +66,7 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 			OrderNumber:   orderNumber,
 			RatingTypeID:  ratingTypeID.ID.Hex(),
 			Comment:       &userId,
+			StoreUID:      input.StoreUID,
 		},
 	}
 	arrSub := []entity.RatingSubmissionMp{sub}

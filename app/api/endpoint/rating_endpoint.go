@@ -483,12 +483,12 @@ func makeCreateRating(s service.RatingService, logger log.Logger, db *mongo.Data
 		}
 		var msg message.Message
 
-		if util.StringInSlice(strings.ToLower(req.SourceType), []string{"product", "store"}) {
-			ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
-			_, msg = ratingMp.CreateRating(req)
-		} else {
-			_, msg = s.CreateRating(req)
-		}
+		// if util.StringInSlice(strings.ToLower(req.SourceType), []string{"product", "store"}) {
+		// 	ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
+		// 	_, msg = ratingMp.CreateRating(req)
+		// } else {
+		// }
+		_, msg = s.CreateRating(req)
 
 		return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 	}
@@ -566,13 +566,14 @@ func makGetListRatingSummary(s service.RatingService, logger log.Logger, db *mon
 
 		var msg message.Message
 		var result interface{}
+		// if util.StringInSlice(strings.ToLower(req.SourceType), viper.GetStringSlice("source-type-mp")) {
+		// 	ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
+		// 	result, _, msg = ratingMp.GetListRatingSummaryBySourceType(req)
+		// } else {
+		// 	result, msg = s.GetListRatingSummary(req)
+		// }
 
-		if util.StringInSlice(strings.ToLower(req.SourceType), viper.GetStringSlice("source-type-mp")) {
-			ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
-			result, _, msg = ratingMp.GetListRatingSummaryBySourceType(req)
-		} else {
-			result, msg = s.GetListRatingSummary(req)
-		}
+		result, msg = s.GetListRatingSummary(req)
 
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil

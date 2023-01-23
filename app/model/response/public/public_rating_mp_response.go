@@ -30,6 +30,7 @@ type PublicRatingSubmissionMpResponse struct {
 	LikeCounter   int                         `json:"like_counter"`
 	SourceType    string                      `json:"source_type"`
 	SourceUID     string                      `json:"source_uid"`
+	StoreUID      string                      `json:"store_uid"`
 	Value         string                      `json:"value"`
 	LikeByMe      bool                        `json:"like_by_me"`
 	IsWithMedia   bool                        `json:"is_with_media"`
@@ -185,14 +186,22 @@ type PublicRatingSubGroupBySourceMp struct {
 	RatingSubmissionsMp []entity.RatingSubmissionMp `json:"rating_submissions_mp" bson:"rating_submissions_mp"`
 }
 
+type PublicRatingSubGroupByStoreSourceMp struct {
+	ID struct {
+		StoreUID   string `json:"store_uid" bson:"store_uid"`
+		SourceType string `json:"source_type" bson:"source_type"`
+	} `json:"_id" bson:"_id"`
+	RatingSubmissionsMp []entity.RatingSubmissionMp `json:"rating_submissions_mp" bson:"rating_submissions_mp"`
+}
+
 type PublicRatingSummaryListDetailResponse struct {
 	SourceUID           string                                `json:"source_uid,omitempty"`
 	SourceType          string                                `json:"source_type,omitempty"`
 	RatingType          string                                `json:"rating_type,omitempty"`
-	TotalValue          string                                `json:"total_value,omitempty"`
+	TotalValue          string                                `json:"total_value"`
 	MaximumValue        string                                `json:"maximum_value,omitempty"`
-	TotalReview         int64                                 `json:"total_review,omitempty"`
-	TotalComment        int64                                 `json:"total_comment,omitempty"`
+	TotalReview         int64                                 `json:"total_review"`
+	TotalComment        int64                                 `json:"total_comment"`
 	RatingSummaryDetail []PublicRatingSummaryDetailMpResponse `json:"rating_summary_detail"`
 }
 
@@ -200,4 +209,12 @@ type PublicRatingSummaryDetailMpResponse struct {
 	Value   string  `json:"value"`
 	Count   int64   `json:"count"`
 	Percent float32 `json:"percent"`
+}
+
+type RatingSummaryStoreProductNumeric struct {
+	StoreUID      string `json:"store_uid"`
+	TotalValue    string `json:"total_value"`
+	MaximumValue  string `json:"maximum_value"`
+	TotalReviewer int64  `json:"total_reviewer"`
+	TotalComment  int64  `json:"total_comment"`
 }

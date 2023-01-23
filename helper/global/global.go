@@ -31,3 +31,21 @@ func GetSourceTypeByRatingType(ratingType string) string {
 
 	return sourceType
 }
+
+func GetMaximumValueBySourceType(sourceType string) string {
+	// default value for product
+	var maximumValue string = "5.0"
+	if sourceType == "store" {
+		maximumValue = "3.0"
+	}
+	return maximumValue
+}
+
+func GetListRatingValueBySourceType(sourceType string) []string {
+	// default value for product
+	var arrRatingValue []string = []string{"5", "4", "3", "2", "1"}
+	if sourceType == "store" {
+		arrRatingValue = []string{"3", "2", "1"}
+	}
+	return arrRatingValue
+}

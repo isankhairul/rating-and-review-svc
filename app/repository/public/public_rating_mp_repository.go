@@ -34,6 +34,7 @@ type PublicRatingMpRepository interface {
 	GetRatingFormulaBySourceType(sourceType string) (*entity.RatingFormulaCol, error)
 	GetSumCountRatingSubsBySource(sourceUID string, sourceType string) (*publicresponse.PublicSumCountRatingSummaryMp, error)
 	GetPublicRatingSubmissionsCustom(limit, page, dir int, sort string, filter publicrequest.FilterRatingSubmissionMp, source string) ([]entity.RatingSubmissionMp, *base.Pagination, error)
+	GetPublicRatingSubmissionsGroupByStoreSource(limit, page, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]publicresponse.PublicRatingSubGroupByStoreSourceMp, *base.Pagination, error)
 }
 
 func NewPublicRatingMpRepository(db *mongo.Database) PublicRatingMpRepository {
@@ -551,4 +552,67 @@ func paginateGroupByMp(db *mongo.Database, page int, limit int64, result interfa
 	pagination.TotalPage = int(math.Ceil(float64(pagination.TotalRecords) / float64(pagination.GetLimit())))
 	pagination.Records = int64(s.Len())
 	return &pagination
+}
+
+func (r *publicRatingMpRepo) GetPublicRatingSubmissionsGroupByStoreSource(limit, page, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]publicresponse.PublicRatingSubGroupByStoreSourceMp, *base.Pagination, error) {
+	var results = []publicresponse.PublicRatingSubGroupByStoreSourceMp{}
+	limit64 := int64(limit)
+	bsonCancelled := bson.D{{Key: "cancelled", Value: false}}
+	skip := int64(page)*limit64 - limit64
+	groupSource := bson.D{
+		{"source_type", "$source_type"},
+		{"store_uid", "$store_uid"}}
+
+	bsonSourceType := bson.D{}
+	bsonStoreUID := bson.D{}
+
+	if filter.SourceType != "" {
+		bsonSourceType = bson.D{{Key: "source_type", Value: filter.SourceType}}
+	}
+
+	if len(filter.StoreUID) > 0 {
+		bsonStoreUID = bson.D{{Key: "store_uid", Value: bson.D{{Key: "$in", Value: filter.StoreUID}}}}
+	}
+
+	filterSource := bson.D{{Key: "$and",
+		Value: bson.A{
+			bsonStoreUID,
+			bsonSourceType,
+			bsonCancelled,
+		},
+	}}
+
+	pipeline := bson.A{
+		bson.D{
+			{"$match",
+				filterSource,
+			},
+		},
+		bson.D{
+			{"$group",
+				bson.D{
+					{"_id", groupSource},
+					{"rating_submissions_mp", bson.D{{"$push", "$$ROOT"}}},
+				},
+			},
+		},
+		bson.D{{"$sort", bson.D{{"created_at", -1}}}},
+		bson.D{{"$skip", skip}},
+		bson.D{{"$limit", limit}},
+	}
+
+	collectionName := entity.RatingSubmissionMp{}.CollectionName()
+	cursor, err := r.db.Collection(collectionName).Aggregate(context.Background(), pipeline)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	pagination := paginateGroupByMp(r.db, page, limit64, results, collectionName, groupSource, filterSource)
+	return results, pagination, nil
 }

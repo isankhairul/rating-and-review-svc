@@ -47,6 +47,13 @@ func PublicRatingMpHttpHandler(s publicservice.PublicRatingMpService, logger log
 		append(options, httptransport.ServerBefore(middleware.CorrelationIdToContext()))...,
 	))
 
+	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/public/ratings-summary/store-product").Handler(httptransport.NewServer(
+		ep.GetRatingSummaryStoreProduct,
+		decodeGetRatingSummaryStoreProduct,
+		encoder.EncodeResponseHTTPWithCorrelationID,
+		append(options, httptransport.ServerBefore(middleware.CorrelationIdToContext()))...,
+	))
+
 	return pr
 }
 
@@ -85,6 +92,20 @@ func decodeGetRatingSubmissionByID(ctx context.Context, r *http.Request) (rqst i
 		return nil, err
 	}
 	if err = schema.NewDecoder().Decode(&params, r.Form); err != nil {
+		return nil, err
+	}
+	return params, nil
+}
+
+func decodeGetRatingSummaryStoreProduct(ctx context.Context, r *http.Request) (rqst interface{}, err error) {
+	var params publicrequest.PublicGetRatingSummaryStoreProductRequest
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+	newSchema := schema.NewDecoder()
+	newSchema.IgnoreUnknownKeys(true)
+
+	if err = newSchema.Decode(&params, r.Form); err != nil {
 		return nil, err
 	}
 	return params, nil

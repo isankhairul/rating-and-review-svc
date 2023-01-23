@@ -12,6 +12,7 @@ import (
 	"go-klikdokter/app/repository"
 	publicrepository "go-klikdokter/app/repository/public"
 	"go-klikdokter/helper/config"
+	"go-klikdokter/helper/global"
 	"go-klikdokter/helper/message"
 	"go-klikdokter/helper/thumbor"
 	"go-klikdokter/pkg/util"
@@ -30,6 +31,7 @@ type PublicRatingMpService interface {
 	GetListRatingSummaryBySourceType(input publicrequest.GetPublicListRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryMpResponse, *base.Pagination, message.Message)
 	GetListRatingSubmissionByID(ctx context.Context, input publicrequest.GetPublicListRatingSubmissionByIDRequest) ([]publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message, interface{})
 	GetListDetailRatingSummaryBySourceType(input publicrequest.PublicGetListDetailRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryListDetailResponse, *base.Pagination, message.Message)
+	GetRatingSummaryStoreProduct(ctx context.Context, input publicrequest.PublicGetRatingSummaryStoreProductRequest) ([]publicresponse.RatingSummaryStoreProductNumeric, *base.Pagination, message.Message)
 }
 
 type publicRatingMpServiceImpl struct {
@@ -120,6 +122,7 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 			ID:            v.ID,
 			SourceType:    v.SourceType,
 			SourceUID:     v.SourceUID,
+			StoreUID:      v.StoreUID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
 			DisplayName:   displayName,
@@ -202,11 +205,7 @@ func (s *publicRatingMpServiceImpl) summaryRatingNumeric(sourceUID string, sourc
 		if err != nil {
 			return nil, err
 		}
-
-		ratingSummary.MaximumValue = "5.0"
-		if sourceType == "store" {
-			ratingSummary.MaximumValue = "3.0"
-		}
+		ratingSummary.MaximumValue = global.GetMaximumValueBySourceType(sourceType)
 
 		data := publicresponse.PublicRatingSummaryMpResponse{
 			SourceUid:     sourceUID,
@@ -255,7 +254,7 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionByID(ctx context.Cont
 		input.Page = 1
 	}
 	if input.Limit <= 0 {
-		input.Limit = 10
+		input.Limit = 100
 	}
 	if input.Sort == "" {
 		input.Sort = "created_at"
@@ -302,6 +301,7 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionByID(ctx context.Cont
 			ID:            v.ID,
 			SourceType:    v.SourceType,
 			SourceUID:     v.SourceUID,
+			StoreUID:      v.StoreUID,
 			UserID:        v.UserID,
 			UserIDLegacy:  v.UserIDLegacy,
 			DisplayName:   displayName,
@@ -409,10 +409,7 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 	// processing calculate detail summary
 	for _, ratingSub := range ratingSubs {
 		// initiate rating value
-		arrRatingValue := []string{"5", "4", "3", "2", "1"}
-		if ratingSub.ID.SourceType == "store" {
-			arrRatingValue = []string{"3", "2", "1"}
-		}
+		var arrRatingValue []string = global.GetListRatingValueBySourceType(ratingSub.ID.SourceType)
 
 		pRsldr := publicresponse.PublicRatingSummaryListDetailResponse{}
 		pRsldr.SourceType = ratingSub.ID.SourceType
@@ -459,11 +456,7 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 			Sum:      totalValue,
 			Count:    pRsldr.TotalReview,
 		}
-
-		pRsldr.MaximumValue = "5.0"
-		if input.SourceType == "store" {
-			pRsldr.MaximumValue = "3.0"
-		}
+		pRsldr.MaximumValue = global.GetMaximumValueBySourceType(input.SourceType)
 
 		ratingSummary, err := calculateRatingMpValue(ratingSub.ID.SourceUID, formulaRating.Formula, sumCountRatingSub)
 		if err == nil {
@@ -472,6 +465,90 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 		}
 
 		results = append(results, pRsldr)
+	}
+
+	return results, pagination, message.SuccessMsg
+}
+
+// swagger:route GET /public/ratings-summary/store-product PublicRating PublicGetRatingSummaryStoreProductRequest
+// Get List Rating Summary Store Product
+//
+// security:
+// responses:
+//  401: SuccessResponse
+//  200: SuccessResponse
+func (s *publicRatingMpServiceImpl) GetRatingSummaryStoreProduct(ctx context.Context, input publicrequest.PublicGetRatingSummaryStoreProductRequest) ([]publicresponse.RatingSummaryStoreProductNumeric, *base.Pagination, message.Message) {
+	// https://it-mkt.atlassian.net/browse/MP-694
+
+	results := []publicresponse.RatingSummaryStoreProductNumeric{}
+	input.MakeDefaultValueIfEmpty()
+	var sourceType string = "product"
+	var dir int
+	if input.Dir == "asc" {
+		dir = 1
+	} else {
+		dir = -1
+	}
+	filter := publicrequest.FilterRatingSummary{}
+	filter.SourceType = sourceType
+	if input.Filter != "" {
+		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
+		if errMarshal != nil {
+			fmt.Println("errMarshal", errMarshal)
+			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+		}
+	}
+	if len(filter.StoreUID) == 0 {
+		return nil, nil, message.ErrStoreUidRequire
+	}
+
+	ratingSubs, pagination, err := s.publicRatingMpRepo.GetPublicRatingSubmissionsGroupByStoreSource(input.Limit, input.Page, dir, input.Sort, filter)
+	if err != nil {
+		return nil, nil, message.RecordNotFound
+	}
+	if len(ratingSubs) <= 0 {
+		return nil, pagination, message.SuccessMsg
+	}
+
+	formulaRating, err := s.publicRatingMpRepo.GetRatingFormulaBySourceType(sourceType)
+	if err != nil {
+		return nil, nil, message.RecordNotFound
+	}
+	if formulaRating == nil {
+		return nil, nil, message.RecordNotFound
+	}
+
+	// processing calculate  summary
+	for _, ratingSub := range ratingSubs {
+		result := publicresponse.RatingSummaryStoreProductNumeric{}
+		result.StoreUID = ratingSub.ID.StoreUID
+		result.TotalReviewer = int64(len(ratingSub.RatingSubmissionsMp))
+		result.MaximumValue = global.GetMaximumValueBySourceType(sourceType)
+		var arrComment []string
+		var totalValue int64
+		// get comment and total value
+		for _, rsmp := range ratingSub.RatingSubmissionsMp {
+			if rsmp.Comment != nil && *rsmp.Comment != "" {
+				arrComment = append(arrComment, *rsmp.Comment)
+			}
+			intValue, err := strconv.Atoi(rsmp.Value)
+			if err != nil {
+				intValue = 0
+			}
+			totalValue = totalValue + int64(intValue)
+		}
+		sumCountRatingSub := &publicresponse.PublicSumCountRatingSummaryMp{
+			Comments: arrComment,
+			Sum:      totalValue,
+			Count:    result.TotalReviewer,
+		}
+		ratingSummary, err := calculateRatingMpValue(ratingSub.ID.StoreUID, formulaRating.Formula, sumCountRatingSub)
+		if err == nil {
+			result.TotalValue = ratingSummary.TotalValue
+			result.TotalComment = ratingSummary.TotalComment
+		}
+
+		results = append(results, result)
 	}
 
 	return results, pagination, message.SuccessMsg

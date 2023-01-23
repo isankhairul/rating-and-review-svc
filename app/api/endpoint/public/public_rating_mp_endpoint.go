@@ -13,14 +13,16 @@ import (
 type PublicRatingMpEndpoint struct {
 	GetListRatingSubmissionBySourceTypeAndUID endpoint.Endpoint
 	GetListRatingSummaryBySourceType          endpoint.Endpoint
-	GetListRatingSubmissionByID  			  endpoint.Endpoint
+	GetListRatingSubmissionByID               endpoint.Endpoint
+	GetRatingSummaryStoreProduct              endpoint.Endpoint
 }
 
 func MakePublicRatingMpEndpoints(s publicservice.PublicRatingMpService) PublicRatingMpEndpoint {
 	return PublicRatingMpEndpoint{
 		GetListRatingSummaryBySourceType:          makeGetListRatingSummaryMpBySourceType(s),
 		GetListRatingSubmissionBySourceTypeAndUID: makeGetListRatingSubmissionMpBySourceTypeAndUID(s),
-		GetListRatingSubmissionByID: makeGetListRatingSubmissionByID(s),
+		GetListRatingSubmissionByID:               makeGetListRatingSubmissionByID(s),
+		GetRatingSummaryStoreProduct:              makeGetRatingSummaryStoreProduct(s),
 	}
 }
 
@@ -49,10 +51,21 @@ func makeGetListRatingSubmissionMpBySourceTypeAndUID(s publicservice.PublicRatin
 func makeGetListRatingSubmissionByID(s publicservice.PublicRatingMpService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(publicrequest.GetPublicListRatingSubmissionByIDRequest)
-		result, pagination, msg, errMsg := s.GetListRatingSubmissionByID(ctx, req) 
+		result, pagination, msg, errMsg := s.GetListRatingSubmissionByID(ctx, req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponseWithCorrelationID(ctx, msg.Code, msg.Message, nil, nil, errMsg), nil
 		}
 		return base.SetHttpResponseWithCorrelationID(ctx, msg.Code, msg.Message, result, pagination, errMsg), nil
+	}
+}
+
+func makeGetRatingSummaryStoreProduct(s publicservice.PublicRatingMpService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(publicrequest.PublicGetRatingSummaryStoreProductRequest)
+		result, pagination, msg := s.GetRatingSummaryStoreProduct(ctx, req)
+		if msg.Code != 212000 {
+			return base.SetHttpResponseWithCorrelationID(ctx, msg.Code, msg.Message, nil, nil, nil), nil
+		}
+		return base.SetHttpResponseWithCorrelationID(ctx, msg.Code, msg.Message, result, pagination, nil), nil
 	}
 }

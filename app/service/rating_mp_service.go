@@ -30,17 +30,19 @@ type RatingMpService interface {
 	// Rating submission
 	CreateRatingSubmissionMp(input request.CreateRatingSubmissionRequest) ([]response.CreateRatingSubmissionMpResponse, message.Message)
 	UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest) message.Message
+	ReplyAdminRatingSubmission(input request.ReplyAdminRatingSubmissionRequest) message.Message
+
+	// unused
 	GetRatingSubmissionMp(id string) (*response.RatingSubmissionMpResponse, message.Message)
 	GetListRatingSubmissionsMp(input request.ListRatingSubmissionRequest) ([]response.RatingSubmissionMpResponse, *base.Pagination, message.Message)
 	GetListRatingSummaryBySourceType(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryMpResponse, *base.Pagination, message.Message)
-	ReplyAdminRatingSubmission(input request.ReplyAdminRatingSubmissionRequest) message.Message
-
 	// Rating
 	CreateRating(input request.SaveRatingRequest) (*entity.RatingsMpCol, message.Message)
 	GetRatingById(id string) (*entity.RatingsMpCol, message.Message)
 	UpdateRating(input request.UpdateRatingRequest) message.Message
 	DeleteRating(id string) message.Message
 	GetListRatings(input request.GetListRatingsRequest) ([]entity.RatingsMpCol, *base.Pagination, message.Message)
+	// end unused
 }
 
 type ratingMpServiceImpl struct {
@@ -343,6 +345,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		OrderNumber:   originalSourceTransID,
 		RatingTypeID:  ratingTypeNum.ID.Hex(),
 		Cancelled:     false,
+		StoreUID:      input.StoreUID,
 	})
 
 	if len(saveReq) == 0 {

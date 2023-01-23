@@ -103,6 +103,7 @@ type CreateRatingSubmissionRequest struct {
 	Avatar        string            `json:"-" bson:"-"`
 	IsAnonymous   bool              `json:"is_anonymous" bson:"is_anonymous"`
 	SourceUID     string            `json:"source_uid" bson:"source_uid"`
+	StoreUID      string            `json:"store_uid" bson:"store_uid"`
 	RatingType    string            `json:"rating_type" bson:"rating_type"`
 	Value         string            `json:"value" bson:"value"`
 	Media         []entity.MediaObj `json:"media" bson:"media"`
@@ -184,6 +185,7 @@ func (req CreateRatingSubmissionRequest) ValidateMp() error {
 			validation.In(sliceStringToSliceInterface(arrAllowedValueRatingProduct)...).Error(fmt.Sprintf("value should be %s", strings.Join(arrAllowedValueRatingProduct, ","))))),
 		validation.Field(&req.Value, validation.When(req.RatingType == "rating_for_store",
 			validation.In(sliceStringToSliceInterface(arrAllowedValueRatingStore)...).Error(fmt.Sprintf("value should be %s", strings.Join(arrAllowedValueRatingStore, ","))))),
+		validation.Field(&req.StoreUID, validation.When(req.RatingType == "rating_for_product", validation.Required)),
 	)
 }
 

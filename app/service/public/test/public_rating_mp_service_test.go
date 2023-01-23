@@ -80,6 +80,14 @@ var requestSummaryMpDetail = publicrequest.PublicGetListDetailRatingSummaryReque
 	Dir:        "1",
 }
 
+var requestSummaryStoreProduct = publicrequest.PublicGetRatingSummaryStoreProductRequest{
+	Filter: `{"store_uid": ["1"]}`,
+	Limit:  50,
+	Page:   1,
+	Sort:   "created_at",
+	Dir:    "1",
+}
+
 var ratingSubMpDatas = []entity.RatingSubmissionMp{
 	{
 		ID:            idDummy1Obj,
@@ -262,6 +270,51 @@ func TestGetListDetailRatingSummaryMpBySourceType(t *testing.T) {
 	publicRatingMpRepository.Mock.On("GetRatingFormulaBySourceType", requestSummaryMp.SourceType).Return(&ratingFormulaMp, nil).Once()
 
 	result, pagination, msg := publicRatingMpService.GetListDetailRatingSummaryBySourceType(requestSummaryMpDetail)
+
+	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
+	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
+	assert.Equal(t, 1, len(result), "Count of list kd must be 1")
+	assert.Equal(t, int64(1), pagination.Records, "Total record must be 1")
+}
+
+func TestGetRatingSummaryStoreProduct(t *testing.T) {
+	idObj, _ := primitive.ObjectIDFromHex(idDummy1)
+	paginationResult := base.Pagination{
+		Records:      1,
+		Limit:        10,
+		Page:         1,
+		TotalRecords: 1,
+	}
+
+	ratingSubmissionGroupByStoreSource := publicresponse.PublicRatingSubGroupByStoreSourceMp{
+		ID: struct {
+			StoreUID   string `json:"store_uid" bson:"store_uid"`
+			SourceType string `json:"source_type" bson:"source_type"`
+		}(struct {
+			StoreUID   string
+			SourceType string
+		}{StoreUID: "1", SourceType: "product"}),
+		RatingSubmissionsMp: ratingSubMpDatas,
+	}
+
+	var filter = publicrequest.FilterRatingSummary{
+		SourceType: "product",
+		StoreUID:   []string{"1"},
+	}
+
+	ratingFormulaMp := entity.RatingFormulaCol{
+		ID:           idObj,
+		SourceType:   "product",
+		Formula:      "(sum / count) / 1",
+		RatingTypeId: ratingid,
+		RatingType:   ratingType,
+	}
+
+	publicRatingMpRepository.Mock.On("GetPublicRatingSubmissionsGroupByStoreSource", requestSummaryStoreProduct.Limit, requestSummaryStoreProduct.Page, -1, "created_at", filter).
+		Return([]publicresponse.PublicRatingSubGroupByStoreSourceMp{ratingSubmissionGroupByStoreSource}, &paginationResult, nil).Once()
+	publicRatingMpRepository.Mock.On("GetRatingFormulaBySourceType", "product").Return(&ratingFormulaMp, nil).Once()
+
+	result, pagination, msg := publicRatingMpService.GetRatingSummaryStoreProduct(context.TODO(), requestSummaryStoreProduct)
 
 	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
 	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")

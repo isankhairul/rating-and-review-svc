@@ -71,6 +71,7 @@ var ErrCannotModifiedStatement = Message{Code: ValidationFailCode, Message: "Sta
 var ErrCannotModifiedNumStatement = Message{Code: ValidationFailCode, Message: "Num Statement cannot be modified because this rating type is in use and has submission"}
 var ErrCannotModifiedType = Message{Code: ValidationFailCode, Message: "Type cannot be modified because this rating type is in use"}
 var ErrSourceUidRequire = Message{Code: ValidationFailCode, Message: "Source_uid is required"}
+var ErrStoreUidRequire = Message{Code: ValidationFailCode, Message: "store_uid is required"}
 var ErrMaxMin = Message{Code: ValidationFailCode, Message: "min_score can not be less than max_score"}
 var ErrTypeNotFound = Message{Code: ValidationFailCode, Message: "Rating type not found"}
 var ErrCannotSameRatingId = Message{Code: ValidationFailCode, Message: "Cannot create rating submission with same rating"}

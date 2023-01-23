@@ -27,7 +27,7 @@ func DbInit() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	//Define auto migration here
+	// Define auto migration here
 
 	// example Seeder
 	// for i := 0; i < 1000; i++ {
@@ -45,12 +45,12 @@ func DbInit() (*gorm.DB, error) {
 
 func InitRouting(db *mongo.Database, logger log.Logger) *http.ServeMux {
 	// Transport initialization
-	swagHttp := transport.SwaggerHttpHandler(log.With(logger, "SwaggerTransportLayer", "HTTP")) //don't delete or change this !!
+	swagHttp := transport.SwaggerHttpHandler(log.With(logger, "SwaggerTransportLayer", "HTTP")) // don't delete or change this !!
 	globalHttp := GlobalHttpHandler(log.With(logger, "GlobalTransportLayer", "HTTP"), db)
 
 	// Routing path
 	nsm := http.NewServeMux()
-	nsm.Handle("/", swagHttp) //don't delete or change this!!
+	nsm.Handle("/", swagHttp) // don't delete or change this!!
 	nsm.HandleFunc("/__kdhealth", func(writer http.ResponseWriter, request *http.Request) { writer.Write([]byte("OK")) })
 	nsm.Handle(_struct.PrefixBase+"/", globalHttp)
 
@@ -63,12 +63,12 @@ func GlobalHttpHandler(logger log.Logger, db *mongo.Database) http.Handler {
 	publicRatingSvc := registry.RegisterPublicRatingService(db, logger)
 	publicRatingMpSvc := registry.RegisterPublicRatingMpService(db, logger)
 	daprSvc := registry.RegisterDaprService(db, logger)
-	//ratingMpSvc := registry.RegisterRatingMpService(db, logger)
+	// ratingMpSvc := registry.RegisterRatingMpService(db, logger)
 	updloadImgSvc := registry.RegisterUploadService(db, logger)
 
 	pr := mux.NewRouter()
 
-	//ratingMpHttp := transport.RatingMpHttpHandler(ratingMpSvc, log.With(logger, "RatingMpTransportLayer", "HTTP"))
+	// ratingMpHttp := transport.RatingMpHttpHandler(ratingMpSvc, log.With(logger, "RatingMpTransportLayer", "HTTP"))
 	ratingHttp := transport.RatingHttpHandler(ratingSvc, log.With(logger, "RatingTransportLayer", "HTTP"), db)
 	publicRatingMpHttp := publictransport.PublicRatingMpHttpHandler(publicRatingMpSvc, log.With(logger, "PublicRatingMpTransportLayer", "HTTP"))
 	publicRatingHttp := publictransport.PublicRatingHttpHandler(publicRatingSvc, log.With(logger, "PublicRatingTransportLayer", "HTTP"), db)
@@ -76,13 +76,14 @@ func GlobalHttpHandler(logger log.Logger, db *mongo.Database) http.Handler {
 	uploadHttp := transport.UploadHttpHandler(updloadImgSvc, log.With(logger, "UploadTransportLayer", "HTTP"))
 
 	pr.PathPrefix(_struct.PrefixBase + "/public/rating-submissions-by-id").Handler(publicRatingMpHttp)
-	//pr.PathPrefix(_struct.PrefixBase + "/public/ratings-summary-mp").Handler(publicRatingMpHttp)
+	pr.PathPrefix(_struct.PrefixBase + "/public/ratings-summary/store-product").Handler(publicRatingMpHttp)
+	// pr.PathPrefix(_struct.PrefixBase + "/public/ratings-summary-mp").Handler(publicRatingMpHttp)
 	pr.PathPrefix(_struct.PrefixBase + "/public/rating-submissions").Handler(publicRatingHttp)
 	pr.PathPrefix(_struct.PrefixBase + "/public/ratings-summary").Handler(publicRatingHttp)
-	pr.PathPrefix(_struct.PrefixBase + "/dapr").Handler(daprHttp)	
-	pr.PathPrefix(_struct.PrefixBase+"/upload/").Handler(uploadHttp) // for upload images
-	//pr.PathPrefix(_struct.PrefixBase + "/rating-submissions-mp").Handler(ratingMpHttp)
-	//pr.PathPrefix(_struct.PrefixBase + "/ratings-summary-mp").Handler(ratingMpHttp)
+	pr.PathPrefix(_struct.PrefixBase + "/dapr").Handler(daprHttp)
+	pr.PathPrefix(_struct.PrefixBase + "/upload/").Handler(uploadHttp) // for upload images
+	// pr.PathPrefix(_struct.PrefixBase + "/rating-submissions-mp").Handler(ratingMpHttp)
+	// pr.PathPrefix(_struct.PrefixBase + "/ratings-summary-mp").Handler(ratingMpHttp)
 	pr.PathPrefix(_struct.PrefixBase + "/").Handler(ratingHttp)
 
 	return pr

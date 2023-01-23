@@ -133,6 +133,9 @@ definitions:
       source_uid:
         type: string
         x-go-name: SourceUID
+      store_uid:
+        type: string
+        x-go-name: StoreUID
       user_agent:
         type: string
         x-go-name: UserAgent
@@ -356,7 +359,7 @@ definitions:
         type: string
         x-go-name: UpdatedAt
     type: object
-    x-go-name: RatingsMpCol
+    x-go-name: RatingsCol
     x-go-package: go-klikdokter/app/model/entity
   RatingByType:
     properties:
@@ -1133,7 +1136,7 @@ paths:
         required: true
         type: string
         x-go-name: SourceType
-      - description: 'Filter available {"source_uid": []}'
+      - description: 'Filter available {"source_uid": [""]}'
         in: query
         name: filter
         type: string
@@ -1172,7 +1175,7 @@ paths:
       description: Get List Detail Rating Summary
       operationId: PublicGetListDetailRatingSummaryRequest
       parameters:
-      - description: 'Filter available {"source_uid": [], "rating_type": []}'
+      - description: 'Filter available {"source_uid": [""]}'
         in: query
         name: filter
         required: true
@@ -1202,6 +1205,41 @@ paths:
         required: true
         type: string
         x-go-name: SourceType
+      responses:
+        "200":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "401":
+          description: SuccessResponse
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+      tags:
+      - PublicRating
+  /public/ratings-summary/store-product:
+    get:
+      description: Get List Rating Summary Store Product
+      operationId: PublicGetRatingSummaryStoreProductRequest
+      parameters:
+      - description: 'Filter available {"store_uid": [""]}'
+        in: query
+        name: filter
+        required: true
+        type: string
+        x-go-name: Filter
+      - format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - in: query
+        name: sort
+        type: string
+        x-go-name: Sort
+      - in: query
+        name: dir
+        type: string
+        x-go-name: Dir
       responses:
         "200":
           description: SuccessResponse

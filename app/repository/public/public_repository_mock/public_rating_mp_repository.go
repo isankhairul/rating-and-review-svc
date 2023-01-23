@@ -158,6 +158,38 @@ func (_m *PublicRatingMpRepository) GetPublicRatingSubmissionsGroupBySource(limi
 	return r0, r1, r2
 }
 
+// GetPublicRatingSubmissionsGroupByStoreSource provides a mock function with given fields: limit, page, dir, sort, filter
+func (_m *PublicRatingMpRepository) GetPublicRatingSubmissionsGroupByStoreSource(limit int, page int, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]publicresponse.PublicRatingSubGroupByStoreSourceMp, *base.Pagination, error) {
+	ret := _m.Called(limit, page, dir, sort, filter)
+
+	var r0 []publicresponse.PublicRatingSubGroupByStoreSourceMp
+	if rf, ok := ret.Get(0).(func(int, int, int, string, publicrequest.FilterRatingSummary) []publicresponse.PublicRatingSubGroupByStoreSourceMp); ok {
+		r0 = rf(limit, page, dir, sort, filter)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]publicresponse.PublicRatingSubGroupByStoreSourceMp)
+		}
+	}
+
+	var r1 *base.Pagination
+	if rf, ok := ret.Get(1).(func(int, int, int, string, publicrequest.FilterRatingSummary) *base.Pagination); ok {
+		r1 = rf(limit, page, dir, sort, filter)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*base.Pagination)
+		}
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(int, int, int, string, publicrequest.FilterRatingSummary) error); ok {
+		r2 = rf(limit, page, dir, sort, filter)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // GetPublicRatingsByParams provides a mock function with given fields: limit, page, dir, sort, filter
 func (_m *PublicRatingMpRepository) GetPublicRatingsByParams(limit int, page int, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]entity.RatingsMpCol, *base.Pagination, error) {
 	ret := _m.Called(limit, page, dir, sort, filter)

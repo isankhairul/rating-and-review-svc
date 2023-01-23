@@ -33,6 +33,7 @@ type RatingSubmissionMp struct {
 	RatingTypeID    string             `json:"rating_type_id" bson:"rating_type_id, omitempty"`
 	Reply           string             `json:"reply" bson:"reply"`
 	ReplyBy         string             `json:"reply_by" bson:"reply_by"`
+	StoreUID        string             `json:"store_uid" bson:"store_uid"`
 }
 
 func (RatingSubmissionMp) CollectionName() string {
