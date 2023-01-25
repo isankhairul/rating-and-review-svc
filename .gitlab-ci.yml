@@ -14,7 +14,7 @@ go-test:
     - go test -v ./...
   allow_failure: true
   rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "release" || $CI_COMMIT_BRANCH == "develop"'
 
 sonarqube-check:
   stage: scanning
@@ -32,7 +32,7 @@ sonarqube-check:
     - sonar-scanner
   allow_failure: true
   rules:
-    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_TAG =~ /.*sonar$/'
+    - if: '$CI_COMMIT_BRANCH == "release" || $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_TAG =~ /.*sonar$/'
   when: always
 
 build-staging:
@@ -49,7 +49,7 @@ build-staging:
       --dockerfile docker/Dockerfile
       --destination $CI_REGISTRY/$CI_REGISTRY_IMAGE:dev-$VERSION-$CI_PIPELINE_ID
   rules:
-    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_TAG =~ /.*hotfix-dev$/'
+    - if: '$CI_COMMIT_BRANCH == "release" || $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_TAG =~ /.*hotfix-dev$/'
       when: always
 
 build-prod:
