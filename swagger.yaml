@@ -359,7 +359,7 @@ definitions:
         type: string
         x-go-name: UpdatedAt
     type: object
-    x-go-name: RatingsCol
+    x-go-name: RatingsMpCol
     x-go-package: go-klikdokter/app/model/entity
   RatingByType:
     properties:
@@ -756,11 +756,11 @@ definitions:
           in: string
         x-go-name: Errors
       meta:
-        $ref: '#/definitions/MetaResponse'
+        $ref: '#/definitions/metaResponseWithCorrelationID'
       pagination:
         $ref: '#/definitions/PaginationResponse'
     type: object
-    x-go-name: responseHttp
+    x-go-name: responseHttpWithCorrelationID
     x-go-package: go-klikdokter/app/model/base
   UpdateRatingSubDisplayNameRequest:
     properties:

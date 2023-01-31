@@ -212,9 +212,10 @@ type PublicRatingSummaryDetailMpResponse struct {
 }
 
 type RatingSummaryStoreProductNumeric struct {
-	StoreUID      string `json:"store_uid"`
-	TotalValue    string `json:"total_value"`
-	MaximumValue  string `json:"maximum_value"`
-	TotalReviewer int64  `json:"total_reviewer"`
-	TotalComment  int64  `json:"total_comment"`
+	StoreUID            string                                `json:"store_uid"`
+	TotalValue          string                                `json:"total_value"`
+	MaximumValue        string                                `json:"maximum_value"`
+	TotalReviewer       int64                                 `json:"total_reviewer"`
+	TotalComment        int64                                 `json:"total_comment"`
+	RatingSummaryDetail []PublicRatingSummaryDetailMpResponse `json:"rating_summary_detail"`
 }

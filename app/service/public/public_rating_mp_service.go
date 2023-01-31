@@ -526,6 +526,8 @@ func (s *publicRatingMpServiceImpl) GetRatingSummaryStoreProduct(ctx context.Con
 		result.MaximumValue = global.GetMaximumValueBySourceType(sourceType)
 		var arrComment []string
 		var totalValue int64
+		var arrRatingValue []string = global.GetListRatingValueBySourceType(ratingSub.ID.SourceType)
+
 		// get comment and total value
 		for _, rsmp := range ratingSub.RatingSubmissionsMp {
 			if rsmp.Comment != nil && *rsmp.Comment != "" {
@@ -547,6 +549,28 @@ func (s *publicRatingMpServiceImpl) GetRatingSummaryStoreProduct(ctx context.Con
 			result.TotalValue = ratingSummary.TotalValue
 			result.TotalComment = ratingSummary.TotalComment
 		}
+
+		// calculate star
+		var arrRatingDetailSummary []publicresponse.PublicRatingSummaryDetailMpResponse
+		for _, arv := range arrRatingValue {
+			ratingDetailSummary := publicresponse.PublicRatingSummaryDetailMpResponse{}
+			for _, rsmp := range ratingSub.RatingSubmissionsMp {
+				ratingDetailSummary.Value = arv
+
+				// increment count
+				if arv == rsmp.Value {
+					ratingDetailSummary.Count = ratingDetailSummary.Count + 1
+				}
+			}
+
+			// calculate percentage
+			if ratingDetailSummary.Count > 0 {
+				percent, _ := strconv.ParseFloat(fmt.Sprintf("%.1f", (float32(ratingDetailSummary.Count)/float32(result.TotalReviewer))*100), 32)
+				ratingDetailSummary.Percent = float32(percent)
+			}
+			arrRatingDetailSummary = append(arrRatingDetailSummary, ratingDetailSummary)
+		}
+		result.RatingSummaryDetail = arrRatingDetailSummary
 
 		results = append(results, result)
 	}
