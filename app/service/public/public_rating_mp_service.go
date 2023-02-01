@@ -414,7 +414,7 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 		pRsldr := publicresponse.PublicRatingSummaryListDetailResponse{}
 		pRsldr.SourceType = ratingSub.ID.SourceType
 		pRsldr.SourceUID = ratingSub.ID.SourceUID
-		pRsldr.TotalReview = int64(len(ratingSub.RatingSubmissionsMp))
+		pRsldr.TotalReviewer = int64(len(ratingSub.RatingSubmissionsMp))
 		var arrComment []string
 		var totalValue int64
 		// get comment and total value
@@ -443,7 +443,7 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 
 			// calculate percentage
 			if ratingDetailSummary.Count > 0 {
-				percent, _ := strconv.ParseFloat(fmt.Sprintf("%.1f", (float32(ratingDetailSummary.Count)/float32(pRsldr.TotalReview))*100), 32)
+				percent, _ := strconv.ParseFloat(fmt.Sprintf("%.1f", (float32(ratingDetailSummary.Count)/float32(pRsldr.TotalReviewer))*100), 32)
 				ratingDetailSummary.Percent = float32(percent)
 			}
 			arrRatingDetailSummary = append(arrRatingDetailSummary, ratingDetailSummary)
@@ -454,7 +454,7 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 		sumCountRatingSub := &publicresponse.PublicSumCountRatingSummaryMp{
 			Comments: arrComment,
 			Sum:      totalValue,
-			Count:    pRsldr.TotalReview,
+			Count:    pRsldr.TotalReviewer,
 		}
 		pRsldr.MaximumValue = global.GetMaximumValueBySourceType(input.SourceType)
 

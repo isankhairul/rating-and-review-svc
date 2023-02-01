@@ -200,7 +200,7 @@ type PublicRatingSummaryListDetailResponse struct {
 	RatingType          string                                `json:"rating_type,omitempty"`
 	TotalValue          string                                `json:"total_value"`
 	MaximumValue        string                                `json:"maximum_value,omitempty"`
-	TotalReview         int64                                 `json:"total_review"`
+	TotalReviewer       int64                                 `json:"total_reviewer"`
 	TotalComment        int64                                 `json:"total_comment"`
 	RatingSummaryDetail []PublicRatingSummaryDetailMpResponse `json:"rating_summary_detail"`
 }
