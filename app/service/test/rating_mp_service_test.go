@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/repository/repository_mock"
@@ -74,7 +75,7 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 	ratingMpRepository.Mock.On("FindRatingTypeNumByRatingType", input.RatingType).Return(&ratingTypeID, nil)
 	ratingMpRepository.Mock.On("CreateRatingSubmission", saveReq).Return(&arrSub, nil)
 
-	_, msg := ratingMpSvc.CreateRatingSubmissionMp(input)
+	_, msg := ratingMpSvc.CreateRatingSubmissionMp(context.Background(), input)
 
 	assert.Equal(t, message.SuccessMsg, msg)
 }

@@ -84,7 +84,7 @@ func (updSvc *uploadServiceImpl) UploadImage(ctx context.Context, input upload_r
 		SetFileReader("image", input.FileName, bytes.NewReader(input.Image)).
 		SetFormData(mapFormData).
 		Post(urlMediaService)
-	level.Info(logger).Log("type", "[Media-Svc]", "respStatus", resp.StatusCode(), "respBody", string(resp.Body()))
+	level.Info(logger).Log("correlationID", correlationId, "type", "[Media-Svc]", "respStatus", resp.StatusCode(), "respBody", string(resp.Body()))
 	if err != nil {
 		errMsg["image"] = "Failed to Upload Image"
 		return result, message.ErrUploadMedia, nil

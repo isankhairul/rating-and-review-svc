@@ -35,6 +35,7 @@ type PublicRatingMpRepository interface {
 	GetSumCountRatingSubsBySource(sourceUID string, sourceType string) (*publicresponse.PublicSumCountRatingSummaryMp, error)
 	GetPublicRatingSubmissionsCustom(limit, page, dir int, sort string, filter publicrequest.FilterRatingSubmissionMp, source string) ([]entity.RatingSubmissionMp, *base.Pagination, error)
 	GetPublicRatingSubmissionsGroupByStoreSource(limit, page, dir int, sort string, filter publicrequest.FilterRatingSummary) ([]publicresponse.PublicRatingSubGroupByStoreSourceMp, *base.Pagination, error)
+	GetRatingSubsGroupByValue(sourceUid string, sourceType string) ([]interface{}, error)
 }
 
 func NewPublicRatingMpRepository(db *mongo.Database) PublicRatingMpRepository {
@@ -615,4 +616,59 @@ func (r *publicRatingMpRepo) GetPublicRatingSubmissionsGroupByStoreSource(limit,
 
 	pagination := paginateGroupByMp(r.db, page, limit64, results, collectionName, groupSource, filterSource)
 	return results, pagination, nil
+}
+
+
+func (r *publicRatingMpRepo) GetRatingSubsGroupByValue(sourceUid string, sourceType string) ([]interface{}, error) {
+	var results []interface{}
+	bsonCancelled := bson.D{{Key: "cancelled", Value: false}}
+	bsonSourceType := bson.D{{Key: "source_type", Value: sourceType}}
+	bsonSourceUID := bson.D{{Key: "source_uid", Value: sourceUid}}
+	
+	filterSource := bson.D{{Key: "$and",
+		Value: bson.A{
+			bsonSourceUID,
+			bsonSourceType,
+			bsonCancelled,
+		},
+	}}
+
+	pipeline := bson.A{
+		bson.D{
+			{
+				"$match",
+					filterSource,
+			},
+		},
+		bson.D{
+			{
+				"$addFields", 
+					bson.D{
+						{"convertedValue", bson.D{{"$toInt", "$value"}}},
+					},
+			},
+		},
+		bson.D{
+			{"$group",
+				bson.D{
+					{"_id", "$convertedValue"},
+					{"count", bson.D{{"$sum", 1}}},
+				},
+			},
+		},
+	}
+
+	collectionName := entity.RatingSubmissionMp{}.CollectionName()
+	cursor, err := r.db.Collection(collectionName).Aggregate(context.Background(), pipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return results, nil
 }

@@ -1,9 +1,11 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go-klikdokter/app/middleware"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
@@ -11,6 +13,7 @@ import (
 	"go-klikdokter/app/model/response"
 	publicresponse "go-klikdokter/app/model/response/public"
 	"go-klikdokter/app/repository"
+	helper_dapr "go-klikdokter/helper/dapr"
 	global "go-klikdokter/helper/global"
 	"go-klikdokter/helper/message"
 	"go-klikdokter/helper/thumbor"
@@ -21,6 +24,7 @@ import (
 	"time"
 
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/vjeantet/govaluate"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,8 +32,8 @@ import (
 
 type RatingMpService interface {
 	// Rating submission
-	CreateRatingSubmissionMp(input request.CreateRatingSubmissionRequest) ([]response.CreateRatingSubmissionMpResponse, message.Message)
-	UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest) message.Message
+	CreateRatingSubmissionMp(ctx context.Context, input request.CreateRatingSubmissionRequest) ([]response.CreateRatingSubmissionMpResponse, message.Message)
+	UpdateRatingSubmission(ctx context.Context, input request.UpdateRatingSubmissionRequest) message.Message
 	ReplyAdminRatingSubmission(input request.ReplyAdminRatingSubmissionRequest) message.Message
 
 	// unused
@@ -255,10 +259,12 @@ func (s *ratingMpServiceImpl) GetListRatings(input request.GetListRatingsRequest
 	return results, pagination, message.SuccessMsg
 }
 
-func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatingSubmissionRequest) ([]response.CreateRatingSubmissionMpResponse, message.Message) {
+func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(ctx context.Context, input request.CreateRatingSubmissionRequest) ([]response.CreateRatingSubmissionMpResponse, message.Message) {
 	// logger := log.With(s.logger, "RatingService", "CreateRatingSubmission")
 	var saveReq = make([]entity.RatingSubmissionMp, 0)
-
+	// set source type
+	correlationId := fmt.Sprint(ctx.Value(middleware.CorrelationIdContextKey))
+	sourceType := global.GetSourceTypeByRatingType(input.RatingType)
 	result := []response.CreateRatingSubmissionMpResponse{}
 	// isOrderIdExist := false
 
@@ -269,8 +275,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 			Message: err.Error(),
 		}
 	}
-	// set source type
-	sourceType := global.GetSourceTypeByRatingType(input.RatingType)
+	
 	// set user_id as user_id_legacy must be filled
 	input.UserID = input.UserIDLegacy
 	// Validate displayname
@@ -284,15 +289,6 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 	}
 
 	originalSourceTransID := input.SourceTransID
-	// // Get Rating by SourceUID and RatingType
-	// rating, err := s.ratingMpRepo.FindRatingBySourceUIDAndRatingType(input.SourceUID, input.RatingType)
-	// if err != nil {
-	// 	return result, message.ErrRatingNotFound
-	// }
-	// if rating == nil || !*rating.Status {
-	// 	return result, message.ErrRatingNotFound
-	// }
-	// Get Rating Type Numeric by rating type
 
 	ratingTypeNum, err := s.ratingMpRepo.FindRatingTypeNumByRatingType(input.RatingType)
 
@@ -365,7 +361,7 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 
 	go func() {
 		// trigger image house keeping
-		util_media.ImageHouseKeeping(s.logger, media, ratingSubsID)
+		util_media.ImageHouseKeeping(ctx, s.logger, media, ratingSubsID)
 		// send review for product & store to payment svc
 		if ratingSubs != nil && len(*ratingSubs) > 0 {
 			ratingSub := *ratingSubs
@@ -373,10 +369,12 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(input request.CreateRatin
 		}
 	}()
 
+	go GetFinalRating(s, correlationId, sourceType, input.SourceUID)
+	
 	return result, message.SuccessMsg
 }
 
-func (s *ratingMpServiceImpl) UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest) message.Message {
+func (s *ratingMpServiceImpl) UpdateRatingSubmission(ctx context.Context ,input request.UpdateRatingSubmissionRequest) message.Message {
 	// Input ID of Submission
 	objectRatingSubmissionId, err := primitive.ObjectIDFromHex(input.ID)
 	if err != nil {
@@ -430,7 +428,7 @@ func (s *ratingMpServiceImpl) UpdateRatingSubmission(input request.UpdateRatingS
 
 	go func() {
 		// trigger image house keeping
-		util_media.ImageHouseKeeping(s.logger, media, ratingSubmission.ID.Hex())
+		util_media.ImageHouseKeeping(ctx, s.logger, media, ratingSubmission.ID.Hex())
 	}()
 
 	return message.SuccessMsg
@@ -788,4 +786,55 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 	}
 
 	return result, nil
+}
+
+func GetFinalRating(s *ratingMpServiceImpl, correlationId string ,sourceType string, sourceUid string) {
+	summarySubsGroupByValue, _ := s.ratingMpRepo.GetRatingSubsGroupByValue(sourceUid, sourceType)
+	totalValue := 0
+	TotalReviewer := 0
+
+	for _, val := range summarySubsGroupByValue {
+		totalValue += val.ConvertedValue * val.Total
+		TotalReviewer += val.Total
+	}
+
+	formulaRating, _  := s.ratingMpRepo.GetRatingFormulaBySourceType(sourceType)
+	
+	if formulaRating == nil {
+		level.Info(s.logger).Log("correlationID", correlationId, "Type", "Create Rating Submission", "err", "Failed Get Formula Rating")	
+		return
+	}
+
+	formula := formulaRating.Formula
+	expression, err := govaluate.NewEvaluableExpression(formula)
+
+	if err != nil {
+		level.Info(s.logger).Log("correlationID", correlationId, "Type", "Create Rating Submission", "err", "Failed Get Expression Formula Rating")
+		return
+	}
+
+	parameters := make(map[string]interface{}, 8)
+	parameters["sum"] = totalValue
+	parameters["count"] = TotalReviewer
+
+	finalCalc, err := expression.Evaluate(parameters)
+	if err != nil {
+		level.Info(s.logger).Log("correlationID", correlationId, "Type", "Create Rating Submission", "err", "Failed Calculate Formula Rating")
+		return
+	}
+	result := fmt.Sprintf("%.1f", finalCalc)
+	level.Info(s.logger).Log("correlationID", correlationId, "Type", "Create Rating Submission","result", result)
+
+	jsonPayload, _ := json.Marshal(map[string]interface{}{
+		"data": map[string]string{
+			"product_uid": sourceUid,
+			"final_rating": result,
+		},
+	})
+		
+	client := helper_dapr.NewDaprHttpClient()
+	response, err := client.PublishEvent("queuing.rnr.ts-final-rating", string(jsonPayload))
+
+	_ = level.Info(s.logger).Log(fmt.Sprintf("Publisher response: %v", response))
+	_ = level.Info(s.logger).Log(fmt.Sprintf("Publisher error: %v", err))
 }

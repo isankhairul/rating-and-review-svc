@@ -558,6 +558,49 @@ func (_m *RatingMpRepository) UpdateRatingSubmission(input entity.RatingSubmissi
 	return r0
 }
 
+func (_m *RatingMpRepository) GetRatingSubsGroupByValue(sourceUid string, sourceType string) ([]publicresponse.PublicRatingSubGroupByValue, error) {
+	ret := _m.Called(sourceUid, sourceType)
+
+	var r0 []publicresponse.PublicRatingSubGroupByValue
+	if rf, ok := ret.Get(0).(func(string, string) []publicresponse.PublicRatingSubGroupByValue); ok {
+		r0 = rf(sourceUid, sourceType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]publicresponse.PublicRatingSubGroupByValue)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(sourceUid, sourceType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+func (_m *RatingMpRepository) GetRatingFormulaBySourceType(sourceType string) (*entity.RatingFormulaCol, error) {
+	ret := _m.Called(sourceType)
+
+	var r0 *entity.RatingFormulaCol
+	if rf, ok := ret.Get(0).(func(string) *entity.RatingFormulaCol); ok {
+		r0 = rf(sourceType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.RatingFormulaCol)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(sourceType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
 type mockConstructorTestingTNewRatingMpRepository interface {
 	mock.TestingT
 	Cleanup(func())

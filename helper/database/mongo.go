@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"go-klikdokter/helper/config"
 	"time"
 
@@ -20,7 +19,8 @@ var (
 func NewMongo() (*mongo.Database, error) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	// uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/?authSource=%s", viper.GetString("database.username"), viper.GetString("database.password"), viper.GetString("database.hostname"), viper.GetString("database.port"), viper.GetString("database.dbname"))
-	uri := fmt.Sprintf("%s://%s:%s@%s/%s?authSource=admin", config.GetConfigString(viper.GetString("database.uri")), config.GetConfigString(viper.GetString("database.username")), config.GetConfigString(viper.GetString("database.password")), config.GetConfigString(viper.GetString("database.hostname")), config.GetConfigString(viper.GetString("database.dbname")))
+	uri := "mongodb+srv://klikdokter-mongodb-stg:wUiKsE67q1abgWKd@klikdokter-stg-pl-0.82rpw.mongodb.net/"
+	// uri := fmt.Sprintf("%s://%s:%s@%s/%s?authSource=admin", config.GetConfigString(viper.GetString("database.uri")), config.GetConfigString(viper.GetString("database.username")), config.GetConfigString(viper.GetString("database.password")), config.GetConfigString(viper.GetString("database.hostname")), config.GetConfigString(viper.GetString("database.dbname")))
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
 		return nil, err

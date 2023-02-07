@@ -53,6 +53,8 @@ type RatingMpRepository interface {
 	// rating type
 	FindRatingTypeNumByRatingType(ratingType string) (*entity.RatingTypesNumCol, error)
 	FindRatingTypeNumByRatingTypeID(ratingTypeID primitive.ObjectID) (*entity.RatingTypesNumCol, error)
+	GetRatingSubsGroupByValue(sourceUid string, sourceType string) ([]publicresponse.PublicRatingSubGroupByValue, error)
+	GetRatingFormulaBySourceType(sourceType string) (*entity.RatingFormulaCol, error)
 }
 
 func NewRatingMpRepository(db *mongo.Database) RatingMpRepository {
@@ -674,4 +676,88 @@ func getPaginationMp(db *mongo.Database, page int, limit int64, result interface
 	pagination.TotalPage = int(math.Ceil(float64(pagination.TotalRecords) / float64(pagination.GetLimit())))
 	pagination.Records = int64(s.Len())
 	return &pagination
+}
+
+func (r *ratingMpRepo) GetRatingSubsGroupByValue(sourceUid string, sourceType string) ([]publicresponse.PublicRatingSubGroupByValue, error) {
+	var results []publicresponse.PublicRatingSubGroupByValue
+	bsonCancelled := bson.D{{Key: "cancelled", Value: false}}
+	bsonSourceType := bson.D{}
+	bsonSourceUID := bson.D{}
+
+	bsonSourceUID = bson.D{{Key: "source_uid", Value: sourceUid}}
+	bsonSourceType = bson.D{{Key: "source_type", Value: sourceType}}
+	if sourceType == "store" {
+		bsonSourceUID = bson.D{{Key: "store_uid", Value: sourceUid}}
+	}
+	
+	filterSource := bson.D{{Key: "$and",
+		Value: bson.A{
+			bsonSourceUID,
+			bsonSourceType,
+			bsonCancelled,
+		},
+	}}
+
+	pipeline := bson.A{
+		bson.D{
+			{
+				"$match",
+					filterSource,
+			},
+		},
+		bson.D{
+			{
+				"$addFields", 
+					bson.D{
+						{"convertedValue", bson.D{{"$toInt", "$value"}}},
+					},
+			},
+		},
+		bson.D{
+			{"$group",
+				bson.D{
+					{"_id", "$convertedValue"},
+					{"count", bson.D{{"$sum", 1}}},
+				},
+			},
+		},
+	}
+
+	collectionName := entity.RatingSubmissionMp{}.CollectionName()
+	cursor, err := r.db.Collection(collectionName).Aggregate(context.Background(), pipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return results, nil
+}
+
+func (r *ratingMpRepo) GetRatingFormulaBySourceType(sourceType string) (*entity.RatingFormulaCol, error) {
+	var ratingFormula entity.RatingFormulaCol
+
+	bsonSourceType := bson.D{{Key: "source_type", Value: sourceType}}
+	bsonStatus := bson.D{{Key: "status", Value: true}}
+
+	bsonFilter := bson.D{{Key: "$and",
+		Value: bson.A{
+			bsonSourceType,
+			bsonStatus,
+		}},
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	err := r.db.Collection(entity.RatingFormulaCol{}.CollectionName()).FindOne(ctx, bsonFilter).Decode(&ratingFormula)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &ratingFormula, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"go-klikdokter/app/api/endpoint"
+	"go-klikdokter/app/middleware"
 	"go-klikdokter/app/model/base/encoder"
 	"go-klikdokter/app/model/request"
 	"go-klikdokter/app/service"
@@ -39,7 +40,7 @@ func RatingMpHttpHandler(s service.RatingMpService, logger log.Logger) http.Hand
 		ep.CreateRatingSubmission,
 		decodeCreateRatingSubmissionMp,
 		encoder.EncodeResponseHTTP,
-		options...,
+		append(options, httptransport.ServerBefore(middleware.CorrelationIdToContext()))...,
 	))
 
 	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/rating-submissions-mp/{id}").Handler(httptransport.NewServer(

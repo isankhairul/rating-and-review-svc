@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"go-klikdokter/app/api/endpoint"
+	"go-klikdokter/app/middleware"
 	"go-klikdokter/app/model/base/encoder"
 	"go-klikdokter/app/model/request"
-	"go-klikdokter/app/model/request/public"
+	publicrequest "go-klikdokter/app/model/request/public"
 	"go-klikdokter/app/service"
 	"go-klikdokter/helper/_struct"
-	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
+
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/gorilla/schema"
 
@@ -68,8 +70,8 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger, db *mongo.Dat
 	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "/rating-submissions/").Handler(httptransport.NewServer(
 		ep.CreateRatingSubmission,
 		decodeCreateRatingSubmission,
-		encoder.EncodeResponseHTTP,
-		options...,
+		encoder.EncodeResponseHTTPWithCorrelationID,
+		append(options, httptransport.ServerBefore(middleware.CorrelationIdToContext()))...,
 	))
 
 	pr.Methods(http.MethodGet).Path(_struct.PrefixBase + "/rating-submissions").Handler(httptransport.NewServer(

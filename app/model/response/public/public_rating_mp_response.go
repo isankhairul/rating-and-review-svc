@@ -219,3 +219,8 @@ type RatingSummaryStoreProductNumeric struct {
 	TotalComment        int64                                 `json:"total_comment"`
 	RatingSummaryDetail []PublicRatingSummaryDetailMpResponse `json:"rating_summary_detail"`
 }
+
+type PublicRatingSubGroupByValue struct {
+	ConvertedValue int `json:"id" bson:"_id"`
+	Total int `json:"count" bson:"count"`
+}

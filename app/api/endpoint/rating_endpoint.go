@@ -3,7 +3,6 @@ package endpoint
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/viper"
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/base/encoder"
 	"go-klikdokter/app/model/request"
@@ -14,6 +13,8 @@ import (
 	"go-klikdokter/helper/message"
 	"go-klikdokter/pkg/util"
 	"strings"
+
+	"github.com/spf13/viper"
 
 	"github.com/go-kit/log"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -224,15 +225,15 @@ func makeCreateRatingSubmission(s service.RatingService, logger log.Logger, db *
 
 		if util.StringInSlice(strings.ToLower(req.RatingType), viper.GetStringSlice("rating-type-mp")) {
 			ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
-			result, msg = ratingMp.CreateRatingSubmissionMp(req)
+			result, msg = ratingMp.CreateRatingSubmissionMp(ctx, req)
+			
 		} else {
 			result, msg = s.CreateRatingSubmission(req)
 		}
-
 		if msg.Code != 212000 {
-			return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
+			return base.SetHttpResponseWithCorrelationID(ctx, msg.Code, msg.Message, nil, nil, nil), nil
 		}
-		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
+		return base.SetHttpResponseWithCorrelationID(ctx, msg.Code, msg.Message, result, nil, nil), nil
 	}
 }
 
@@ -252,7 +253,7 @@ func makeUpdateRatingSubmission(s service.RatingService, logger log.Logger, db *
 
 		if util.StringInSlice(strings.ToLower(req.RatingType), viper.GetStringSlice("rating-type-mp")) {
 			ratingMp := service.NewRatingMpService(logger, repository.NewRatingMpRepository(db))
-			msg = ratingMp.UpdateRatingSubmission(req)
+			msg = ratingMp.UpdateRatingSubmission(ctx, req)
 		} else {
 			msg = s.UpdateRatingSubmission(req)
 		}

@@ -67,7 +67,7 @@ func makeCreateRatingSubmissionMp(s service.RatingMpService) endpoint.Endpoint {
 		req.UserIDLegacy = &userIdLegacy
 		req.UserID = &userIdLegacy
 
-		result, msg := s.CreateRatingSubmissionMp(req)
+		result, msg := s.CreateRatingSubmissionMp(ctx, req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
 		}
