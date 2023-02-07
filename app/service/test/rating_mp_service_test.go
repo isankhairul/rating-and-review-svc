@@ -9,6 +9,8 @@ import (
 	"go-klikdokter/helper/message"
 	"testing"
 
+	publicresponse "go-klikdokter/app/model/response/public"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -71,9 +73,29 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 		},
 	}
 	arrSub := []entity.RatingSubmissionMp{sub}
+	valueGroupBy := []publicresponse.PublicRatingSubGroupByValue{
+		{
+			ConvertedValue: 4,
+			Total: 1,
+		},
+	}
+
+	status := true
+
+	formula := entity.RatingFormulaCol{
+		ID: 	objectID,
+		SourceType   :"product",
+		Formula:    "(count/sum)/1" ,
+		RatingTypeId : "123",
+		RatingType: "rating_for_product",
+		Status: &status, 
+	}
+
 	ratingMpRepository.Mock.On("FindRatingSubmissionBySourceTransID", SourceTransID).Return(nil, gorm.ErrRecordNotFound)
 	ratingMpRepository.Mock.On("FindRatingTypeNumByRatingType", input.RatingType).Return(&ratingTypeID, nil)
 	ratingMpRepository.Mock.On("CreateRatingSubmission", saveReq).Return(&arrSub, nil)
+	ratingMpRepository.Mock.On("GetRatingSubsGroupByValue", input.SourceUID, "product").Return(valueGroupBy, nil)
+	ratingMpRepository.Mock.On("GetRatingFormulaBySourceType", "product").Return(&formula, nil)
 
 	_, msg := ratingMpSvc.CreateRatingSubmissionMp(context.Background(), input)
 

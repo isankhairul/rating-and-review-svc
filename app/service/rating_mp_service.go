@@ -789,6 +789,9 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 }
 
 func GetFinalRating(s *ratingMpServiceImpl, correlationId string ,sourceType string, sourceUid string) {
+	if s.logger == nil {
+		return
+	}
 	summarySubsGroupByValue, _ := s.ratingMpRepo.GetRatingSubsGroupByValue(sourceUid, sourceType)
 	totalValue := 0
 	TotalReviewer := 0
