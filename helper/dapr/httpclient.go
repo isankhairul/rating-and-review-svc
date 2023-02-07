@@ -41,7 +41,7 @@ func NewDaprHttpClient() HttpClient {
 
 func (c httpClient) PublishEvent(topic string, data string) (map[string]interface{}, error) {
 	client := http.Client{}
-	url := fmt.Sprintf("%s:%s/%s/publish/%s/%s", c.Host, c.Port, c.Version, c.PubSubName, topic)
+	url := fmt.Sprintf("%s:%s/%s/publish/%s/%s?metadata.rawPayload=true", c.Host, c.Port, c.Version, c.PubSubName, topic)
 	req, err := http.NewRequest("POST", url, strings.NewReader(data))
 	if err != nil {
 		return nil, err
