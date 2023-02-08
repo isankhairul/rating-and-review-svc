@@ -369,7 +369,9 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(ctx context.Context, inpu
 		}
 	}()
 
-	go GetFinalRating(s, correlationId, sourceType, input.SourceUID)
+	if input.RatingType == "rating_for_product" {
+		go GetFinalRating(s, correlationId, sourceType, input.SourceUID)
+	}
 	
 	return result, message.SuccessMsg
 }
