@@ -130,7 +130,7 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,
 			LikeCounter:   v.LikeCounter,
-			Value:         v.Value,
+			Value:         strconv.Itoa(v.Value),
 			LikeByMe:      false,
 			Media:         mediaResponse,
 			IsWithMedia:   v.IsWithMedia,
@@ -309,7 +309,7 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionByID(ctx context.Cont
 			Comment:       v.Comment,
 			SourceTransID: v.SourceTransID,
 			LikeCounter:   v.LikeCounter,
-			Value:         v.Value,
+			Value:         strconv.Itoa(v.Value),
 			LikeByMe:      false,
 			IsWithMedia:   v.IsWithMedia,
 			Media:         mediaResponse,
@@ -422,11 +422,8 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 			if rsmp.Comment != nil && *rsmp.Comment != "" {
 				arrComment = append(arrComment, *rsmp.Comment)
 			}
-			intValue, err := strconv.Atoi(rsmp.Value)
-			if err != nil {
-				intValue = 0
-			}
-			totalValue = totalValue + int64(intValue)
+			
+			totalValue = totalValue + int64(rsmp.Value)
 		}
 
 		var arrRatingDetailSummary []publicresponse.PublicRatingSummaryDetailMpResponse
@@ -434,9 +431,9 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 			ratingDetailSummary := publicresponse.PublicRatingSummaryDetailMpResponse{}
 			for _, rsmp := range ratingSub.RatingSubmissionsMp {
 				ratingDetailSummary.Value = arv
-
+				arvInt, _ := strconv.Atoi(arv)
 				// increment count
-				if arv == rsmp.Value {
+				if arvInt == rsmp.Value {
 					ratingDetailSummary.Count = ratingDetailSummary.Count + 1
 				}
 			}
@@ -533,11 +530,8 @@ func (s *publicRatingMpServiceImpl) GetRatingSummaryStoreProduct(ctx context.Con
 			if rsmp.Comment != nil && *rsmp.Comment != "" {
 				arrComment = append(arrComment, *rsmp.Comment)
 			}
-			intValue, err := strconv.Atoi(rsmp.Value)
-			if err != nil {
-				intValue = 0
-			}
-			totalValue = totalValue + int64(intValue)
+
+			totalValue = totalValue + int64(rsmp.Value)
 		}
 		sumCountRatingSub := &publicresponse.PublicSumCountRatingSummaryMp{
 			Comments: arrComment,
@@ -556,9 +550,9 @@ func (s *publicRatingMpServiceImpl) GetRatingSummaryStoreProduct(ctx context.Con
 			ratingDetailSummary := publicresponse.PublicRatingSummaryDetailMpResponse{}
 			for _, rsmp := range ratingSub.RatingSubmissionsMp {
 				ratingDetailSummary.Value = arv
-
+				arvInt, _ := strconv.Atoi(arv)
 				// increment count
-				if arv == rsmp.Value {
+				if arvInt == rsmp.Value {
 					ratingDetailSummary.Count = ratingDetailSummary.Count + 1
 				}
 			}

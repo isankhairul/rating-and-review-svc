@@ -13,7 +13,7 @@ type RatingSubmissionMp struct {
 	UserIDLegacy    *string            `json:"user_id_legacy" bson:"user_id_legacy,omitempty"`
 	DisplayName     *string            `json:"display_name" bson:"display_name,omitempty"`
 	Comment         *string            `json:"comment" bson:"comment,omitempty"`
-	Value           string             `json:"value" bson:"value,omitempty"`
+	Value           int                `json:"value" bson:"value,omitempty"`
 	IPAddress       string             `json:"ip_address" bson:"ip_address,omitempty"`
 	UserAgent       string             `json:"user_agent" bson:"user_agent,omitempty"`
 	Avatar          string             `json:"avatar" bson:"avatar,omitempty"`

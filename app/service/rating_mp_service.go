@@ -320,10 +320,10 @@ func (s *ratingMpServiceImpl) CreateRatingSubmissionMp(ctx context.Context, inpu
 		}
 	}
 	// end process media_path
-
+	value, _ := strconv.Atoi(input.Value)
 	saveReq = append(saveReq, entity.RatingSubmissionMp{
 		// RatingID:      rating.ID.Hex(),
-		Value:         input.Value,
+		Value:         value,
 		UserID:        input.UserID,
 		UserIDLegacy:  input.UserIDLegacy,
 		DisplayName:   input.DisplayName,
@@ -416,8 +416,9 @@ func (s *ratingMpServiceImpl) UpdateRatingSubmission(ctx context.Context ,input 
 		}
 	}
 	// end process media_path
+	value, _ := strconv.Atoi(*input.Value)
 	ratingSubmission.Comment = &input.Comment
-	ratingSubmission.Value = *input.Value
+	ratingSubmission.Value = value
 	ratingSubmission.Media = media
 	ratingSubmission.IsWithMedia = isWithMedia
 	ratingSubmission.UpdatedAt = timeUpdate
@@ -492,11 +493,12 @@ func (s *ratingMpServiceImpl) GetRatingSubmissionMp(id string) (*response.Rating
 		}
 		mediaResponse = append(mediaResponse, mediaObjResponse)
 	}
+	
 	var result = response.RatingSubmissionMpResponse{
 		RatingID:      get.RatingID,
 		UserID:        get.UserID,
 		UserIDLegacy:  get.UserIDLegacy,
-		Value:         get.Value,
+		Value:         strconv.Itoa(get.Value),
 		SourceTransID: get.SourceTransID,
 		Media:         mediaResponse,
 		IsWithMedia:   get.IsWithMedia,
@@ -568,7 +570,7 @@ func (s *ratingMpServiceImpl) GetListRatingSubmissionsMp(input request.ListRatin
 				UserID:        args.UserID,
 				UserIDLegacy:  args.UserIDLegacy,
 				Comment:       *args.Comment,
-				Value:         args.Value,
+				Value:         strconv.Itoa(args.Value),
 				SourceTransID: args.SourceTransID,
 				Media:         mediaResponse,
 				IsWithMedia:   args.IsWithMedia,
@@ -601,7 +603,8 @@ func filterScoreSubmissionMp(ratingSubmissionsMp entity.RatingSubmissionMp, scor
 		return true
 	}
 	var scoreDB = make([]float64, 0)
-	values := strings.Split(ratingSubmissionsMp.Value, ",")
+	
+	values := strings.Split(strconv.Itoa(ratingSubmissionsMp.Value), ",")
 	for _, argVs := range values {
 		value, _ := strconv.ParseFloat(argVs, 64)
 		scoreDB = append(scoreDB, value)

@@ -7,6 +7,7 @@ import (
 	"go-klikdokter/app/repository/repository_mock"
 	"go-klikdokter/app/service"
 	"go-klikdokter/helper/message"
+	"strconv"
 	"testing"
 
 	publicresponse "go-klikdokter/app/model/response/public"
@@ -43,13 +44,14 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 	ratingTypeID := entity.RatingTypesNumCol{
 		ID: objectID,
 	}
+	valueInt , _ := strconv.Atoi(value)
 	sub := entity.RatingSubmissionMp{
 		ID:            objectID,
 		UserID:        &userId,
 		UserIDLegacy:  &userId,
 		RatingID:      id,
 		SourceTransID: orderNumber + "||product||Frtgffggffgft123||34343432",
-		Value:         value,
+		Value:         valueInt,
 		OrderNumber:   orderNumber,
 		Media:         nil,
 		RatingTypeID:  ratingTypeID.ID.Hex(),
@@ -64,7 +66,7 @@ func TestCreateRatingSubmissionMpSuccess(t *testing.T) {
 			SourceTransID: orderNumber + "||product||Frtgffggffgft123||34343432",
 			SourceUID:     "Frtgffggffgft123",
 			SourceType:    "product",
-			Value:         value,
+			Value:         valueInt,
 			Media:         nil,
 			OrderNumber:   orderNumber,
 			RatingTypeID:  ratingTypeID.ID.Hex(),

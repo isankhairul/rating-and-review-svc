@@ -8,7 +8,7 @@ import (
 	publicresponse "go-klikdokter/app/model/response/public"
 	"go-klikdokter/app/repository/public/public_repository_mock"
 	"go-klikdokter/app/repository/repository_mock"
-	"go-klikdokter/app/service/public"
+	publicservice "go-klikdokter/app/service/public"
 	"go-klikdokter/helper/message"
 	"os"
 	"testing"
@@ -94,7 +94,7 @@ var ratingSubMpDatas = []entity.RatingSubmissionMp{
 		UserID:        &userId,
 		UserIDLegacy:  &userId,
 		Comment:       &comment,
-		Value:         "4",
+		Value:         4,
 		IPAddress:     ipaddress,
 		UserAgent:     useragent,
 		SourceTransID: sourceTransIdMp,
@@ -109,7 +109,7 @@ func TestGetRatingSummaryMpBySourceType(t *testing.T) {
 			UserID:        &userId,
 			UserIDLegacy:  &userId,
 			Comment:       &comment,
-			Value:         "4",
+			Value:         4,
 			IPAddress:     ipaddress,
 			UserAgent:     useragent,
 			SourceTransID: sourceTransIdMp,
@@ -200,7 +200,7 @@ func TestGetListRatingSubmissionMpByID(t *testing.T) {
 			UserID:        &userId,
 			UserIDLegacy:  &userId,
 			Comment:       &comment,
-			Value:         "4",
+			Value:         4,
 			IPAddress:     ipaddress,
 			UserAgent:     useragent,
 			SourceTransID: sourceTransIdMp,
