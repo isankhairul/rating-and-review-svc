@@ -74,18 +74,18 @@ var requestSubmissionMpByID = publicrequest.GetPublicListRatingSubmissionByIDReq
 var requestSummaryMpDetail = publicrequest.PublicGetListDetailRatingSummaryRequest{
 	Filter:     `{"source_uid": ["1234"]}`,
 	SourceType: "product",
-	Limit:      50,
-	Page:       1,
-	Sort:       "created_at",
-	Dir:        "1",
+	// Limit:      50,
+	// Page:       1,
+	// Sort:       "created_at",
+	// Dir:        "1",
 }
 
 var requestSummaryStoreProduct = publicrequest.PublicGetRatingSummaryStoreProductRequest{
 	Filter: `{"store_uid": ["1"]}`,
-	Limit:  50,
-	Page:   1,
-	Sort:   "created_at",
-	Dir:    "1",
+	// Limit:  50,
+	// Page:   1,
+	// Sort: "created_at",
+	// Dir:    "1",
 }
 
 var ratingSubMpDatas = []entity.RatingSubmissionMp{
@@ -103,18 +103,18 @@ var ratingSubMpDatas = []entity.RatingSubmissionMp{
 
 func TestGetRatingSummaryMpBySourceType(t *testing.T) {
 	idObj, _ := primitive.ObjectIDFromHex(idDummy1)
-	ratingSubDatas := []entity.RatingSubmissionMp{
-		{
-			ID:            idObj,
-			UserID:        &userId,
-			UserIDLegacy:  &userId,
-			Comment:       &comment,
-			Value:         4,
-			IPAddress:     ipaddress,
-			UserAgent:     useragent,
-			SourceTransID: sourceTransIdMp,
-		},
-	}
+	// ratingSubDatas := []entity.RatingSubmissionMp{
+	// 	{
+	// 		ID:            idObj,
+	// 		UserID:        &userId,
+	// 		UserIDLegacy:  &userId,
+	// 		Comment:       &comment,
+	// 		Value:         4,
+	// 		IPAddress:     ipaddress,
+	// 		UserAgent:     useragent,
+	// 		SourceTransID: sourceTransIdMp,
+	// 	},
+	// }
 	ratingFormulaMp := entity.RatingFormulaCol{
 		ID:           idObj,
 		SourceType:   "product",
@@ -122,21 +122,23 @@ func TestGetRatingSummaryMpBySourceType(t *testing.T) {
 		RatingTypeId: ratingid,
 		RatingType:   ratingType,
 	}
-	paginationResult := base.Pagination{
-		Records:      1,
-		Limit:        10,
-		Page:         1,
-		TotalRecords: 1,
-	}
+	// paginationResult := base.Pagination{
+	// 	Records:      1,
+	// 	Limit:        10,
+	// 	Page:         1,
+	// 	TotalRecords: 1,
+	// }
 	ratingSubmissionGroupBySource := publicresponse.PublicRatingSubGroupBySourceMp{
-		ID: struct {
-			SourceUID  string `json:"source_uid" bson:"source_uid"`
-			SourceType string `json:"source_type" bson:"source_type"`
-		}(struct {
-			SourceUID  string
-			SourceType string
-		}{SourceUID: "1234", SourceType: "product"}),
-		RatingSubmissionsMp: ratingSubDatas,
+		ID: publicresponse.StructGroupSource{
+			SourceUID:  "1234",
+			SourceType: "product",
+		},
+		ArrayValue: []map[string]int{
+			{
+				"key":   5,
+				"value": 1,
+			},
+		},
 	}
 	sumCountRatingSummary := publicresponse.PublicSumCountRatingSummaryMp{
 		Sum:      10,
@@ -144,16 +146,16 @@ func TestGetRatingSummaryMpBySourceType(t *testing.T) {
 		Comments: []string{},
 	}
 
-	publicRatingMpRepository.Mock.On("GetPublicRatingSubmissionsGroupBySource", requestSummaryMp.Limit, requestSummaryMp.Page, -1, "updated_at", filterSummaryMp).
-		Return([]publicresponse.PublicRatingSubGroupBySourceMp{ratingSubmissionGroupBySource}, &paginationResult, nil).Once()
+	publicRatingMpRepository.Mock.On("GetPublicRatingSubmissionsGroupBySource", filterSummaryMp).
+		Return([]publicresponse.PublicRatingSubGroupBySourceMp{ratingSubmissionGroupBySource}, nil).Once()
 	publicRatingMpRepository.Mock.On("GetSumCountRatingSubsBySource", ratingSubmissionGroupBySource.ID.SourceUID, ratingSubmissionGroupBySource.ID.SourceType).Return(&sumCountRatingSummary, nil).Once()
 	publicRatingMpRepository.Mock.On("GetRatingFormulaBySourceType", requestSummaryMp.SourceType).Return(&ratingFormulaMp, nil).Once()
 
-	result, pagination, msg := publicRatingMpService.GetListRatingSummaryBySourceType(requestSummaryMp)
+	result, msg := publicRatingMpService.GetListRatingSummaryBySourceType(requestSummaryMp)
 	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
 	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
 	assert.Equal(t, 1, len(result), "Count of list kd must be 1")
-	assert.Equal(t, int64(1), pagination.Records, "Total record must be 1")
+	// assert.Equal(t, int64(1), pagination.Records, "Total record must be 1")
 }
 
 func TestGetRatingSubmissionMpBySourceTypeAndUID(t *testing.T) {
@@ -235,21 +237,17 @@ func TestGetListRatingSubmissionMpByID(t *testing.T) {
 
 func TestGetListDetailRatingSummaryMpBySourceType(t *testing.T) {
 	idObj, _ := primitive.ObjectIDFromHex(idDummy1)
-	paginationResult := base.Pagination{
-		Records:      1,
-		Limit:        10,
-		Page:         1,
-		TotalRecords: 1,
-	}
 	ratingSubmissionGroupBySource := publicresponse.PublicRatingSubGroupBySourceMp{
-		ID: struct {
-			SourceUID  string `json:"source_uid" bson:"source_uid"`
-			SourceType string `json:"source_type" bson:"source_type"`
-		}(struct {
-			SourceUID  string
-			SourceType string
-		}{SourceUID: "1234", SourceType: "product"}),
-		RatingSubmissionsMp: ratingSubMpDatas,
+		ID: publicresponse.StructGroupSource{
+			SourceUID:  "1234",
+			SourceType: "product",
+		},
+		ArrayValue: []map[string]int{
+			{
+				"key":   5,
+				"value": 1,
+			},
+		},
 	}
 
 	var filterListDetailRatingSummaryMp = publicrequest.FilterRatingSummary{
@@ -265,16 +263,16 @@ func TestGetListDetailRatingSummaryMpBySourceType(t *testing.T) {
 		RatingType:   ratingType,
 	}
 
-	publicRatingMpRepository.Mock.On("GetPublicRatingSubmissionsGroupBySource", requestSummaryMp.Limit, requestSummaryMp.Page, -1, "created_at", filterListDetailRatingSummaryMp).
-		Return([]publicresponse.PublicRatingSubGroupBySourceMp{ratingSubmissionGroupBySource}, &paginationResult, nil).Once()
+	publicRatingMpRepository.Mock.On("GetPublicRatingSubmissionsGroupBySource", filterListDetailRatingSummaryMp).
+		Return([]publicresponse.PublicRatingSubGroupBySourceMp{ratingSubmissionGroupBySource}, nil).Once()
 	publicRatingMpRepository.Mock.On("GetRatingFormulaBySourceType", requestSummaryMp.SourceType).Return(&ratingFormulaMp, nil).Once()
 
-	result, pagination, msg := publicRatingMpService.GetListDetailRatingSummaryBySourceType(requestSummaryMpDetail)
+	result, msg := publicRatingMpService.GetListDetailRatingSummaryBySourceType(requestSummaryMpDetail)
 
 	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
 	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
 	assert.Equal(t, 1, len(result), "Count of list kd must be 1")
-	assert.Equal(t, int64(1), pagination.Records, "Total record must be 1")
+	// assert.Equal(t, int64(1), pagination.Records, "Total record must be 1")
 }
 
 func TestGetRatingSummaryStoreProduct(t *testing.T) {
@@ -287,14 +285,15 @@ func TestGetRatingSummaryStoreProduct(t *testing.T) {
 	}
 
 	ratingSubmissionGroupByStoreSource := publicresponse.PublicRatingSubGroupByStoreSourceMp{
-		ID: struct {
-			StoreUID   string `json:"store_uid" bson:"store_uid"`
-			SourceType string `json:"source_type" bson:"source_type"`
-		}(struct {
-			StoreUID   string
-			SourceType string
-		}{StoreUID: "1", SourceType: "product"}),
-		RatingSubmissionsMp: ratingSubMpDatas,
+		ID: publicresponse.StructGroupStoreSource{
+			StoreUID: "1", SourceType: "product",
+		},
+		ArrayValue: []map[string]int{
+			{
+				"key":   5,
+				"value": 1,
+			},
+		},
 	}
 
 	var filter = publicrequest.FilterRatingSummary{
@@ -310,14 +309,14 @@ func TestGetRatingSummaryStoreProduct(t *testing.T) {
 		RatingType:   ratingType,
 	}
 
-	publicRatingMpRepository.Mock.On("GetPublicRatingSubmissionsGroupByStoreSource", requestSummaryStoreProduct.Limit, requestSummaryStoreProduct.Page, -1, "created_at", filter).
+	publicRatingMpRepository.Mock.On("GetPublicRatingSubmissionsGroupByStoreSource", filter).
 		Return([]publicresponse.PublicRatingSubGroupByStoreSourceMp{ratingSubmissionGroupByStoreSource}, &paginationResult, nil).Once()
 	publicRatingMpRepository.Mock.On("GetRatingFormulaBySourceType", "product").Return(&ratingFormulaMp, nil).Once()
 
-	result, pagination, msg := publicRatingMpService.GetRatingSummaryStoreProduct(context.TODO(), requestSummaryStoreProduct)
+	result, msg := publicRatingMpService.GetRatingSummaryStoreProduct(context.TODO(), requestSummaryStoreProduct)
 
 	assert.Equal(t, message.SuccessMsg.Code, msg.Code, "Code must be 1000")
 	assert.Equal(t, message.SuccessMsg.Message, msg.Message, "Message must be success")
 	assert.Equal(t, 1, len(result), "Count of list kd must be 1")
-	assert.Equal(t, int64(1), pagination.Records, "Total record must be 1")
+	// assert.Equal(t, int64(1), pagination.Records, "Total record must be 1")
 }

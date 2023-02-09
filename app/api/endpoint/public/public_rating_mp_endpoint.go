@@ -29,11 +29,11 @@ func MakePublicRatingMpEndpoints(s publicservice.PublicRatingMpService) PublicRa
 func makeGetListRatingSummaryMpBySourceType(s publicservice.PublicRatingMpService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(publicrequest.GetPublicListRatingSummaryRequest)
-		result, pagination, msg := s.GetListRatingSummaryBySourceType(req)
+		result, msg := s.GetListRatingSummaryBySourceType(req)
 		if msg.Code != 212000 {
-			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 		}
-		return base.SetHttpResponse(msg.Code, msg.Message, result, pagination), nil
+		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
 	}
 }
 
@@ -62,10 +62,10 @@ func makeGetListRatingSubmissionByID(s publicservice.PublicRatingMpService) endp
 func makeGetRatingSummaryStoreProduct(s publicservice.PublicRatingMpService) endpoint.Endpoint {
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(publicrequest.PublicGetRatingSummaryStoreProductRequest)
-		result, pagination, msg := s.GetRatingSummaryStoreProduct(ctx, req)
+		result, msg := s.GetRatingSummaryStoreProduct(ctx, req)
 		if msg.Code != 212000 {
 			return base.SetHttpResponseWithCorrelationID(ctx, msg.Code, msg.Message, nil, nil, nil), nil
 		}
-		return base.SetHttpResponseWithCorrelationID(ctx, msg.Code, msg.Message, result, pagination, nil), nil
+		return base.SetHttpResponseWithCorrelationID(ctx, msg.Code, msg.Message, result, nil, nil), nil
 	}
 }

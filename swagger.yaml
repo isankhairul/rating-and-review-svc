@@ -756,11 +756,11 @@ definitions:
           in: string
         x-go-name: Errors
       meta:
-        $ref: '#/definitions/metaResponseWithCorrelationID'
+        $ref: '#/definitions/MetaResponse'
       pagination:
         $ref: '#/definitions/PaginationResponse'
     type: object
-    x-go-name: responseHttpWithCorrelationID
+    x-go-name: responseHttp
     x-go-package: go-klikdokter/app/model/base
   UpdateRatingSubDisplayNameRequest:
     properties:
@@ -1175,30 +1175,14 @@ paths:
       description: Get List Detail Rating Summary
       operationId: PublicGetListDetailRatingSummaryRequest
       parameters:
-      - description: 'Filter available {"source_uid": [""]}'
+      - description: |-
+          Filter available {"source_uid": [""]}
+          max source_uid is 50
         in: query
         name: filter
         required: true
         type: string
         x-go-name: Filter
-      - format: int64
-        in: query
-        name: limit
-        type: integer
-        x-go-name: Limit
-      - format: int64
-        in: query
-        name: page
-        type: integer
-        x-go-name: Page
-      - in: query
-        name: sort
-        type: string
-        x-go-name: Sort
-      - in: query
-        name: dir
-        type: string
-        x-go-name: Dir
       - description: SourceType
         in: path
         name: source_type
@@ -1221,25 +1205,14 @@ paths:
       description: Get List Rating Summary Store Product
       operationId: PublicGetRatingSummaryStoreProductRequest
       parameters:
-      - description: 'Filter available {"store_uid": [""]}'
+      - description: |-
+          Filter available {"store_uid": [""]}
+          max store_uid is 20
         in: query
         name: filter
         required: true
         type: string
         x-go-name: Filter
-      - format: int64
-        in: query
-        name: page
-        type: integer
-        x-go-name: Page
-      - in: query
-        name: sort
-        type: string
-        x-go-name: Sort
-      - in: query
-        name: dir
-        type: string
-        x-go-name: Dir
       responses:
         "200":
           description: SuccessResponse

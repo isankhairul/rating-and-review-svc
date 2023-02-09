@@ -4,6 +4,7 @@ import (
 	"fmt"
 	validation "github.com/itgelo/ozzo-validation/v4"
 	"github.com/spf13/viper"
+	"go-klikdokter/helper/message"
 	"strings"
 )
 
@@ -26,6 +27,30 @@ type FilterRatingSummary struct {
 	SourceUid  []string `json:"source_uid"`
 	StoreUID   []string `json:"store_uid,omitempty"`
 	RatingType []string `json:"rating_type"`
+}
+
+func (f FilterRatingSummary) ValidateSourceUID() *message.Message {
+	if len(f.SourceUid) == 0 {
+		return &message.ErrSourceUidRequire
+	}
+
+	if len(f.SourceUid) > 50 {
+		return &message.ErrSourceUidRequire
+	}
+
+	return nil
+}
+
+func (f FilterRatingSummary) ValidateStoreUID() *message.Message {
+	if len(f.StoreUID) == 0 {
+		return &message.ErrStoreUidRequire
+	}
+
+	if len(f.StoreUID) > 20 {
+		return &message.ErrStoreUidMax
+	}
+
+	return nil
 }
 
 // swagger:parameters GetPublicListRatingSubmissionRequest

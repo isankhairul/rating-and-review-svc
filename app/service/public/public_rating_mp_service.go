@@ -28,10 +28,10 @@ import (
 
 type PublicRatingMpService interface {
 	GetListRatingSubmissionBySourceTypeAndUID(input publicrequest.GetPublicListRatingSubmissionRequest) ([]publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message)
-	GetListRatingSummaryBySourceType(input publicrequest.GetPublicListRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryMpResponse, *base.Pagination, message.Message)
+	GetListRatingSummaryBySourceType(input publicrequest.GetPublicListRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryMpResponse, message.Message)
 	GetListRatingSubmissionByID(ctx context.Context, input publicrequest.GetPublicListRatingSubmissionByIDRequest) ([]publicresponse.PublicRatingSubmissionMpResponse, *base.Pagination, message.Message, interface{})
-	GetListDetailRatingSummaryBySourceType(input publicrequest.PublicGetListDetailRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryListDetailResponse, *base.Pagination, message.Message)
-	GetRatingSummaryStoreProduct(ctx context.Context, input publicrequest.PublicGetRatingSummaryStoreProductRequest) ([]publicresponse.RatingSummaryStoreProductNumeric, *base.Pagination, message.Message)
+	GetListDetailRatingSummaryBySourceType(input publicrequest.PublicGetListDetailRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryListDetailResponse, message.Message)
+	GetRatingSummaryStoreProduct(ctx context.Context, input publicrequest.PublicGetRatingSummaryStoreProductRequest) ([]publicresponse.RatingSummaryStoreProductNumeric, message.Message)
 }
 
 type publicRatingMpServiceImpl struct {
@@ -143,43 +143,37 @@ func (s *publicRatingMpServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(in
 	return results, pagination, message.SuccessMsg
 }
 
-func (s *publicRatingMpServiceImpl) GetListRatingSummaryBySourceType(input publicrequest.GetPublicListRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryMpResponse, *base.Pagination, message.Message) {
+func (s *publicRatingMpServiceImpl) GetListRatingSummaryBySourceType(input publicrequest.GetPublicListRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryMpResponse, message.Message) {
 	results := []publicresponse.PublicRatingSummaryMpResponse{}
 	input.MakeDefaultValueIfEmpty()
-	var dir int
-	if input.Dir == "asc" {
-		dir = 1
-	} else {
-		dir = -1
-	}
 	filter := publicrequest.FilterRatingSummary{}
 	filter.SourceType = input.SourceType
 	if input.Filter != "" {
 		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
 		if errMarshal != nil {
-			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+			return nil, message.ErrUnmarshalFilterListRatingRequest
 		}
 	}
-	if len(filter.SourceUid) == 0 {
-		return nil, nil, message.ErrSourceUidRequire
+	if errValidate := filter.ValidateSourceUID(); errValidate != nil {
+		return nil, *errValidate
 	}
 
-	ratingSub, pagination, err := s.publicRatingMpRepo.GetPublicRatingSubmissionsGroupBySource(input.Limit, input.Page, dir, input.Sort, filter)
+	ratingSub, err := s.publicRatingMpRepo.GetPublicRatingSubmissionsGroupBySource(filter)
 	if err != nil {
-		return nil, nil, message.RecordNotFound
+		return nil, message.RecordNotFound
 	}
 	if len(ratingSub) <= 0 {
-		return results, pagination, message.SuccessMsg
+		return results, message.SuccessMsg
 	}
 
 	for _, args := range ratingSub {
 		data, err := s.summaryRatingNumeric(args.ID.SourceUID, input.SourceType)
 		if err != nil {
-			return nil, nil, message.ErrFailedSummaryRatingNumeric
+			return nil, message.ErrFailedSummaryRatingNumeric
 		}
 		results = append(results, *data)
 	}
-	return results, pagination, message.SuccessMsg
+	return results, message.SuccessMsg
 }
 
 func (s *publicRatingMpServiceImpl) summaryRatingNumeric(sourceUID string, sourceType string) (*publicresponse.PublicRatingSummaryMpResponse, error) {
@@ -328,10 +322,14 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 	result.TotalReviewer = sumCountRatingSubs.Count
 	result.TotalValue = "0"
 
-	for _, c := range sumCountRatingSubs.Comments {
-		if strings.TrimSpace(c) != "" {
-			result.TotalComment++
+	if len(sumCountRatingSubs.Comments) > 0 {
+		for _, c := range sumCountRatingSubs.Comments {
+			if strings.TrimSpace(c) != "" {
+				result.TotalComment++
+			}
 		}
+	} else {
+		result.TotalComment = result.TotalReviewer
 	}
 
 	if formula != "" {
@@ -347,11 +345,6 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 		if err != nil {
 			return result, err
 		}
-
-		// totalValue, err := strconv.ParseFloat(fmt.Sprintf("%.1f", finalCalc.(float64)), 64)
-		// if err != nil {
-		//	return result, err
-		// }
 		result.TotalValue = fmt.Sprintf("%.1f", finalCalc)
 	}
 
@@ -365,41 +358,36 @@ func calculateRatingMpValue(sourceUID, formula string, sumCountRatingSubs *publi
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
-func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input publicrequest.PublicGetListDetailRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryListDetailResponse, *base.Pagination, message.Message) {
+func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input publicrequest.PublicGetListDetailRatingSummaryRequest) ([]publicresponse.PublicRatingSummaryListDetailResponse, message.Message) {
 	results := []publicresponse.PublicRatingSummaryListDetailResponse{}
 	input.MakeDefaultValueIfEmpty()
-	var dir int
-	if input.Dir == "asc" {
-		dir = 1
-	} else {
-		dir = -1
-	}
+
 	filter := publicrequest.FilterRatingSummary{}
 	filter.SourceType = input.SourceType
 	if input.Filter != "" {
 		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
 		if errMarshal != nil {
-			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+			return nil, message.ErrUnmarshalFilterListRatingRequest
 		}
 	}
-	if len(filter.SourceUid) == 0 {
-		return nil, nil, message.ErrSourceUidRequire
+	if errValidate := filter.ValidateSourceUID(); errValidate != nil {
+		return nil, *errValidate
 	}
 
-	ratingSubs, pagination, err := s.publicRatingMpRepo.GetPublicRatingSubmissionsGroupBySource(input.Limit, input.Page, dir, input.Sort, filter)
+	ratingSubs, err := s.publicRatingMpRepo.GetPublicRatingSubmissionsGroupBySource(filter)
 	if err != nil {
-		return nil, nil, message.RecordNotFound
+		return nil, message.RecordNotFound
 	}
 	if len(ratingSubs) <= 0 {
-		return results, pagination, message.SuccessMsg
+		return results, message.SuccessMsg
 	}
 
 	formulaRating, err := s.publicRatingMpRepo.GetRatingFormulaBySourceType(input.SourceType)
 	if err != nil {
-		return nil, nil, message.RecordNotFound
+		return nil, message.RecordNotFound
 	}
 	if formulaRating == nil {
-		return nil, nil, message.RecordNotFound
+		return nil, message.RecordNotFound
 	}
 
 	// https://it-mkt.atlassian.net/browse/MP-675
@@ -414,44 +402,17 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 		pRsldr := publicresponse.PublicRatingSummaryListDetailResponse{}
 		pRsldr.SourceType = ratingSub.ID.SourceType
 		pRsldr.SourceUID = ratingSub.ID.SourceUID
-		pRsldr.TotalReviewer = int64(len(ratingSub.RatingSubmissionsMp))
-		var arrComment []string
-		var totalValue int64
-		// get comment and total value
-		for _, rsmp := range ratingSub.RatingSubmissionsMp {
-			if rsmp.Comment != nil && *rsmp.Comment != "" {
-				arrComment = append(arrComment, *rsmp.Comment)
-			}
-			
-			totalValue = totalValue + int64(rsmp.Value)
-		}
+		pRsldr.TotalReviewer = int64(ratingSub.TotalReviewer)
+		var totalValue = int64(ratingSub.TotalValue)
 
-		var arrRatingDetailSummary []publicresponse.PublicRatingSummaryDetailMpResponse
-		for _, arv := range arrRatingValue {
-			ratingDetailSummary := publicresponse.PublicRatingSummaryDetailMpResponse{}
-			for _, rsmp := range ratingSub.RatingSubmissionsMp {
-				ratingDetailSummary.Value = arv
-				arvInt, _ := strconv.Atoi(arv)
-				// increment count
-				if arvInt == rsmp.Value {
-					ratingDetailSummary.Count = ratingDetailSummary.Count + 1
-				}
-			}
-
-			// calculate percentage
-			if ratingDetailSummary.Count > 0 {
-				percent, _ := strconv.ParseFloat(fmt.Sprintf("%.1f", (float32(ratingDetailSummary.Count)/float32(pRsldr.TotalReviewer))*100), 32)
-				ratingDetailSummary.Percent = float32(percent)
-			}
-			arrRatingDetailSummary = append(arrRatingDetailSummary, ratingDetailSummary)
-		}
+		// calculate star
+		var arrRatingDetailSummary = populateStarRatingSummary(arrRatingValue, ratingSub.ArrayValue, pRsldr.TotalReviewer)
 		pRsldr.RatingSummaryDetail = arrRatingDetailSummary
 
 		// calculate total_value
 		sumCountRatingSub := &publicresponse.PublicSumCountRatingSummaryMp{
-			Comments: arrComment,
-			Sum:      totalValue,
-			Count:    pRsldr.TotalReviewer,
+			Sum:   totalValue,
+			Count: pRsldr.TotalReviewer,
 		}
 		pRsldr.MaximumValue = global.GetMaximumValueBySourceType(input.SourceType)
 
@@ -464,7 +425,7 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 		results = append(results, pRsldr)
 	}
 
-	return results, pagination, message.SuccessMsg
+	return results, message.SuccessMsg
 }
 
 // swagger:route GET /public/ratings-summary/store-product PublicRating PublicGetRatingSummaryStoreProductRequest
@@ -474,100 +435,92 @@ func (s *publicRatingMpServiceImpl) GetListDetailRatingSummaryBySourceType(input
 // responses:
 //  401: SuccessResponse
 //  200: SuccessResponse
-func (s *publicRatingMpServiceImpl) GetRatingSummaryStoreProduct(ctx context.Context, input publicrequest.PublicGetRatingSummaryStoreProductRequest) ([]publicresponse.RatingSummaryStoreProductNumeric, *base.Pagination, message.Message) {
+func (s *publicRatingMpServiceImpl) GetRatingSummaryStoreProduct(ctx context.Context, input publicrequest.PublicGetRatingSummaryStoreProductRequest) ([]publicresponse.RatingSummaryStoreProductNumeric, message.Message) {
 	// https://it-mkt.atlassian.net/browse/MP-694
-
 	results := []publicresponse.RatingSummaryStoreProductNumeric{}
 	input.MakeDefaultValueIfEmpty()
 	var sourceType string = "product"
-	var dir int
-	if input.Dir == "asc" {
-		dir = 1
-	} else {
-		dir = -1
-	}
 	filter := publicrequest.FilterRatingSummary{}
 	filter.SourceType = sourceType
 	if input.Filter != "" {
 		errMarshal := json.Unmarshal([]byte(input.Filter), &filter)
 		if errMarshal != nil {
 			fmt.Println("errMarshal", errMarshal)
-			return nil, nil, message.ErrUnmarshalFilterListRatingRequest
+			return nil, message.ErrUnmarshalFilterListRatingRequest
 		}
 	}
-	if len(filter.StoreUID) == 0 {
-		return nil, nil, message.ErrStoreUidRequire
+	if errValidate := filter.ValidateStoreUID(); errValidate != nil {
+		return nil, *errValidate
 	}
 
-	ratingSubs, pagination, err := s.publicRatingMpRepo.GetPublicRatingSubmissionsGroupByStoreSource(input.Limit, input.Page, dir, input.Sort, filter)
+	ratingSubs, err := s.publicRatingMpRepo.GetPublicRatingSubmissionsGroupByStoreSource(filter)
 	if err != nil {
-		return nil, nil, message.RecordNotFound
+		return nil, message.RecordNotFound
 	}
 	if len(ratingSubs) <= 0 {
-		return nil, pagination, message.SuccessMsg
+		return nil, message.SuccessMsg
 	}
 
 	formulaRating, err := s.publicRatingMpRepo.GetRatingFormulaBySourceType(sourceType)
 	if err != nil {
-		return nil, nil, message.RecordNotFound
+		return nil, message.RecordNotFound
 	}
 	if formulaRating == nil {
-		return nil, nil, message.RecordNotFound
+		return nil, message.RecordNotFound
 	}
 
 	// processing calculate  summary
 	for _, ratingSub := range ratingSubs {
 		result := publicresponse.RatingSummaryStoreProductNumeric{}
 		result.StoreUID = ratingSub.ID.StoreUID
-		result.TotalReviewer = int64(len(ratingSub.RatingSubmissionsMp))
+		result.TotalReviewer = int64(ratingSub.TotalReviewer)
 		result.MaximumValue = global.GetMaximumValueBySourceType(sourceType)
-		var arrComment []string
-		var totalValue int64
+		var totalValue = int64(ratingSub.TotalValue)
 		var arrRatingValue []string = global.GetListRatingValueBySourceType(ratingSub.ID.SourceType)
 
-		// get comment and total value
-		for _, rsmp := range ratingSub.RatingSubmissionsMp {
-			if rsmp.Comment != nil && *rsmp.Comment != "" {
-				arrComment = append(arrComment, *rsmp.Comment)
-			}
-
-			totalValue = totalValue + int64(rsmp.Value)
-		}
 		sumCountRatingSub := &publicresponse.PublicSumCountRatingSummaryMp{
-			Comments: arrComment,
-			Sum:      totalValue,
-			Count:    result.TotalReviewer,
+			Sum:   totalValue,
+			Count: result.TotalReviewer,
 		}
 		ratingSummary, err := calculateRatingMpValue(ratingSub.ID.StoreUID, formulaRating.Formula, sumCountRatingSub)
 		if err == nil {
 			result.TotalValue = ratingSummary.TotalValue
-			result.TotalComment = ratingSummary.TotalComment
+			result.TotalComment = result.TotalReviewer
 		}
 
 		// calculate star
-		var arrRatingDetailSummary []publicresponse.PublicRatingSummaryDetailMpResponse
-		for _, arv := range arrRatingValue {
-			ratingDetailSummary := publicresponse.PublicRatingSummaryDetailMpResponse{}
-			for _, rsmp := range ratingSub.RatingSubmissionsMp {
-				ratingDetailSummary.Value = arv
-				arvInt, _ := strconv.Atoi(arv)
-				// increment count
-				if arvInt == rsmp.Value {
-					ratingDetailSummary.Count = ratingDetailSummary.Count + 1
-				}
-			}
-
-			// calculate percentage
-			if ratingDetailSummary.Count > 0 {
-				percent, _ := strconv.ParseFloat(fmt.Sprintf("%.1f", (float32(ratingDetailSummary.Count)/float32(result.TotalReviewer))*100), 32)
-				ratingDetailSummary.Percent = float32(percent)
-			}
-			arrRatingDetailSummary = append(arrRatingDetailSummary, ratingDetailSummary)
-		}
+		var arrRatingDetailSummary = populateStarRatingSummary(arrRatingValue, ratingSub.ArrayValue, result.TotalReviewer)
 		result.RatingSummaryDetail = arrRatingDetailSummary
 
 		results = append(results, result)
 	}
 
-	return results, pagination, message.SuccessMsg
+	return results, message.SuccessMsg
+}
+
+func populateStarRatingSummary(arrRatingValue []string, arrayValue []map[string]int, totalReviewer int64) []publicresponse.PublicRatingSummaryDetailMpResponse {
+	var arrRatingDetailSummary []publicresponse.PublicRatingSummaryDetailMpResponse
+	for _, arv := range arrRatingValue {
+		ratingDetailSummary := publicresponse.PublicRatingSummaryDetailMpResponse{}
+		for _, av := range arrayValue {
+			ratingDetailSummary.Value = arv
+
+			// assign count value
+			if key, isKey := av["key"]; isKey && fmt.Sprint(key) == arv {
+				countValue, isCountValue := av["value"]
+				if isCountValue {
+					ratingDetailSummary.Count = int64(countValue)
+				}
+			}
+		}
+
+		// calculate percentage
+		if ratingDetailSummary.Count > 0 {
+			percent, _ := strconv.ParseFloat(fmt.Sprintf("%.1f", (float32(ratingDetailSummary.Count)/float32(totalReviewer))*100), 32)
+			ratingDetailSummary.Percent = float32(percent)
+		}
+		arrRatingDetailSummary = append(arrRatingDetailSummary, ratingDetailSummary)
+	}
+
+	return arrRatingDetailSummary
 }

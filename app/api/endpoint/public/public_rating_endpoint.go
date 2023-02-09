@@ -40,7 +40,7 @@ func makeGetListRatingSummaryBySourceType(s publicservice.PublicRatingService, l
 
 		if util.StringInSlice(strings.ToLower(req.SourceType), []string{"product", "store"}) {
 			publicMp := publicservice.NewPublicRatingMpService(logger, rp.NewRatingMpRepository(db), publicrepository.NewPublicRatingMpRepository(db))
-			result, pagination, msg = publicMp.GetListRatingSummaryBySourceType(req)
+			result, msg = publicMp.GetListRatingSummaryBySourceType(req)
 		} else {
 			result, pagination, msg = s.GetListRatingSummaryBySourceType(req)
 		}
@@ -76,15 +76,14 @@ func makeGetListDetailRatingSummaryBySourceType(s publicservice.PublicRatingServ
 	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
 		req := rqst.(publicrequest.PublicGetListDetailRatingSummaryRequest)
 		var result interface{}
-		var pagination *base.Pagination
 		var msg message.Message
 
 		publicMp := publicservice.NewPublicRatingMpService(logger, rp.NewRatingMpRepository(db), publicrepository.NewPublicRatingMpRepository(db))
-		result, pagination, msg = publicMp.GetListDetailRatingSummaryBySourceType(req)
+		result, msg = publicMp.GetListDetailRatingSummaryBySourceType(req)
 
 		if msg.Code != 212000 {
-			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, pagination), nil
+			return base.SetHttpResponse(msg.Code, msg.Message, encoder.Empty{}, nil), nil
 		}
-		return base.SetHttpResponse(msg.Code, msg.Message, result, pagination), nil
+		return base.SetHttpResponse(msg.Code, msg.Message, result, nil), nil
 	}
 }

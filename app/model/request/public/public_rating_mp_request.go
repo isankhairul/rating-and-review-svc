@@ -106,13 +106,14 @@ func sliceStringToSliceInterface(arr []string) []interface{} {
 // swagger:parameters PublicGetListDetailRatingSummaryRequest
 type PublicGetListDetailRatingSummaryRequest struct {
 	// Filter available {"source_uid": [""]}
+	// max source_uid is 50
 	// required: true
 	Filter string `json:"filter" schema:"filter" binding:"omitempty"`
 
-	Limit int    `json:"limit" schema:"limit" binding:"omitempty,numeric,min=1,max=100"`
-	Page  int    `json:"page" schema:"page" binding:"omitempty,numeric,min=1"`
-	Sort  string `json:"sort" schema:"sort" binding:"omitempty"`
-	Dir   string `json:"dir" schema:"dir" binding:"omitempty"`
+	// Limit int    `json:"limit" schema:"limit" binding:"omitempty,numeric,min=1,max=100"`
+	// Page  int    `json:"page" schema:"page" binding:"omitempty,numeric,min=1"`
+	// Sort  string `json:"sort" schema:"sort" binding:"omitempty"`
+	// Dir   string `json:"dir" schema:"dir" binding:"omitempty"`
 
 	// SourceType
 	// in: path
@@ -121,37 +122,38 @@ type PublicGetListDetailRatingSummaryRequest struct {
 }
 
 func (r *PublicGetListDetailRatingSummaryRequest) MakeDefaultValueIfEmpty() {
-	if r.Limit <= 0 {
-		r.Limit = 50
-	}
-	if r.Page <= 0 {
-		r.Page = 1
-	}
-	if r.Sort == "" {
-		r.Sort = "updated_at"
-	}
+	// if r.Limit <= 0 {
+	// 	r.Limit = 50
+	// }
+	// if r.Page <= 0 {
+	// 	r.Page = 1
+	// }
+	// if r.Sort == "" {
+	// 	r.Sort = "updated_at"
+	// }
 }
 
 // swagger:parameters PublicGetRatingSummaryStoreProductRequest
 type PublicGetRatingSummaryStoreProductRequest struct {
 	// Filter available {"store_uid": [""]}
+	// max store_uid is 20
 	// required: true
 	Filter string `json:"filter" schema:"filter" binding:"omitempty"`
 
-	Limit int    `json:"-"`
-	Page  int    `json:"page" schema:"page" binding:"omitempty,numeric,min=1"`
-	Sort  string `json:"sort" schema:"sort" binding:"omitempty"`
-	Dir   string `json:"dir" schema:"dir" binding:"omitempty"`
+	// Limit int    `json:"-"`
+	// Page  int    `json:"-"`
+	// Sort string `json:"sort" schema:"sort" binding:"omitempty"`
+	// Dir  string `json:"dir" schema:"dir" binding:"omitempty"`
 }
 
 func (r *PublicGetRatingSummaryStoreProductRequest) MakeDefaultValueIfEmpty() {
-	if r.Limit <= 0 {
-		r.Limit = 10
-	}
-	if r.Page <= 0 {
-		r.Page = 1
-	}
-	if r.Sort == "" {
-		r.Sort = "updated_at"
-	}
+	// if r.Limit <= 0 {
+	// 	r.Limit = 10
+	// }
+	// if r.Page <= 0 {
+	// 	r.Page = 1
+	// }
+	// if r.Sort == "" {
+	// 	r.Sort = "updated_at"
+	// }
 }

@@ -179,19 +179,27 @@ type PublicSumCountRatingSummaryMp struct {
 }
 
 type PublicRatingSubGroupBySourceMp struct {
-	ID struct {
-		SourceUID  string `json:"source_uid" bson:"source_uid"`
-		SourceType string `json:"source_type" bson:"source_type"`
-	} `json:"_id" bson:"_id"`
-	RatingSubmissionsMp []entity.RatingSubmissionMp `json:"rating_submissions_mp" bson:"rating_submissions_mp"`
+	ID            StructGroupSource `json:"_id" bson:"_id"`
+	TotalValue    int               `json:"total_value" bson:"total_value"`
+	TotalReviewer int               `json:"total_reviewer" bson:"total_reviewer"`
+	ArrayValue    []map[string]int  `json:"array_value" bson:"array_value"`
 }
 
 type PublicRatingSubGroupByStoreSourceMp struct {
-	ID struct {
-		StoreUID   string `json:"store_uid" bson:"store_uid"`
-		SourceType string `json:"source_type" bson:"source_type"`
-	} `json:"_id" bson:"_id"`
-	RatingSubmissionsMp []entity.RatingSubmissionMp `json:"rating_submissions_mp" bson:"rating_submissions_mp"`
+	ID            StructGroupStoreSource `json:"_id" bson:"_id"`
+	TotalValue    int                    `json:"total_value" bson:"total_value"`
+	TotalReviewer int                    `json:"total_reviewer" bson:"total_reviewer"`
+	ArrayValue    []map[string]int       `json:"array_value" bson:"array_value"`
+}
+
+type StructGroupSource struct {
+	SourceUID  string `json:"source_uid" bson:"source_uid"`
+	SourceType string `json:"source_type" bson:"source_type"`
+}
+
+type StructGroupStoreSource struct {
+	StoreUID   string `json:"store_uid" bson:"store_uid"`
+	SourceType string `json:"source_type" bson:"source_type"`
 }
 
 type PublicRatingSummaryListDetailResponse struct {
@@ -222,5 +230,5 @@ type RatingSummaryStoreProductNumeric struct {
 
 type PublicRatingSubGroupByValue struct {
 	ConvertedValue int `json:"id" bson:"_id"`
-	Total int `json:"count" bson:"count"`
+	Total          int `json:"count" bson:"count"`
 }
