@@ -341,6 +341,8 @@ func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort
 	bsonUserIdLegacy := bson.D{}
 	bsonSourceTransId := bson.D{}
 	bsonValue := bson.D{}
+	bsonRangeDate := bson.D{}
+	bsonCreatedAt := bson.D{}
 
 	if len(filter.UserIdLegacy) > 0 {
 		bsonUserIdLegacy = bson.D{{Key: "user_id_legacy", Value: bson.D{{Key: "$in", Value: filter.UserIdLegacy}}}}
@@ -350,6 +352,17 @@ func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort
 	}
 	if filter.Value != "" {
 		bsonValue = bson.D{{Key: "value", Value: filter.Value}}
+	}
+	if filter.StartDate != "" {
+		startDate, _ := util.ConvertToDateTime(filter.StartDate + " 00:00:00")
+		bsonRangeDate = append(bsonRangeDate, bson.E{Key: "$gte", Value: primitive.NewDateTimeFromTime(startDate)})
+	}
+	if filter.EndDate != "" {
+		endDate, _ := util.ConvertToDateTime(filter.EndDate + " 23:59:59")
+		bsonRangeDate = append(bsonRangeDate, bson.E{Key: "$lt", Value: primitive.NewDateTimeFromTime(endDate)})
+	}
+	if len(bsonRangeDate) > 0 {
+		bsonCreatedAt = bson.D{{Key: "created_at", Value: bsonRangeDate}}
 	}
 
 	var bsonFilter = bson.D{}
@@ -361,12 +374,14 @@ func (r *publicRatingRepo) GetPublicRatingSubmissions(limit, page, dir int, sort
 			bsonRatingType,
 			bsonLikertVal,
 			bsonCancelled,
+			bsonCreatedAt,
 		}}}
 	} else {
 		bsonRatingID := bson.D{{Key: "rating_id", Value: bson.D{{Key: "$in", Value: filter.RatingID}}}}
 		bsonFilter = bson.D{{Key: "$and", Value: bson.A{
 			bsonRatingID,
 			bsonCancelled,
+			bsonCreatedAt,
 			bson.D{{Key: "$or",
 				Value: bson.A{
 					bsonUserIdLegacy,

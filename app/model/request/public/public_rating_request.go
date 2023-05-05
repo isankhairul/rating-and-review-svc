@@ -63,7 +63,7 @@ type GetPublicListRatingSubmissionRequest struct {
 	// in: path
 	// required: true
 	SourceUID string `json:"source_uid"`
-	// Filter available {"user_id_legacy": [""], "source_trans_id": [""], "value": "", "is_with_media": true}
+	// Filter available {"user_id_legacy": [""], "source_trans_id": [""], "value": "", "is_with_media": true, "start_date": "", "end_date": "", ""}
 	Filter string `json:"filter" schema:"filter" binding:"omitempty"`
 	Limit  int    `json:"limit" schema:"limit" binding:"omitempty,numeric,min=1,max=100"`
 	Page   int    `json:"page" schema:"page" binding:"omitempty,numeric,min=1"`
@@ -77,6 +77,18 @@ type FilterRatingSubmission struct {
 	UserIdLegacy  []string     `json:"user_id_legacy"`
 	SourceTransID []string     `json:"source_trans_id"`
 	Value         string       `json:"value"`
+	StartDate     string       `json:"start_date"`
+	EndDate       string       `json:"end_date"`
+}
+
+func (req FilterRatingSubmission) ValidateFormatDate() error {
+	return validation.ValidateStruct(&req,
+		// Default
+		validation.Field(&req.StartDate, validation.When(req.StartDate != "", validation.Date("2006-01-02").
+			Error("start_date is invalid format, format should be 2006-01-02"))),
+		validation.Field(&req.EndDate, validation.When(req.EndDate != "", validation.Date("2006-01-02").
+			Error("end_date is invalid format, format should be 2006-01-02"))),
+	)
 }
 
 type LikertFilter struct {

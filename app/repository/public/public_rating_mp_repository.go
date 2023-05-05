@@ -8,6 +8,7 @@ import (
 	"go-klikdokter/app/model/entity"
 	publicrequest "go-klikdokter/app/model/request/public"
 	publicresponse "go-klikdokter/app/model/response/public"
+	"go-klikdokter/pkg/util"
 	"math"
 	"reflect"
 	"time"
@@ -80,6 +81,8 @@ func (r *publicRatingMpRepo) GetPublicRatingSubmissions(limit, page, dir int, so
 	bsonSourceType := bson.D{}
 	bsonSourceUID := bson.D{}
 	bsonSourceUIDs := bson.D{}
+	bsonRangeDate := bson.D{}
+	bsonCreatedAt := bson.D{}
 
 	if filter.SourceUID != "" {
 		bsonSourceUID = bson.D{{Key: "source_uid", Value: filter.SourceUID}}
@@ -105,6 +108,17 @@ func (r *publicRatingMpRepo) GetPublicRatingSubmissions(limit, page, dir int, so
 	if filter.IsWithMedia != nil {
 		bsonIsWithMedia = bson.D{{Key: "is_with_media", Value: filter.IsWithMedia}}
 	}
+	if filter.StartDate != "" {
+		startDate, _ := util.ConvertToDateTime(filter.StartDate + " 00:00:00")
+		bsonRangeDate = append(bsonRangeDate, bson.E{Key: "$gte", Value: primitive.NewDateTimeFromTime(startDate)})
+	}
+	if filter.EndDate != "" {
+		endDate, _ := util.ConvertToDateTime(filter.EndDate + " 23:59:59")
+		bsonRangeDate = append(bsonRangeDate, bson.E{Key: "$lt", Value: primitive.NewDateTimeFromTime(endDate)})
+	}
+	if len(bsonRangeDate) > 0 {
+		bsonCreatedAt = bson.D{{Key: "created_at", Value: bsonRangeDate}}
+	}
 
 	var bsonFilter = bson.D{}
 
@@ -113,6 +127,7 @@ func (r *publicRatingMpRepo) GetPublicRatingSubmissions(limit, page, dir int, so
 		bsonSourceUID,
 		bsonSourceUIDs,
 		bsonCancelled,
+		bsonCreatedAt,
 		bson.D{{Key: "$or",
 			Value: bson.A{
 				bsonUserIdLegacy,

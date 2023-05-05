@@ -280,6 +280,17 @@ func (s *publicRatingServiceImpl) GetListRatingSubmissionBySourceTypeAndUID(inpu
 	for _, v := range ratings {
 		filterRatingSubs.RatingID = append(filterRatingSubs.RatingID, v.ID.Hex())
 	}
+	// validation filter date
+	if err := filterRatingSubs.ValidateFormatDate(); err != nil {
+		return nil, nil, message.ErrInvalidDate
+	}
+	if filterRatingSubs.StartDate != "" && filterRatingSubs.EndDate != "" {
+		startDate, _ := util.ConvertToDateTime(filterRatingSubs.StartDate + " 00:00:00")
+		endDate, _ := util.ConvertToDateTime(filterRatingSubs.EndDate + " 23:59:59")
+		if errD := endDate.Before(startDate); errD == true {
+			return nil, nil, message.ErrRangeDate
+		}
+	}
 
 	// Get Rating Submission
 	ratingSubs, pagination, err := s.publicRatingRepo.GetPublicRatingSubmissions(input.Limit, input.Page, dir, input.Sort, filterRatingSubs)

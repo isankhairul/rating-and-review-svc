@@ -86,6 +86,8 @@ var ErrFailedSummaryRatingNumeric = Message{Code: ValidationFailCode, Message: "
 var ErrDisplayNameRequired = Message{Code: ValidationFailCode, Message: "Display Name is required"}
 var ErrUserNotFound = Message{Code: ValidationFailCode, Message: "User not found"}
 var ErrUserPermissionUpdate = Message{Code: ValidationFailCode, Message: "Not allowed update rating submission of another user"}
+var ErrRangeDate = Message{Code: ValidationFailCode, Message: "end_date can not before start_date"}
+var ErrInvalidDate = Message{Code: ValidationFailCode, Message: "invalid format date, format should be 2006-01-02"}
 
 // Code 39000 - 39999 Server error
 var ErrRevocerRoute = Message{Code: 39000, Message: "Terjadi kesalahan routing"}

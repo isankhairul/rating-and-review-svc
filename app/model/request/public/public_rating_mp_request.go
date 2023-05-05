@@ -93,6 +93,18 @@ type FilterRatingSubmissionMp struct {
 	RatingSubsID  []string     `json:"rating_subs_id"`
 	Value         string       `json:"value"`
 	IsWithMedia   *bool        `json:"is_with_media"`
+	StartDate     string       `json:"start_date"`
+	EndDate       string       `json:"end_date"`
+}
+
+func (req FilterRatingSubmissionMp) ValidateFormatDate() error {
+	return validation.ValidateStruct(&req,
+		// Default
+		validation.Field(&req.StartDate, validation.When(req.StartDate != "", validation.Date("2006-01-02").
+			Error("start_date is invalid format, format should be 2006-01-02"))),
+		validation.Field(&req.EndDate, validation.When(req.EndDate != "", validation.Date("2006-01-02").
+			Error("end_date is invalid format, format should be 2006-01-02"))),
+	)
 }
 
 func sliceStringToSliceInterface(arr []string) []interface{} {
