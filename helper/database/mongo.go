@@ -2,7 +2,7 @@ package database
 
 import (
 	"context"
-	"fmt"
+	// "fmt"
 	"go-klikdokter/helper/config"
 	"time"
 
