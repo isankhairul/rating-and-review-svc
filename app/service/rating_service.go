@@ -7,9 +7,9 @@ import (
 	"go-klikdokter/app/model/base"
 	"go-klikdokter/app/model/entity"
 	"go-klikdokter/app/model/request"
-	"go-klikdokter/app/model/request/public"
+	publicrequest "go-klikdokter/app/model/request/public"
 	"go-klikdokter/app/model/response"
-	"go-klikdokter/app/model/response/public"
+	publicresponse "go-klikdokter/app/model/response/public"
 	"go-klikdokter/app/repository"
 	repository2 "go-klikdokter/app/repository/public"
 	"go-klikdokter/helper/config"
@@ -94,8 +94,9 @@ func NewRatingService(
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) CreateRatingTypeNum(input request.CreateRatingTypeNumRequest) (*entity.RatingTypesNumCol, message.Message) {
 	if *input.Scale < 0 || *input.Scale > 2 {
 		return nil, message.ErrScaleValueReq
@@ -132,8 +133,9 @@ func (s *ratingServiceImpl) CreateRatingTypeNum(input request.CreateRatingTypeNu
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetRatingTypeNumById(input request.GetRatingTypeNumRequest) (*entity.RatingTypesNumCol, message.Message) {
 	objectId, err := primitive.ObjectIDFromHex(input.Id)
 	if err != nil {
@@ -187,8 +189,9 @@ func checkConditionUpdateRatingTypeNum(s *ratingServiceImpl, input request.EditR
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) UpdateRatingTypeNum(input request.EditRatingTypeNumRequest) message.Message {
 	objectId, err := primitive.ObjectIDFromHex(input.Id)
 	if err != nil {
@@ -219,8 +222,9 @@ func (s *ratingServiceImpl) UpdateRatingTypeNum(input request.EditRatingTypeNumR
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) DeleteRatingTypeNumById(input request.GetRatingTypeNumRequest) message.Message {
 	objectId, err := primitive.ObjectIDFromHex(input.Id)
 	if err != nil {
@@ -255,8 +259,9 @@ func (s *ratingServiceImpl) DeleteRatingTypeNumById(input request.GetRatingTypeN
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetRatingTypeNums(input request.GetRatingTypeNumsRequest) ([]entity.RatingTypesNumCol, *base.Pagination, message.Message) {
 	var dir interface{}
 	sort := "updated_at"
@@ -305,8 +310,9 @@ func (s *ratingServiceImpl) GetRatingTypeNums(input request.GetRatingTypeNumsReq
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) CreateRatingSubmission(input request.CreateRatingSubmissionRequest) ([]publicresponse.PublicCreateRatingSubmissionResponse, message.Message) {
 	logger := log.With(s.logger, "RatingService", "CreateRatingSubmission")
 	var saveReq = make([]request.SaveRatingSubmission, 0)
@@ -630,8 +636,9 @@ func createTagging(saveReq []request.SaveRatingSubmission, numId, likertId, valu
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) UpdateRatingSubmission(input request.UpdateRatingSubmissionRequest) message.Message {
 	// Input ID of Submission
 	objectRatingSubmissionId, err := primitive.ObjectIDFromHex(input.ID)
@@ -761,8 +768,9 @@ func (s *ratingServiceImpl) UpdateRatingSubmission(input request.UpdateRatingSub
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) DeleteRatingSubmission(id string) message.Message {
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -784,8 +792,9 @@ func (s *ratingServiceImpl) DeleteRatingSubmission(id string) message.Message {
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input request.GetPublicListRatingSubmissionByUserIdRequest) ([]publicresponse.PublicRatingSubmissionResponse, *base.Pagination, message.Message) {
 	results := []publicresponse.PublicRatingSubmissionResponse{}
 	timezone := config.GetConfigString(viper.GetString("util.timezone"))
@@ -811,7 +820,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil, message.Message{
-				Code:    message.ValidationFailCode,
+				Code:    message.DataNotFoundCode,
 				Message: "Cannot find rating with params SourceType :" + input.SourceType + ", SourceUid:" + input.SourceUID,
 			}
 		}
@@ -819,7 +828,7 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 	}
 	if len(ratings) <= 0 {
 		return nil, nil, message.Message{
-			Code:    message.ValidationFailCode,
+			Code:    message.DataNotFoundCode,
 			Message: "Cannot find rating with params SourceType :" + input.SourceType + ", SourceUid:" + input.SourceUID,
 		}
 	}
@@ -863,6 +872,9 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 		// Get like by me value
 		ratingSubHelpful, err := s.publicRatingRepo.GetRatingSubHelpfulByRatingSubAndActor(v.ID.Hex(), input.UserIdLegacy)
 		if err != nil {
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				return results, pagination, message.ErrNoData
+			}
 			return nil, nil, message.FailedMsg
 		}
 		if ratingSubHelpful != nil {
@@ -905,8 +917,9 @@ func (s *ratingServiceImpl) GetListRatingSubmissionWithUserIdLegacy(input reques
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) UpdateRatingSubDisplayNameByIdLegacy(input request.UpdateRatingSubDisplayNameRequest) message.Message {
 	if input.DisplayName == "" {
 		return message.ErrDisplayNameRequired
@@ -926,8 +939,9 @@ func (s *ratingServiceImpl) UpdateRatingSubDisplayNameByIdLegacy(input request.U
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) CancelRatingSubmission(input request.CancelRatingById) message.Message {
 	ids := []primitive.ObjectID{}
 	reason := input.CancelledReason
@@ -953,8 +967,9 @@ func (s *ratingServiceImpl) CancelRatingSubmission(input request.CancelRatingByI
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetRatingSubmission(id string) (*response.RatingSubmissonResponse, message.Message) {
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -984,8 +999,9 @@ func (s *ratingServiceImpl) GetRatingSubmission(id string) (*response.RatingSubm
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetListRatingSubmissions(input request.ListRatingSubmissionRequest) ([]response.RatingSubmissonResponse, *base.Pagination, message.Message) {
 	var dir interface{}
 	results := make([]response.RatingSubmissonResponse, 0)
@@ -1074,8 +1090,9 @@ func filterScoreSubmission(ratingSubmissions entity.RatingSubmisson, score []flo
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) CreateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) message.Message {
 
 	errMsg := validateNumStatement(input)
@@ -1103,8 +1120,9 @@ func (s *ratingServiceImpl) CreateRatingTypeLikert(input request.SaveRatingTypeL
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetRatingTypeLikertById(input request.GetRatingTypeLikertRequest) (*entity.RatingTypesLikertCol, message.Message) {
 	objectId, err := primitive.ObjectIDFromHex(input.Id)
 	if err != nil {
@@ -1126,8 +1144,9 @@ func (s *ratingServiceImpl) GetRatingTypeLikertById(input request.GetRatingTypeL
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) UpdateRatingTypeLikert(input request.SaveRatingTypeLikertRequest) message.Message {
 	objectId, err := primitive.ObjectIDFromHex(input.Id)
 	if err != nil {
@@ -1188,8 +1207,9 @@ func (s *ratingServiceImpl) UpdateRatingTypeLikert(input request.SaveRatingTypeL
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) DeleteRatingTypeLikertById(input request.GetRatingTypeLikertRequest) message.Message {
 	objectId, err := primitive.ObjectIDFromHex(input.Id)
 	if err != nil {
@@ -1224,8 +1244,9 @@ func (s *ratingServiceImpl) DeleteRatingTypeLikertById(input request.GetRatingTy
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetRatingTypeLikerts(input request.GetRatingTypeLikertsRequest) ([]entity.RatingTypesLikertCol, *base.Pagination, message.Message) {
 	var dir interface{}
 	if input.Dir == "asc" {
@@ -1275,7 +1296,8 @@ func (s *ratingServiceImpl) GetRatingTypeLikerts(input request.GetRatingTypeLike
 // security:
 // - Bearer: []
 // responses:
-//  200: SuccessResponse
+//
+//	200: SuccessResponse
 func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*entity.RatingsCol, message.Message) {
 
 	if input.Status == nil {
@@ -1354,7 +1376,8 @@ func (s *ratingServiceImpl) CreateRating(input request.SaveRatingRequest) (*enti
 // security:
 // - Bearer: []
 // responses:
-//  200: SuccessResponse
+//
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetRatingById(id string) (*entity.RatingsCol, message.Message) {
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -1378,7 +1401,8 @@ func (s *ratingServiceImpl) GetRatingById(id string) (*entity.RatingsCol, messag
 // security:
 // - Bearer: []
 // responses:
-//  200: SuccessResponse
+//
+//	200: SuccessResponse
 func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) message.Message {
 	// get current rating
 	objectId, err := primitive.ObjectIDFromHex(input.Id)
@@ -1456,7 +1480,8 @@ func (s *ratingServiceImpl) UpdateRating(input request.UpdateRatingRequest) mess
 // security:
 // - Bearer: []
 // responses:
-//  200: SuccessResponse
+//
+//	200: SuccessResponse
 func (s *ratingServiceImpl) DeleteRating(id string) message.Message {
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -1496,7 +1521,8 @@ func (s *ratingServiceImpl) DeleteRating(id string) message.Message {
 // security:
 // - Bearer: []
 // responses:
-//  200: SuccessResponse
+//
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetListRatings(input request.GetListRatingsRequest) ([]entity.RatingsCol, *base.Pagination, message.Message) {
 	input.MakeDefaultValueIfEmpty()
 	var dir int
@@ -1617,7 +1643,8 @@ func updateRatingTypeLikertHaveSubmission(s *ratingServiceImpl, input request.Sa
 // security:
 // - Bearer: []
 // responses:
-//  200: SuccessResponse
+//
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetListRatingSummary(input request.GetListRatingSummaryRequest) ([]response.RatingSummaryResponse, message.Message) {
 	input.MakeDefaultValueIfEmpty()
 	var dir int
@@ -1759,8 +1786,9 @@ func getScore(score []float64) (float64, float64) {
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetRatingBySourceTypeAndActor(input publicrequest.GetRatingBySourceTypeAndActorRequest) (*publicresponse.RatingBySourceTypeAndActorResponse, message.Message) {
 	result := publicresponse.RatingBySourceTypeAndActorResponse{}
 	filter := publicrequest.GetRatingBySourceTypeAndActorFilter{}
@@ -1814,8 +1842,9 @@ func (s *ratingServiceImpl) GetRatingBySourceTypeAndActor(input publicrequest.Ge
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) CreateRatingFormula(input request.SaveRatingFormula) (*entity.RatingFormulaCol, message.Message) {
 	check := true
 	if input.Status == nil {
@@ -1837,8 +1866,9 @@ func (s *ratingServiceImpl) CreateRatingFormula(input request.SaveRatingFormula)
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetRatingFormulaById(input request.GetRatingFormulaRequest) (*entity.RatingFormulaCol, message.Message) {
 	objectId, err := primitive.ObjectIDFromHex(input.Id)
 	if err != nil {
@@ -1860,8 +1890,9 @@ func (s *ratingServiceImpl) GetRatingFormulaById(input request.GetRatingFormulaR
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) UpdateRatingFormula(input request.SaveRatingFormula) message.Message {
 	objectId, err := primitive.ObjectIDFromHex(input.Id)
 	if err != nil {
@@ -1886,8 +1917,9 @@ func (s *ratingServiceImpl) UpdateRatingFormula(input request.SaveRatingFormula)
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) DeleteRatingFormulaById(input request.GetRatingFormulaRequest) message.Message {
 	objectId, err := primitive.ObjectIDFromHex(input.Id)
 	if err != nil {
@@ -1909,8 +1941,9 @@ func (s *ratingServiceImpl) DeleteRatingFormulaById(input request.GetRatingFormu
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) GetRatingFormulas(input request.GetRatingFormulasRequest) ([]entity.RatingFormulaCol, *base.Pagination, message.Message) {
 	var dir interface{}
 	sort := "updated_at"
@@ -1959,8 +1992,9 @@ func (s *ratingServiceImpl) GetRatingFormulas(input request.GetRatingFormulasReq
 // security:
 // - Bearer: []
 // responses:
-//  401: SuccessResponse
-//  200: SuccessResponse
+//
+//	401: SuccessResponse
+//	200: SuccessResponse
 func (s *ratingServiceImpl) CreateRatingSubHelpful(input request.CreateRatingSubHelpfulRequest) (response.RatingSubHelpfulResponse, message.Message) {
 	result := response.RatingSubHelpfulResponse{}
 	result.RatingSubmissionId = input.RatingSubmissionID
