@@ -60,6 +60,8 @@ type RatingEndpoint struct {
 	GetRatingFormulas       endpoint.Endpoint
 
 	CreateRatingSubHelpful endpoint.Endpoint
+
+	CreateRatingInternal endpoint.Endpoint
 }
 
 func MakeRatingEndpoints(s service.RatingService, logger log.Logger, db *mongo.Database) RatingEndpoint {
@@ -101,6 +103,8 @@ func MakeRatingEndpoints(s service.RatingService, logger log.Logger, db *mongo.D
 		GetRatingFormulas:       makeRatingFormulas(s),
 
 		CreateRatingSubHelpful: makeCreateRatingSubHelpful(s),
+
+		CreateRatingInternal: makeCreateRatingInternal(s),
 	}
 }
 
@@ -731,6 +735,14 @@ func makeReplyAdminRatingSubmission(s service.RatingService, logger log.Logger, 
 		if msg.Code != 212000 {
 			return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 		}
+		return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
+	}
+}
+
+func makeCreateRatingInternal(s service.RatingService) endpoint.Endpoint {
+	return func(ctx context.Context, rqst interface{}) (resp interface{}, err error) {
+		req := rqst.(request.SaveRatingRequest)
+		_, msg := s.CreateRating(req)
 		return base.SetHttpResponse(msg.Code, msg.Message, nil, nil), nil
 	}
 }

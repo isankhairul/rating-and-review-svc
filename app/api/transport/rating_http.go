@@ -256,6 +256,13 @@ func RatingHttpHandler(s service.RatingService, logger log.Logger, db *mongo.Dat
 		options...,
 	))
 
+	pr.Methods(http.MethodPost).Path(_struct.PrefixBase + "/internal/rating").Handler(httptransport.NewServer(
+		ep.CreateRatingInternal,
+		decodeCreateRating,
+		encoder.EncodeResponseHTTP,
+		options...,
+	))
+
 	return pr
 }
 
